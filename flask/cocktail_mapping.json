@@ -1,0 +1,38 @@
+{
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text"
+      },
+      "glass": {
+        "type": "keyword"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "ingredients": {
+        "type": "nested",
+        "properties": {
+          "unit": {
+            "type": "keyword"
+          },
+          "amount": {
+            "type": "float"
+          },
+          "ingredient": {
+            "type": "text"
+          }
+        }
+      },
+      "garnish": {
+        "type": "text"
+      },
+      "preparation": {
+        "type": "text"
+      },
+      "abv": {
+        "type": "float"
+      }
+    }
+  }
+}
