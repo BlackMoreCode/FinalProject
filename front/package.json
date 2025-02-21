@@ -18,6 +18,9 @@
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
     "@tosspayments/tosspayments-sdk": "^2.3.4",
+    "@types/jest": "^29.5.14",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.7",
@@ -48,6 +51,7 @@
     "redux-logger": "^3.0.6",
     "redux-persist": "^6.0.0",
     "styled-components": "^6.1.15",
+    "typescript": "^5.7.3",
     "web-vitals": "^2.1.0",
     "yup": "^1.6.1"
   },

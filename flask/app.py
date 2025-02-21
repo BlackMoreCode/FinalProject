@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify
 from elasticsearch import Elasticsearch
 import json
+import os
+
 
 app = Flask(__name__)
-es = Elasticsearch(["http://localhost:9200"])
+es_host = os.getenv("ELASTICSEARCH_HOST", "localhost")
+es = Elasticsearch([f"http://{es_host}:9200"])
 
 
 # JSON 파일에서 매핑을 로드하는 함수
