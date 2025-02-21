@@ -1,0 +1,54 @@
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-image img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-image-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: gray;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.nickname {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.user-stats span {
+  margin-right: 1rem;
+}
+
+.edit-profile-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.calendar-section {
+  margin-top: 30px;
+  margin-left: auto;
+  text-align: center;
+  width: 100%;
+  height: 200px;
+  background-color: lightgray;
+  border: 1px solid black;
+}

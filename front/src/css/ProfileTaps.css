@@ -1,0 +1,43 @@
+.profile-tabs {
+  border-top: 1px solid #ddd;
+  padding-top: 0;
+}
+
+.tab-menu {
+  margin-top: 0;
+}
+
+/* 탭 메뉴를 중앙 정렬 */
+.tab-menu ul {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  gap: 1rem;
+  padding: 0;
+  margin-bottom: 2rem;
+  margin-top: 0px;
+}
+
+.tab-menu li {
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid transparent;
+  position: relative;
+  cursor: pointer;
+}
+
+/* 활성 탭에 대해, 기존의 border-bottom 대신에 상단에 검은 선을 생성 */
+.tab-menu li.active::before {
+  content: "";
+  position: absolute;
+  top: -1px; /* 구분선과 겹치도록 위치 조정 (필요시 값 조정) */
+  left: 0;
+  right: 0;
+  border-top: 2px solid #000;
+}
+
+.user-post {
+  border: 1px solid #eee;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
