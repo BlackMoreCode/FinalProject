@@ -32,6 +32,10 @@
       },
       "abv": {
         "type": "float"
+      },
+      "like": {
+        "type" : "long"
+
       }
     }
   }
