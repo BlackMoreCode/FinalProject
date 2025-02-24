@@ -14,12 +14,15 @@
         "type": "nested",
         "properties": {
           "unit": {
-            "type": "keyword"
+            "type": "text"
           },
           "amount": {
             "type": "float"
           },
           "ingredient": {
+            "type": "keyword"
+          },
+          "special" : {
             "type": "text"
           }
         }
@@ -35,7 +38,15 @@
       },
       "like": {
         "type" : "long"
-
+      },
+      "report": {
+        "type" : "long"
+      },
+      "author" : {
+        "type": "long"
+      },
+      "image" : {
+        "type" : "keyword"
       }
     }
   }

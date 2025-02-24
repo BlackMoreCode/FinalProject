@@ -27,6 +27,20 @@ def create_index_if_not_exists(index_name, mapping_file=None):
     else:
         return jsonify({"message": f"Index {index_name} already exists"}), 400
 
+def get_index_and_mapping(file_type: str):
+    """
+    주어진 file_type에 따라 인덱스 이름과 매핑 파일명을 반환하는 함수
+    """
+    index_mapping = {
+        "cocktail": ("recipe_cocktail", "cocktail_mapping.json"),
+        "food": ("recipe_food", "food_mapping.json"),
+        "cocktail_ingredient": ("cocktail_ingredient", "cocktail_ingredient_mapping.json"),
+        "food_ingredient": ("food_ingredient", "food_ingredient_mapping.json"),
+        "feed": ("feed", "feed_mapping.json"),
+    }
+
+    return index_mapping.get(file_type, (None, None))
+
 
 # 글 하나 업로드
 @app.route("/upload/one", methods=["POST"])
@@ -39,24 +53,7 @@ def upload_one():
     if not file_type:
         return jsonify({"error": "Type is required"}), 400
 
-    # 폼의 타입에 맞춰 인덱스 이름 설정
-    if file_type == "cocktail":
-        index_name = "recipe_cocktail"
-        mapping_file = "cocktail_mapping.json"
-    elif file_type == "food":
-        index_name = "recipe_food"
-        mapping_file = "food_mapping.json"
-    elif file_type == "cocktail_ingredient":
-        index_name = "cocktail_ingredient"
-        mapping_file = "cocktail_ingredient_mapping.json"
-    elif file_type == "food_ingredient":
-        index_name = "food_ingredient"
-        mapping_file = "food_ingredient_mapping.json"
-    elif file_type == "feed":
-        index_name = "feed"  # 인덱스를 'feed'로 설정
-        mapping_file = "feed_mapping.json"  # feed에 해당하는 매핑 파일
-    else:
-        return jsonify({"error": "Invalid type provided"}), 400
+    index_name, mapping_file = get_index_and_mapping(file_type)
 
     # 인덱스가 없으면 매핑을 적용하여 생성
     if not es.indices.exists(index=index_name):
@@ -79,23 +76,7 @@ def upload_json():
         return jsonify({"error": "Type is required"}), 400
 
     # 폼의 타입에 맞춰 인덱스 이름 설정
-    if file_type == "cocktail":
-        index_name = "recipe_cocktail"
-        mapping_file = "cocktail_mapping.json"
-    elif file_type == "food":
-        index_name = "recipe_food"
-        mapping_file = "food_mapping.json"
-    elif file_type == "cocktail_ingredient":
-        index_name = "cocktail_ingredient"
-        mapping_file = "cocktail_ingredient_mapping.json"
-    elif file_type == "food_ingredient":
-        index_name = "food_ingredient"
-        mapping_file = "food_ingredient_mapping.json"
-    elif file_type == "feed":
-        index_name = "feed"  # 인덱스를 'feed'로 설정
-        mapping_file = "feed_mapping.json"  # feed에 해당하는 매핑 파일
-    else:
-        return jsonify({"error": "Invalid type provided"}), 400
+    index_name, mapping_file = get_index_and_mapping(file_type)
 
     # 인덱스가 없으면 매핑을 적용하여 생성
     if not es.indices.exists(index=index_name):
@@ -114,7 +95,7 @@ def search():
     query = request.args.get("q", "")
     type_filter = request.args.get("type", "")
     page = request.args.get("page", 1, type=int)
-    size = request.args.get("size", 10, type=int)
+    size = request.args.get("size", 20, type=int)
 
     if not query:
         return jsonify({"error": "Query is required"}), 400
@@ -122,20 +103,26 @@ def search():
     if not type_filter:
         return jsonify({"error": "'type' filter is required, use 'cocktail' or 'food'"}), 400
 
-    index_name = f"recipe_{type_filter}"
+    index_name, mapping_file = get_index_and_mapping(type_filter)
 
     res = es.search(index=index_name, body={
         "from": (page - 1) * size,
         "size": size,
+        "_source": ["name", "category", "like"],
         "query": {
             "multi_match": {
                 "query": query,
-                "fields": ["name", "ingredients"]
+                "fields": ["name", "ingredients", "category" ],
             }
         }
     })
+    # _id 값을 _source 데이터에 추가
+    results = [
+        {**hit["_source"], "id": hit["_id"]}
+        for hit in res["hits"]["hits"]
+    ]
 
-    return jsonify(res["hits"]["hits"])
+    return jsonify(results)
 
 
 @app.route("/search/ingredient", methods=["GET"])
@@ -143,7 +130,7 @@ def search_ingredient():
     ingredient = request.args.get("ingredient", "")
     type_filter = request.args.get("type", "")
     page = request.args.get("page", 1, type=int)
-    size = request.args.get("size", 10, type=int)
+    size = request.args.get("size", 20, type=int)
 
     if not ingredient:
         return jsonify({"error": "Ingredient is required"}), 400
@@ -157,43 +144,16 @@ def search_ingredient():
         "from": (page - 1) * size,
         "size": size,
         "query": {
-            "match": {"ingredients": ingredient}
+            "match": {"name": ingredient}
         }
     })
+    # _id 값을 _source 데이터에 추가
+    results = [
+        {**hit["_source"], "id": hit["_id"]}
+        for hit in res["hits"]["hits"]
+    ]
 
-    return jsonify(res["hits"]["hits"])
-
-
-@app.route("/search/recipe", methods=["GET"])
-def search_recipe():
-    type_filter = request.args.get("type", "")
-    query = request.args.get("query", "")
-    page = request.args.get("page", 1, type=int)
-    size = request.args.get("size", 10, type=int)
-
-    if not type_filter:
-        return jsonify({"error": "'type' filter is required, use 'cocktail' or 'food'"}), 400
-
-    index_name = f"recipe_{type_filter}"
-
-    es_query = {
-        "from": (page - 1) * size,
-        "size": size,
-        "query": {"match_all": {}}
-    }
-
-    if query:
-        es_query["query"] = {
-            "multi_match": {
-                "query": query,
-                "fields": ["name", "ingredients"]
-            }
-        }
-
-    res_recipe = es.search(index=index_name, body=es_query)
-    recipes = [hit["_source"] for hit in res_recipe["hits"]["hits"]]
-
-    return jsonify(recipes)
+    return jsonify(results)
 
 
 @app.route("/search/alcohol", methods=["GET"])
@@ -201,7 +161,7 @@ def search_alcohol():
     min_abv = request.args.get("min_abv", 0, type=float)
     max_abv = request.args.get("max_abv", 100, type=float)
     page = request.args.get("page", 1, type=int)
-    size = request.args.get("size", 10, type=int)
+    size = request.args.get("size", 20, type=int)
 
     res = es.search(index="recipe_cocktail", body={
         "from": (page - 1) * size,
@@ -216,8 +176,16 @@ def search_alcohol():
         }
     })
 
-    return jsonify(res["hits"]["hits"])
+    # _id 값을 _source 데이터에 추가
+    results = [
+        {**hit["_source"], "id": hit["_id"]}
+        for hit in res["hits"]["hits"]
+    ]
+
+    return jsonify(results)
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+
