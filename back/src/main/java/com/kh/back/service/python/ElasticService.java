@@ -22,7 +22,7 @@ import java.util.List;
 @Slf4j
 public class ElasticService {
 	private final RestTemplate restTemplate;
-	private final String flaskBaseUrl = "http://localhost:5000";
+	private final String flaskBaseUrl = "http://localhost:5001";
 	private final ObjectMapper objectMapper;
 	
 	public List<SearchResDto> search(String query, String type, Integer page, Integer size) {
