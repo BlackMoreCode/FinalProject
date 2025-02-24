@@ -22,9 +22,7 @@ services:
       - app-network
 
   flask:
-    build:
-      context: ../flask
-    container_name: flask_app
+    image: "homyeonggo/back-flask:latest"
     ports:
       - "5000:5000"
     depends_on:
