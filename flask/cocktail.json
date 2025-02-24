@@ -86,10 +86,10 @@
       { "unit": "cl", "amount": 3, "ingredient": "라임 주스" },
       { "special": "민트 6가지" },
       { "special": "흰 설탕 2 티스푼" },
-      { "special": "소다 워터" }
+      { "special": "탄산수" }
     ],
     "garnish": "민트 잎과 레몬 슬라이스",
-    "preparation": "민트와 설탕, 라임 주스를 머들 합니다. 소다 워터를 조금 추가하고 얼음 조각을 넣습니다. 럼을 붓고 소다 워터로 채웁니다. 빨대를 넣고 서빙합니다.",
+    "preparation": "민트와 설탕, 라임 주스를 머들 합니다. 탄산수를 조금 추가하고 얼음 조각을 넣습니다. 럼을 붓고 탄산수로 채웁니다. 빨대를 넣고 서빙합니다.",
     "abv": 15
   },
   {
@@ -169,7 +169,7 @@
   },
   {
     "name": "클로버 클럽",
-    "glass": "마르티니 글래스",
+    "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 4.5, "ingredient": "진" },
@@ -177,19 +177,19 @@
       { "unit": "cl", "amount": 1.5, "ingredient": "레몬 주스" },
       { "special": "달걀 흰자 몇 방울" }
     ],
-    "preparation": "얼음을 넣고 흔들어 준 후, 마르티니 글래스에 거른다.",
+    "preparation": "얼음을 넣고 흔들어 준 후, 마티니 글래스에 거른다.",
     "abv": 20
   },
   {
     "name": "엔젤 페이스",
-    "glass": "마르티니 글래스",
+    "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 3, "ingredient": "진" },
       { "unit": "cl", "amount": 3, "ingredient": "살구 브랜디" },
       { "unit": "cl", "amount": 3, "ingredient": "칼바도스" }
     ],
-    "preparation": "얼음과 함께 흔들어 마르티니 글래스에 거른다.",
+    "preparation": "얼음과 함께 흔들어 마티니 글래스에 거른다.",
     "abv": 18
   },
   {
@@ -349,11 +349,11 @@
       {
         "unit": "cl",
         "amount": 8,
-        "ingredient": "소다 워터"
+        "ingredient": "탄산수"
       }
     ],
     "garnish": "레몬 조각",
-    "preparation": "진, 레몬 주스, 설탕 시럽을 얼음과 함께 흔든 후, 텀블러에 붓고 소다 워터로 마무리한다.",
+    "preparation": "진, 레몬 주스, 설탕 시럽을 얼음과 함께 흔든 후, 텀블러에 붓고 탄산수로 마무리한다.",
     "abv": 11
   },
   {
@@ -510,7 +510,7 @@
     "category": "식후 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 5, "ingredient": "꼬냑" },
-      { "unit": "cl", "amount": 2, "ingredient": "크림 리큐어", "label": "화이트 크렘 드 멘트" }
+      { "unit": "cl", "amount": 2, "ingredient": "크렘 리큐어", "label": "화이트 크렘 드 멘트" }
     ],
     "preparation": "Stir in mixing glass with ice cubes. Strain into a cocktail glass.",
     "abv": 27.4
@@ -533,7 +533,7 @@
     "glass": "올드 패션드",
     "ingredients": [
       { "unit": "cl", "amount": 3.5, "ingredient": "보드카" },
-      { "unit": "cl", "amount": 3.5, "ingredient": "디사로노" }
+      { "unit": "cl", "amount": 3.5, "ingredient": "아마레토" }
     ],
     "preparation": "Build into old-fashioned glass filled with ice cubes. Stir gently.",
     "abv": 24.1
@@ -545,7 +545,7 @@
     "ingredients": [
       { "unit": "cl", "amount": 6, "ingredient": "프로세코" },
       { "unit": "cl", "amount": 4, "ingredient": "아페롤" },
-      { "special": "소다 워터 한 방울" }
+      { "special": "탄산수 한 방울" }
     ],
     "garnish": "오렌지 슬라이스 절반",
     "preparation": "Build into an old-fashioned glass filled with ice. Top with a splash of soda water.",
@@ -570,7 +570,7 @@
     "glass": "마티니",
     "ingredients": [
       { "unit": "cl", "amount": 3, "ingredient": "꼬냑" },
-      { "unit": "cl", "amount": 3, "ingredient": "크림 리큐어", "label": "브라운 크렘 드 카카오" },
+      { "unit": "cl", "amount": 3, "ingredient": "크렘 리큐어", "label": "브라운 크렘 드 카카오" },
       { "unit": "cl", "amount": 3, "ingredient": "크림" }
     ],
     "preparation": "쉐이크한 후, 차가운 칵테일 글래스에 따라낸 뒤, 신선한 육두구를 갈아서 뿌립니다.",
@@ -743,10 +743,10 @@
     "ingredients": [
       { "unit": "cl", "amount": 3, "ingredient": "캄파리" },
       { "unit": "cl", "amount": 3, "ingredient": "베르무트", "label": "레드 베르무트" },
-      { "special": "소다 워터 한 스플래시" }
+      { "special": "탄산수 한 스플래시" }
     ],
     "garnish": "오렌지 슬라이스 반 개",
-    "preparation": "얼음이 담긴 올드 패션드 글래스에 재료를 넣고, 소다 워터를 추가합니다.",
+    "preparation": "얼음이 담긴 올드 패션드 글래스에 재료를 넣고, 탄산수를 추가합니다.",
     "abv": 18.7
   },
   {
@@ -772,7 +772,7 @@
     "glass": "올드 패션드",
     "ingredients": [
       { "unit": "cl", "amount": 3.5, "ingredient": "꼬냑" },
-      { "unit": "cl", "amount": 3.5, "ingredient": "디사로노" }
+      { "unit": "cl", "amount": 3.5, "ingredient": "아마레토" }
     ],
     "preparation": "얼음이 담긴 올드 패션드 글래스에 재료를 넣고 부드럽게 저어줍니다.",
     "abv": 28.5
@@ -799,7 +799,7 @@
       { "unit": "cl", "amount": 4.5, "ingredient": "진" },
       { "unit": "cl", "amount": 3, "ingredient": "레몬 주스" },
       { "unit": "cl", "amount": 1.5, "ingredient": "시럽", "label": "설탕 시럽" },
-      { "unit": "cl", "amount": 6, "ingredient": "소다 워터" }
+      { "unit": "cl", "amount": 6, "ingredient": "탄산수" }
     ],
     "garnish": "레몬 슬라이스와 체리",
     "preparation": "하이볼 글래스에 얼음을 채운 후 재료를 넣고 부드럽게 저어줍니다. 앙고스투라 비터스를 약간 추가하세요. (참고: 톰 콜린스를 만들 때는 올드 톰 진을 사용하세요)",
@@ -832,31 +832,31 @@
   },
   {
     "name": "토미의 마르가리타",
-    "glass": "마르티니 글래스",
+    "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 4.5, "ingredient": "테킬라" },
       { "unit": "cl", "amount": 1.5, "ingredient": "라임 주스" },
       { "special": "아가베 네크타르 2 바 스푼" }
     ],
-    "preparation": "셰이크한 후 차가운 마르티니 글래스에 스트레인합니다.",
+    "preparation": "셰이크한 후 차가운 마티니 글래스에 스트레인합니다.",
     "abv": 18
   },
   {
     "name": "파라다이스",
-    "glass": "마르티니 글래스",
+    "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 3.5, "ingredient": "진" },
       { "unit": "cl", "amount": 2, "ingredient": "살구 브랜디" },
       { "unit": "cl", "amount": 1.5, "ingredient": "오렌지 주스" }
     ],
-    "preparation": "얼음과 함께 셰이크한 후 차가운 마르티니 글래스에 스트레인합니다.",
+    "preparation": "얼음과 함께 셰이크한 후 차가운 마티니 글래스에 스트레인합니다.",
     "abv": 13
   },
   {
-    "name": "더티 마르티니",
-    "glass": "마르티니 글래스",
+    "name": "더티 마티니",
+    "glass": "마티니 글래스",
     "category": "식전 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 6, "ingredient": "보드카" },
@@ -864,7 +864,7 @@
       { "unit": "cl", "amount": 1, "ingredient": "올리브 주스" }
     ],
     "garnish": "그린 올리브",
-    "preparation": "믹싱 글래스에 얼음을 넣고 잘 저은 후 차가운 마르티니 글래스에 스트레인합니다.",
+    "preparation": "믹싱 글래스에 얼음을 넣고 잘 저은 후 차가운 마티니 글래스에 스트레인합니다.",
     "abv": 20
   },
   {
@@ -883,7 +883,7 @@
   },
   {
     "name": "메리 픽포드",
-    "glass": "마르티니 글래스",
+    "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 6, "ingredient": "화이트럼" },
@@ -896,7 +896,7 @@
   },
   {
     "name": "헤밍웨이 스페셜",
-    "glass": "마르티니 글래스",
+    "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
       { "unit": "cl", "amount": 6, "ingredient": "화이트럼" },
@@ -932,9 +932,9 @@
       { "special": "계란 흰자 1개" },
       { "special": "오렌지 꽃물 3대시" },
       { "special": "바닐라 추출물 2방울" },
-      { "special": "소다 워터" }
+      { "special": "탄산수" }
     ],
-    "preparation": "모든 재료(소다 제외)를 믹싱 글래스에 넣고 2분 동안 드라이 셰이크 후 얼음을 넣고 1분 동안 하드 셰이크합니다. 얼음 없이 하이볼 글래스에 스트레인한 후 소다를 부어줍니다.",
+    "preparation": "모든 재료(탄산수 제외)를 믹싱 글래스에 넣고 2분 동안 드라이 셰이크 후 얼음을 넣고 1분 동안 하드 셰이크합니다. 얼음 없이 하이볼 글래스에 스트레인한 후 탄산수를 부어줍니다.",
     "abv": 13
   },
   {
@@ -956,7 +956,7 @@
     "glass": "올드 패션드",
     "ingredients": [
       { "unit": "cl", "amount": 3.5, "ingredient": "위스키", "label": "스카치 위스키" },
-      { "unit": "cl", "amount": 3.5, "ingredient": "디사로노" }
+      { "unit": "cl", "amount": 3.5, "ingredient": "아마레토" }
     ],
     "preparation": "올드 패션드 글래스에 얼음을 채우고 재료를 붓고 부드럽게 저어주세요.",
     "abv": 24
