@@ -1,26 +1,57 @@
 {
   "mappings": {
     "properties": {
-      "name": {
+      "RCP_NM": {
         "type": "text"
       },
-      "category": {
+
+      "RCP_WAY2": {
         "type": "keyword"
       },
-      "ingredients": {
+      "RCP_PAT2": {
+        "type": "keyword"
+      },
+
+      "ATT_FILE_NO_MAIN": {
+        "type": "keyword"
+      },
+      "ATT_FILE_NO_MK": {
+        "type": "keyword"
+      },
+      "RCP_PARTS_DTLS": {
         "type": "nested",
         "properties": {
-          "ingredient": {
+          "name": {
             "type": "text"
           },
-          "amount": {
-            "type": "float"
+          "quantity": {
+            "type": "text"
           }
         }
       },
-      "instructions": {
+      "RCP_NA_TIP": {
         "type": "text"
+      },
+      "MANUALS": {
+        "type": "nested",
+        "properties": {
+          "text": {
+            "type": "text"
+          },
+          "imageUrl": {
+            "type": "keyword"
+          }
+        }
       }
-    }
+    },
+     "like": {
+        "type" : "long"
+      },
+      "report": {
+        "type" : "long"
+      },
+      "author" : {
+        "type": "long"
+      }
   }
 }

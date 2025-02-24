@@ -3,6 +3,10 @@ import styled from "styled-components";
 import AuthApi from "../../../../../../Uniguide/BackendCapstone/src/main/react/src/api/AuthApi";
 import TermsModal from "./TermsModal";
 
+const DEFAULT_PROFILE_URL =
+  "https://firebasestorage.googleapis.com/v0/b/project-mini-db956.firebasestorage.app/o/default_profile.png?alt=media&token=6ccfd06d-4d99-4c7b-b603-1baf0517116b";
+
+
 const SignupModal = ({ closeModal }) => {
   const [inputPhone, setInputPhone] = useState("");
   const [inputNickname, setInputNickname] = useState("");
@@ -17,6 +21,10 @@ const SignupModal = ({ closeModal }) => {
   const [isPw, setIsPw] = useState(false);
   const [isConPw, setIsConPw] = useState(false);
   const [isName, setIsName] = useState(false);
+
+  const [file, setFile] = useState(null);
+  const [profileUrl, setProfileUrl] = useState(DEFAULT_PROFILE_URL);
+  
 
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -75,6 +83,20 @@ const formatTime = (seconds) => {
   return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
 };
 
+const handleFileInputChange = (e) => {
+  const selectedFile = e.target.files[0];
+  if (selectedFile && selectedFile.type.startsWith("image/")) {
+    setFile(selectedFile);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileUrl(reader.result); // Set the profile image preview
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    alert("유효한 이미지 파일만 선택해주세요.");
+  }
+};
+
 
 
 
@@ -84,6 +106,20 @@ const formatTime = (seconds) => {
   };
 
   const onClickSignup = async () => {
+     let finalProfileUrl = DEFAULT_PROFILE_URL;
+        if (file) {
+          const storageRef = storage.ref();
+          const fileRef = storageRef.child(file.name);
+    
+          try {
+            await fileRef.put(file);
+            finalProfileUrl = await fileRef.getDownloadURL();
+          } catch (error) {
+            console.error("이미지 업로드 실패:", error);
+            alert("이미지 업로드 중 문제가 발생했습니다.");
+            return;
+          }
+        }
     try {
 
       const currentDate = new Date();
@@ -95,7 +131,8 @@ const formatTime = (seconds) => {
         inputPw,
         inputName,
         inputPhone,
-        regDate
+        regDate,
+        finalProfileUrl
       );
       if (memberReg.data) {
         alert("회원가입에 성공했습니다.");
@@ -274,6 +311,23 @@ const formatTime = (seconds) => {
     <ModalOverlay onClick={handleOverlayClick}>
       <ModalContainer>
         <h3>회원가입</h3>
+        <ProfileWrapper>
+  <ProfileImage>
+    {profileUrl ? (
+      <img src={profileUrl} alt="Profile" />
+    ) : (
+      <i className="fi fi-ss-user"></i> // 기본 이미지 대신 아이콘 사용
+    )}
+    <FileInputLabel>
+      +
+      <FileInput
+        type="file"
+        accept="image/*"
+        onChange={handleFileInputChange}
+      />
+    </FileInputLabel>
+  </ProfileImage>
+</ProfileWrapper>
 
         <InputContainer>
           <p>닉네임</p>

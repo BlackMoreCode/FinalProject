@@ -33,6 +33,8 @@ public class Member {
     @Column(length = 50)
     private String name;
 
+    @Column
+    private String memberImg;
     @Column(length = 50)
     private String type; // 가입 방식 (예: "kakao", "naver", "direct")
     
@@ -49,7 +51,7 @@ public class Member {
     
 
     @Builder
-    public Member(String nickName, String email, String pwd, String name, String phone, LocalDateTime regDate, Authority authority) {
+    public Member(String nickName, String email, String pwd, String name, String phone, LocalDateTime regDate, Authority authority,String memberImg) {
         this.nickName = nickName;
         this.email = email;
         this.pwd = pwd;
@@ -57,6 +59,7 @@ public class Member {
         this.phone = phone;
         this.regDate = regDate;
         this.authority = authority; // Enum 타입
+        this.memberImg = memberImg;
 
     }
     public Member(String userId, String email, String type, String phone, String name, String nickName, LocalDateTime regDate) {
