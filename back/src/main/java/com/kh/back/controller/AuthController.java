@@ -57,8 +57,8 @@
 
 //		// 회원 가입
 //		@PostMapping("/signup")
-//		public ResponseEntity<MemberResDto> signup(@RequestBody MemberReqDto memberReqDto) {
-//			MemberResDto memberResDto = authService.signup(memberReqDto);
+//		public ResponseEntity<MemberPublicResDto> signup(@RequestBody MemberReqDto memberReqDto) {
+//			MemberPublicResDto memberResDto = authService.signup(memberReqDto);
 //			log.info("signup : {}", memberResDto);
 //			return ResponseEntity.ok(memberResDto);
 //		}
@@ -147,7 +147,7 @@
 //		@GetMapping("/email/{phone}")
 //		public ResponseEntity<?> findEmailByPhone(@PathVariable String phone) {
 //			try {
-//				MemberResDto memberResDto = memberService.findEmailByPhone(phone);
+//				MemberPublicResDto memberResDto = memberService.findEmailByPhone(phone);
 //				log.info("memberResDto : {}", memberResDto);
 //				return ResponseEntity.ok(memberResDto.getEmail());
 //			} catch (RuntimeException e) {

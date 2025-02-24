@@ -54,7 +54,7 @@ public class AuthService {
 	// 회원가입
 
 
-//			public MemberResDto signup(MemberReqDto requestDto) {
+//			public MemberPublicResDto signup(MemberReqDto requestDto) {
 //				// 이메일 중복 확인
 //				if (memberRepository.existsByEmail(requestDto.getEmail())) {
 //					throw new RuntimeException("이미 가입되어 있는 유저입니다.");
@@ -64,7 +64,7 @@ public class AuthService {
 //				Member member = requestDto.toEntity(passwordEncoder);
 //				Member savedMember = memberRepository.save(member);
 //
-//				return MemberResDto.of(savedMember);
+//				return MemberPublicResDto.of(savedMember);
 //			}
 
 
