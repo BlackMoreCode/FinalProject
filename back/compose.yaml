@@ -22,7 +22,7 @@ services:
       - app-network
 
   flask:
-    image: "homyeonggo/back-flask:latest"
+    image: "homyeonggo/back-flask"
     ports:
       - "5000:5000"
     depends_on:
