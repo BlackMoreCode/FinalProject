@@ -2,13 +2,16 @@
   "mappings": {
     "properties": {
       "name": {
-        "type": "text"
+        "type": "keyword"
       },
       "abv": {
-        "type": "int"
+        "type": "float"
       },
       "taste": {
-        "type": "text"
+        "type": "keyword"
+      },
+      "image" : {
+        "type": "keyword"
       }
     }
   }

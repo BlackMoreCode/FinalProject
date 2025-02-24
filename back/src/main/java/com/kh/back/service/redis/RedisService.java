@@ -42,8 +42,13 @@ public class RedisService {
 	// 좋아요 수 조회
 	public Long getLikes(String postId) {
 		String key = "likes:" + postId;
-		Long likes = (Long) redisTemplate.opsForValue().get(key);
-		return likes == null ? 0L : likes; // 키가 없으면 0 반환
+		String value = (String) redisTemplate.opsForValue().get(key);  // Redis에서 값 가져오기
+		log.warn("현재 좋아요 수 : {}", value);
+		if (value != null) {
+			return Long.parseLong(value);  // 문자열을 Long으로 변환
+		}
+		return 0L;  // 기본값
 	}
+	
 }
 

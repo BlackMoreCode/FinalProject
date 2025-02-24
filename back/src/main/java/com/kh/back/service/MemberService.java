@@ -30,11 +30,11 @@ public class MemberService {
 
 
 //	// 전체 회원 조회
-//	public List<MemberResDto> allMember() {
+//	public List<MemberPublicResDto> allMember() {
 //		try {
 //			List<Member> members = memberRepository.findAll();
 //			// 프론트 엔드에 정보를 전달하기 위해 DTO List 를 생성
-//			List<MemberResDto> memberResDtoList = new ArrayList<>();
+//			List<MemberPublicResDto> memberResDtoList = new ArrayList<>();
 //			for (Member member : members) {
 //				memberResDtoList.add(convertEntityToDto(member));
 //			}
@@ -46,13 +46,13 @@ public class MemberService {
 //	}
 
 //	// 특정 회원 조회
-//	public MemberResDto findMemberByEmail(String email) {
+//	public MemberPublicResDto findMemberByEmail(String email) {
 //		Member member = memberRepository.findByEmail(email)
 //				.orElseThrow(() -> new RuntimeException("해당 회원이 존재하지 않습니다."));
 //		return convertEntityToDto(member);
 //	}
 
-//	public MemberResDto findEmailByPhone(String phone) {
+//	public MemberPublicResDto findEmailByPhone(String phone) {
 //		Member member = memberRepository.findEmailByPhone(phone)
 //				.orElseThrow(() -> new RuntimeException("해당 회원이 존재하지 않습니다."));
 //		return convertEntityToDto(member);
@@ -186,8 +186,8 @@ public class MemberService {
 
 
 //	// Member Entity -> 회원 정보 DTO
-//	private MemberResDto convertEntityToDto(Member member) {
-//		MemberResDto memberResDto = new MemberResDto();
+//	private MemberPublicResDto convertEntityToDto(Member member) {
+//		MemberPublicResDto memberResDto = new MemberPublicResDto();
 //		memberResDto.setEmail(member.getEmail());
 //		memberResDto.setName(member.getName());
 ////		memberResDto.setRegDate(member.getRegDate());
