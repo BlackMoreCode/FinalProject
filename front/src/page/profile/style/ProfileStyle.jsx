@@ -5,6 +5,12 @@ export const ProfileHeaderContainer = styled.section`
   align-items: flex-start;
   gap: 2rem;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
 `;
 
 export const ProfileImageWrapper = styled.div`
@@ -12,6 +18,11 @@ export const ProfileImageWrapper = styled.div`
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    width: 100px;
+    height: 100px;
+  }
 `;
 
 export const ProfileImage = styled.img`
@@ -34,6 +45,9 @@ export const ProfileImagePlaceholder = styled.div`
 
 export const ProfileInfo = styled.div`
   flex: 1;
+  @media (max-width: 768px) {
+    text-align: left;
+  }
 `;
 
 export const Nickname = styled.h2`
@@ -51,5 +65,9 @@ export const UserStats = styled.div`
 
   span {
     margin-right: 1rem;
+  }
+  @media (max-width: 768px) {
+    display: block; /* 세로로 나열되게 하기 */
+    text-align: left; /* 텍스트 중앙 정렬 */
   }
 `;
