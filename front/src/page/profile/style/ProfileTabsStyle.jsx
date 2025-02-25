@@ -11,12 +11,18 @@ export const TabMenu = styled.nav`
 
 export const TabList = styled.ul`
   display: flex;
-  justify-content: center;
+  justify-content: space-evenly;
   list-style: none;
   gap: 1rem;
   padding: 0;
   margin-bottom: 2rem;
   margin-top: 0px;
+
+  @media (max-width: 768px) {
+    flex-wrap: nowrap; /* 세로로 쌓이지 않게 설정 */
+    width: 100%; /* 탭 리스트 너비를 100%로 설정 */
+    overflow-x: auto; /* 필요시 가로 스크롤 가능하도록 설정 */
+  }
 `;
 
 export const TabItem = styled.li`
@@ -32,6 +38,11 @@ export const TabItem = styled.li`
     left: 0;
     right: 0;
     border-top: 2px solid #000;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.8rem; /* 모바일에서 텍스트 크기 조정 */
+    padding: 0.2rem 0.3rem; /* 모바일에서 여백 줄이기 */
   }
 `;
 
