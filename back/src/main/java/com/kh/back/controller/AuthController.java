@@ -1,24 +1,24 @@
 	package com.kh.back.controller;
 
 	import com.kh.back.dto.auth.AccessTokenDto;
+	import com.kh.back.dto.auth.LoginDto;
+	import com.kh.back.dto.auth.SignupDto;
 	import com.kh.back.dto.auth.TokenDto;
+	import com.kh.back.dto.auth.requset.EmailTokenVerificationDto;
+	import com.kh.back.dto.auth.requset.SmsTokenVerificationDto;
 	import com.kh.back.entity.Member;
 	import com.kh.back.jwt.TokenProvider;
-	import com.kh.back.security.SecurityUtil;
 	import com.kh.back.service.MemberService;
 	import com.kh.back.service.auth.AuthService;
 	import com.kh.back.service.auth.EmailService;
 	import com.kh.back.service.auth.SmsService;
 	import lombok.RequiredArgsConstructor;
 	import lombok.extern.slf4j.Slf4j;
-	import org.springframework.http.HttpStatus;
 	import org.springframework.http.ResponseEntity;
 	import org.springframework.security.crypto.password.PasswordEncoder;
 	import org.springframework.web.bind.annotation.*;
-	
-	import java.util.List;
-	
-	
+
+
 	@Slf4j
 	@CrossOrigin(origins = "http://localhost:3000")
 	@RestController
@@ -55,56 +55,28 @@
 			return ResponseEntity.ok(existPhone);
 		}
 
-//		// 회원 가입
-//		@PostMapping("/signup")
-//		public ResponseEntity<MemberPublicResDto> signup(@RequestBody MemberReqDto memberReqDto) {
-//			MemberPublicResDto memberResDto = authService.signup(memberReqDto);
-//			log.info("signup : {}", memberResDto);
-//			return ResponseEntity.ok(memberResDto);
-//		}
+		// 회원 가입
+		@PostMapping("/signup")
+		public ResponseEntity<Boolean> signup(@RequestBody SignupDto signupDto) {
+			boolean isSuccess = authService.signup(signupDto);
+			return ResponseEntity.ok(isSuccess);
+		}
 
 		// 이메일 전송 - 비밀번호 찾기
 		@PostMapping("/sendPw")
 		public ResponseEntity<Boolean> sendPw(@RequestBody Member member) {
 			log.info("메일:{}", member.getEmail());
-
-			// 이메일로 비밀번호 재설정 토큰 전송
 			boolean result = emailService.sendPasswordResetToken(member.getEmail());
-
 			return ResponseEntity.ok(result);
 		}
 
 		// 이메일 인증 토큰 검증
 		@PostMapping("/verify-email-token")
-		public ResponseEntity<Boolean> verifyEmailToken(@RequestBody TokenVerificationRequest request) {
+		public ResponseEntity<Boolean> verifyEmailToken(@RequestBody EmailTokenVerificationDto request) {
 			boolean isValid = emailService.verifyEmailToken(request.getEmail(), request.getInputToken());
 			return ResponseEntity.ok(isValid);
 		}
 
-
-
-		// 이메일과 입력된 토큰을 받을 DTO 클래스
-		public static class TokenVerificationRequest {
-			private String email;
-			private String inputToken;
-
-			// Getters and Setters
-			public String getEmail() {
-				return email;
-			}
-
-			public void setEmail(String email) {
-				this.email = email;
-			}
-
-			public String getInputToken() {
-				return inputToken;
-			}
-
-			public void setInputToken(String inputToken) {
-				this.inputToken = inputToken;
-			}
-		}
 		@PostMapping("/sendSms")
 		public ResponseEntity<String> sendSms(@RequestBody Member member) {
 			String result = smsService.sendVerificationCode(member.getPhone());
@@ -116,38 +88,16 @@
 
 		// SMS 인증 토큰 검증
 		@PostMapping("/verify-sms-token")
-		public ResponseEntity<Boolean> verifySmsCode(@RequestBody smsTokenVerificationRequest request) {
+		public ResponseEntity<Boolean> verifySmsCode(@RequestBody SmsTokenVerificationDto request) {
 			boolean isValid = smsService.verifySmsCode(request.getPhone(), request.getInputToken());
 			return ResponseEntity.ok(isValid);
 		}
 
-		// 전화번호와 입력된 인증번호를 받을 DTO 클래스
-		public static class smsTokenVerificationRequest {
-			private String phone;
-			private String inputToken;
-
-			// Getters and Setters
-			public String getPhone() {
-				return phone;
-			}
-
-			public void setPhone(String phone) {
-				this.phone = phone;
-			}
-
-			public String getInputToken() {
-				return inputToken;
-			}
-
-			public void setInputToken(String inputToken) {
-				this.inputToken = inputToken;
-			}
-		}
 
 //		@GetMapping("/email/{phone}")
 //		public ResponseEntity<?> findEmailByPhone(@PathVariable String phone) {
 //			try {
-//				MemberPublicResDto memberResDto = memberService.findEmailByPhone(phone);
+//				MemberResDto memberResDto = memberService.findEmailByPhone(phone);
 //				log.info("memberResDto : {}", memberResDto);
 //				return ResponseEntity.ok(memberResDto.getEmail());
 //			} catch (RuntimeException e) {
@@ -164,13 +114,13 @@
 			return ResponseEntity.ok(authService.refreshAccessToken(refreshToken));
 		}
 
-//		// 로그인
-//		@PostMapping("/login")
-//		public ResponseEntity<TokenDto> login(@RequestBody MemberReqDto memberReqDto) {
-//			TokenDto tokenDto = authService.login(memberReqDto);
-//			log.info("tokenDto : {}", tokenDto);
-//			return ResponseEntity.ok(tokenDto);
-//		}
+		// 로그인
+		@PostMapping("/login")
+		public ResponseEntity<TokenDto> login(@RequestBody LoginDto loginDto) {
+			TokenDto tokenDto = authService.login(loginDto);
+			log.info("tokenDto : {}", tokenDto);
+			return ResponseEntity.ok(tokenDto);
+		}
 		
 //		@PostMapping("/change-password")
 //		public ResponseEntity<Boolean> changePassword(@RequestBody MemberReqDto memberReqDto) {

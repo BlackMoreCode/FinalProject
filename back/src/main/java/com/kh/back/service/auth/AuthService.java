@@ -1,7 +1,10 @@
 package com.kh.back.service.auth;
 
 
+import com.kh.back.constant.Authority;
 import com.kh.back.dto.auth.AccessTokenDto;
+import com.kh.back.dto.auth.LoginDto;
+import com.kh.back.dto.auth.SignupDto;
 import com.kh.back.dto.auth.TokenDto;
 import com.kh.back.entity.Member;
 import com.kh.back.entity.auth.RefreshToken;
@@ -54,56 +57,45 @@ public class AuthService {
 	// 회원가입
 
 
-//			public MemberPublicResDto signup(MemberReqDto requestDto) {
-//				// 이메일 중복 확인
-//				if (memberRepository.existsByEmail(requestDto.getEmail())) {
-//					throw new RuntimeException("이미 가입되어 있는 유저입니다.");
-//				}
-//
-//				// 엔티티 변환 및 저장
-//				Member member = requestDto.toEntity(passwordEncoder);
-//				Member savedMember = memberRepository.save(member);
-//
-//				return MemberPublicResDto.of(savedMember);
-//			}
+			public boolean signup(SignupDto signupDto) {
+
+				if (memberRepository.existsByEmail(signupDto.getEmail())) {
+					throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+				}
+
+				// 엔티티 변환 및 저장
+				Member member = signupDto.toEntity(passwordEncoder);
+				memberRepository.save(member);
+				return true;
+			}
 
 
 	// member 로그인
 
-//			public TokenDto login(MemberReqDto memberReqDto) {
-//				try {
-//					Member member = memberRepository.findByEmail(memberReqDto.getEmail())
-//							.orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
-//
-//					// 회원의 membership 상태 확인
-//					if (member.getMembership() == Membership.SECESSION) {
-//						// 탈퇴된 회원일 경우 예외 처리
-//						throw new RuntimeException("탈퇴한 회원입니다.");
-//
-//					}
-//
-//					UsernamePasswordAuthenticationToken authenticationToken = memberReqDto.toAuthentication();
-//					log.info("authenticationToken : {}", authenticationToken);
-//
-//					Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
-//					log.info("authentication : {}", authentication);
-//
-//
-//					TokenDto token = tokenProvider.generateTokenDto(authentication);
-//
-//					//refreshToken DB에 저장
-//
-//
-//					refreshTokenSave(member, token);
-//
-//					return token;
-//
-//				} catch (Exception e) {
-//					log.error("로그인 중 에러 발생 : ", e);
-//					throw new RuntimeException("로그인 중 에러 발생", e);
-//				}
-//
-//			}
+			public TokenDto login(LoginDto loginDto) {
+				try {
+					Member member = memberRepository.findByEmail(loginDto.getEmail())
+							.orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+
+					// 회원의 membership 상태 확인
+					if (member.getAuthority() == Authority.REST_USER) {
+						// 탈퇴된 회원일 경우 예외 처리
+						throw new RuntimeException("탈퇴한 회원입니다.");
+					}
+					UsernamePasswordAuthenticationToken authenticationToken = loginDto.toAuthentication();
+					log.info("authenticationToken : {}", authenticationToken);
+
+					Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
+					log.info("authentication : {}", authentication);
+
+					TokenDto token = tokenProvider.generateTokenDto(authentication);
+					refreshTokenSave(member, token);
+					return token;
+				} catch (Exception e) {
+					log.error("로그인 중 에러 발생 : ", e);
+					throw new RuntimeException("로그인 중 에러 발생", e);
+				}
+			}
 
 	public AccessTokenDto refreshAccessToken(String refreshToken) {
 		log.info("일반refreshExist : {}", refreshTokenRepository.existsByRefreshToken(refreshToken));
