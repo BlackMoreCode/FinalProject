@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import Header from "./component/Header";
+import Header from "./component/header/Header";
+import MainContainer from "./component/MainContainer";
 import ProfilePage from "./page/profile/ProfilePage";
 
 function App() {
@@ -8,11 +9,11 @@ function App() {
     <div>
       <Router>
         <Header />
-        <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "16px" }}>
+        <MainContainer>
           <Routes>
             <Route path="/" element={<ProfilePage />} />
           </Routes>
-        </main>
+        </MainContainer>
       </Router>
     </div>
   );

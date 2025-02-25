@@ -6,6 +6,7 @@ import {
   ProfilePageHeader,
   ProfileButtonContainer,
   ProfileButton,
+  EditIcon,
 } from "./style/ProfilePageStyle";
 
 const ProfilePage = () => {
@@ -31,7 +32,10 @@ const ProfilePage = () => {
       <ProfilePageHeader>
         <Profile user={user} />
         <ProfileButtonContainer>
-          <ProfileButton>프로필 편집</ProfileButton>
+          <ProfileButton>
+            <EditIcon />
+            <span>프로필 편집</span>
+          </ProfileButton>
         </ProfileButtonContainer>
       </ProfilePageHeader>
       <ProfileTabs />

@@ -30,6 +30,7 @@ const Profile = ({ user }) => {
           <span>
             게시글: <strong>{user.postsCount}</strong>
           </span>
+          <br />
           <span>
             받은 추천: <strong>{user.likesCount}</strong>
           </span>
