@@ -23,15 +23,19 @@ public class CocktailController {
 
     /**
      * 칵테일 검색
-     * ex) GET /api/cocktails/search?query=모히또
+     * ex) GET /api/cocktails/search?q=모히또&category=롱드링크&page=1&size=10
+     *
+     * 변경 이유:
+     * - 클라이언트로부터 검색어를 "q" 파라미터로 받아들임으로써, 서비스와 ElasticService와 일관되게 사용
      */
     @GetMapping("/search")
     public ResponseEntity<List<CocktailListResDto>> searchCocktails(
-            @RequestParam String query,
+            @RequestParam(name = "q", required = false, defaultValue = "") String q,
+            @RequestParam(required = false, defaultValue = "") String category,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        List<CocktailListResDto> result = cocktailService.searchCocktails(query, page, size);
+        List<CocktailListResDto> result = cocktailService.searchCocktails(q, category, page, size);
         return ResponseEntity.ok(result);
     }
 

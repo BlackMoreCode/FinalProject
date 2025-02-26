@@ -6,7 +6,7 @@ export const Navbar = styled.nav`
   flex-direction: column;
   width: 100%;
   border-bottom: 1px solid #dfd3c3;
-  background-color: #fff;
+  /* background-color: #fff; */
   position: relative;
   z-index: 10;
   overflow-x: hidden;

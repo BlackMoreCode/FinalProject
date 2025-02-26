@@ -24,6 +24,7 @@ export default function Header() {
   return (
     <Navbar>
       <NavContainer>
+        {/* 상단 섹션: 로고, 로그인 버튼, 햄버거 아이콘 */}
         <TopSection>
           <h1>Logo</h1>
           <LoginButton>Login</LoginButton>
@@ -31,6 +32,8 @@ export default function Header() {
             <HiMenu />
           </HamburgerIcon>
         </TopSection>
+
+        {/* 하단 섹션: PC 뷰용 메뉴 */}
         <BottomSection>
           <NavLinks>
             <NavLink to="/" end>
@@ -38,9 +41,12 @@ export default function Header() {
             </NavLink>
             <NavLink to="/about">About</NavLink>
             <NavLink to="/contact">Contact</NavLink>
+            {/* 여기서 Cocktails 메뉴 추가 */}
+            <NavLink to="/cocktails">Cocktails</NavLink>
           </NavLinks>
         </BottomSection>
 
+        {/* 모바일 메뉴 */}
         <MobileMenu isMenuOpen={isMenuOpen}>
           <MenuItem>
             <MobileLoginButton>Login</MobileLoginButton>
@@ -55,6 +61,10 @@ export default function Header() {
           </MenuItem>
           <MenuItem>
             <NavLink to="/contact">Contact</NavLink>
+          </MenuItem>
+          {/* 모바일 메뉴에도 Cocktails 추가 */}
+          <MenuItem>
+            <NavLink to="/cocktails">Cocktails</NavLink>
           </MenuItem>
         </MobileMenu>
       </NavContainer>
