@@ -11,5 +11,6 @@ public class CocktailListResDto implements SearchListResDto {
 	private String id;
 	private String name;
 	private Long like;
+	private Long report;
 	private String category;
 }
