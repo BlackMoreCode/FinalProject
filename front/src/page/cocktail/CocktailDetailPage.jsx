@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchCocktailDetail } from "../../api/CocktailApi";
 
+import placeholder2 from "./style/placeholder2.png";
+
 /**
  * 칵테일 상세 페이지
  * <p>URL 파라미터(:id)를 사용하여 백엔드로부터 상세 정보를 가져오고, 화면에 표시</p>
@@ -14,10 +16,12 @@ const CocktailDetailPage = () => {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const data = await fetchCocktailDetail(id); // /test/detail/{id}?type=cocktail 호출
+        const data = await fetchCocktailDetail(id);
+        console.log("Detail data received:", data);
         setCocktail(data);
       } catch (error) {
         console.error("칵테일 상세 조회 실패:", error);
+        // Optionally set an error state to display a message on the UI
       }
     };
     fetchDetail();
@@ -42,7 +46,7 @@ const CocktailDetailPage = () => {
       </button>
       <h1 className="text-3xl font-bold mb-4">{cocktail.name}</h1>
       <img
-        src={cocktail.image}
+        src={cocktail.image || placeholder2}
         alt={cocktail.name}
         className="w-full h-64 object-cover rounded-lg mb-4"
       />

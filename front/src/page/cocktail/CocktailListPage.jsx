@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchCocktailList } from "../../api/CocktailApi";
 import placeholder from "./style/placeholder.jpg";
+import placeholder2 from "./style/placeholder2.png";
 
 /**
  * 칵테일 목록 페이지
@@ -200,7 +201,7 @@ const CocktailListPage = () => {
               onClick={() => handleSelectCocktail(cocktail.id)}
             >
               <img
-                src={cocktail.image || placeholder}
+                src={cocktail.image || placeholder2}
                 alt={cocktail.name}
                 className="w-full h-48 object-cover"
               />
