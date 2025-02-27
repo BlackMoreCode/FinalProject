@@ -3,8 +3,11 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Header from "./component/header/Header";
 import MainContainer from "./component/MainContainer";
 import ProfilePage from "./page/profile/ProfilePage";
-import CocktailListPage from "./page/cocktail/CocktailListPage";
-import CocktailDetailPage from "./page/cocktail/CocktailDetailPage";
+import { CheckoutPage } from "./component/payments/Checkout";
+import { SuccessPage } from "./component/payments/Succeess";
+import { FailPage } from "./component/payments/Fail";
+// import CocktailListPage from "./page/cocktail/CocktailListPage";
+// import CocktailDetailPage from "./page/cocktail/CocktailDetailPage";
 
 function App() {
   return (
@@ -14,12 +17,18 @@ function App() {
         <Header />
         <MainContainer>
           <Routes>
-            {/* 기존 ProfilePage 라우트 */}
             <Route path="/" element={<ProfilePage />} />
-            {/* 칵테일 리스트 페이지 */}
+            {/* 결제 페이지 */}
+            <Route path="/sandbox" element={<CheckoutPage />} />{" "}
+            {/* /sandbox 경로에 CheckoutPage 연결 */}
+            <Route path="/sandbox/success" element={<SuccessPage />} />{" "}
+            {/* /sandbox/success 경로에 SuccessPage 연결 */}
+            <Route path="/sandbox/fail" element={<FailPage />} />{" "}
+            {/* /sandbox/fail 경로에 FailPage 연결 */}
+            {/* 칵테일 리스트 페이지
             <Route path="/cocktails" element={<CocktailListPage />} />
-            {/* 칵테일 상세 페이지: :id 파라미터 사용 */}
-            <Route path="/cocktails/:id" element={<CocktailDetailPage />} />
+            칵테일 상세 페이지: :id 파라미터 사용
+            <Route path="/cocktails/:id" element={<CocktailDetailPage />} /> */}
           </Routes>
         </MainContainer>
       </Router>

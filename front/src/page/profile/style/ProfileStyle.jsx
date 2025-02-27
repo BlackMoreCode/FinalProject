@@ -71,3 +71,12 @@ export const UserStats = styled.div`
     text-align: left; /* 텍스트 중앙 정렬 */
   }
 `;
+
+export const ProfileCard = styled.div`
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: 0.3s ease;
+  width: 100%;
+  margin: 1rem;
+`;

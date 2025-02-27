@@ -14,6 +14,12 @@ import {
 } from "./style/HeaderStyle";
 import { HiMenu } from "react-icons/hi";
 
+const menuList = [
+  { path: "/", name: "Home" },
+  { path: "/about", name: "About" },
+  { path: "/contact", name: "Contact" },
+];
+
 export default function Header() {
   const [isMenuOpen, setMenuOpen] = useState(false);
 
@@ -36,11 +42,11 @@ export default function Header() {
         {/* 하단 섹션: PC 뷰용 메뉴 */}
         <BottomSection>
           <NavLinks>
-            <NavLink to="/" end>
-              Home
-            </NavLink>
-            <NavLink to="/about">About</NavLink>
-            <NavLink to="/contact">Contact</NavLink>
+            {menuList.map(({ path, name }) => (
+              <NavLink key={path} to={path} end>
+                {name}
+              </NavLink>
+            ))}
             {/* 여기서 Cocktails 메뉴 추가 */}
             <NavLink to="/cocktails">Cocktails</NavLink>
           </NavLinks>
@@ -51,17 +57,13 @@ export default function Header() {
           <MenuItem>
             <MobileLoginButton>Login</MobileLoginButton>
           </MenuItem>
-          <MenuItem>
-            <NavLink to="/" end>
-              Home
-            </NavLink>
-          </MenuItem>
-          <MenuItem>
-            <NavLink to="/about">About</NavLink>
-          </MenuItem>
-          <MenuItem>
-            <NavLink to="/contact">Contact</NavLink>
-          </MenuItem>
+          {menuList.map(({ path, name }) => (
+            <MenuItem key={path}>
+              <NavLink to={path} end>
+                {name}
+              </NavLink>
+            </MenuItem>
+          ))}
           {/* 모바일 메뉴에도 Cocktails 추가 */}
           <MenuItem>
             <NavLink to="/cocktails">Cocktails</NavLink>

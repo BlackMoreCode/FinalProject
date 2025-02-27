@@ -9,7 +9,7 @@ export const ProfilePageContainer = styled.div`
 
 export const ProfilePageHeader = styled.div`
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   margin-bottom: 2rem;
 `;
 
@@ -54,4 +54,33 @@ export const ProfileButton = styled.button`
 
 export const EditIcon = styled(FaEdit)`
   font-size: 1.2rem;
+`;
+
+export const UserStats = styled.div`
+  margin-bottom: 0;
+  margin-left: 2rem;
+  display: flex;
+  flex-direction: column;
+
+  span {
+    margin-right: 1rem;
+  }
+  @media (max-width: 768px) {
+    display: block; /* 세로로 나열되게 하기 */
+    text-align: left; /* 텍스트 중앙 정렬 */
+  }
+`;
+
+export const HeaderUp = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+export const HeaderDown = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
 `;

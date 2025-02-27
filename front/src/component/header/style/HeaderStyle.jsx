@@ -180,8 +180,9 @@ export const MobileMenu = styled.div`
   z-index: 1000;
   padding: 2rem 0;
   padding-top: 0;
+  box-shadow: -2px 4px 8px rgba(0, 0, 0, 0.2);
   gap: 2rem;
-  transform: translateX(100%); /* 처음엔 화면 밖 */
+  transform: translateX(120%); /* 처음엔 화면 밖 */
   transition: transform 0.3s ease-in-out; /* 애니메이션 */
 
   ${({ isMenuOpen }) => isMenuOpen && `transform: translateX(0);`}
