@@ -98,26 +98,10 @@ def upload_json():
 # 재료별 검색 (레시피만 검색되도록 수정)
 @app.route("/search", methods=["GET"])
 def search():
-    """
-    검색어(q)와 카테고리(category)를 함께 처리하도록 수정한 예시
-    - q: 검색어 (없으면 빈 문자열)
-    - category: 카테고리 필터 (없으면 빈 문자열)
-    - type_filter: "cocktail", "food" 등 인덱스 식별
-    - page, size: 페이징 처리
-
-    변경 이유:
-      - 기존에는 검색어가 없으면 오류를 반환했으나,
-        이제는 빈 검색어일 경우에도 카테고리 필터만 적용하거나, 전체 검색(match_all)을 수행하도록 함.
-      - (1) q와 category 모두 없으면 전체 문서(match_all) 반환
-      - (2) q만 있으면 multi_match 쿼리 사용
-      - (3) q가 없고 category만 있는 경우: term 쿼리로 카테고리 필터 (정확한 일치 필요)
-      - (4) 둘 다 있으면 bool 쿼리로 두 조건을 AND 처리
-    """
     try:
-        # 'q' is used as the parameter name for the search term
         q = request.args.get("q", "")
         type_filter = request.args.get("type", "")
-        category = request.args.get("category", "")  # 추가: 카테고리 파라미터
+        category = request.args.get("category", "")
         page = request.args.get("page", 1, type=int)
         size = request.args.get("size", 20, type=int)
 
@@ -125,46 +109,46 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
-        body = {
-            "from": (page - 1) * size,
-            "size": size,
-            "_source": ["name", "category", "like", "abv"],
-            "query": {}
-        }
+        query = {"match_all": {}}  # 기본적으로 모든 문서를 반환
 
-        if not q and not category:
-            body["query"] = {"match_all": {}}
-        elif q and not category:
-            body["query"] = {
-                "multi_match": {
-                    "query": q,
-                    "fields": ["name", "ingredients", "category"]
-                }
-            }
-        elif not q and category:
-            body["query"] = {
-                "term": {
-                    "category.keyword": category
-                }
-            }
-        else:
-            body["query"] = {
+        if q and category:
+            query = {
                 "bool": {
                     "must": [
                         {
                             "multi_match": {
                                 "query": q,
-                                "fields": ["name", "ingredients", "category"]
+                                "fields": ["name", "ingredients.ingredient", "category"]
                             }
                         },
                         {
                             "term": {
-                                "category.keyword": category
+                                "category": {"value": category}
                             }
                         }
                     ]
                 }
             }
+        elif q:
+            query = {
+                "multi_match": {
+                    "query": q,
+                    "fields": ["name", "ingredients", "category"]
+                }
+            }
+        elif category:
+            query = {
+                "term": {
+                    "category": {"value": category}
+                }
+            }
+
+        body = {
+            "from": (page - 1) * size,
+            "size": size,
+            "_source": ["name", "category", "like", "abv"],
+            "query": query
+        }
 
         res = es.search(index=index_name, body=body)
 
@@ -176,8 +160,6 @@ def search():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
 
 @app.route("/search/ingredient", methods=["GET"])
 def search_ingredient():
@@ -242,8 +224,8 @@ def search_alcohol():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-@app.route("/detail/<id>", methods=["GET"])
-def detail(id):
+@app.route("/detail/<doc_id>", methods=["GET"])
+def detail(doc_id):
     type_filter = request.args.get("type", "")
     index_name, _ = get_index_and_mapping(type_filter)
     if not index_name:
