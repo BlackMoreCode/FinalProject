@@ -25,16 +25,7 @@ const Profile = ({ user }) => {
       </ProfileImageWrapper>
       <ProfileInfo>
         <Nickname>{user.name}</Nickname>
-        <UserStats>
-          <Introduce>{user.introduce}</Introduce>
-          <span>
-            게시글: <strong>{user.postsCount}</strong>
-          </span>
-          <br />
-          <span>
-            받은 추천: <strong>{user.likesCount}</strong>
-          </span>
-        </UserStats>
+        <Introduce>{user.introduce}</Introduce>
       </ProfileInfo>
     </ProfileHeaderContainer>
   );

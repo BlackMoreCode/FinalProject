@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Profile from "./Profile";
 import ProfileTabs from "./ProfileTaps";
 import {
@@ -7,9 +8,13 @@ import {
   ProfileButtonContainer,
   ProfileButton,
   EditIcon,
+  UserStats,
+  HeaderUp,
+  HeaderDown,
 } from "./style/ProfilePageStyle";
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   // 실제로는 백엔드에서 fetch하거나 props로 받을 수 있게
   const [user, setUser] = useState({
     name: "홍길동",
@@ -27,20 +32,38 @@ const ProfilePage = () => {
     //   .catch((err) => console.error(err));
   }, []);
 
+  const handlePaymentClick = () => {
+    navigate("/sandbox"); // 결제 페이지로 이동
+  };
+
   return (
     <ProfilePageContainer>
       <ProfilePageHeader>
-        <Profile user={user} />
-        <ProfileButtonContainer>
-          <ProfileButton>
-            <EditIcon />
-            <span>프로필 편집</span>
-          </ProfileButton>
-        </ProfileButtonContainer>
+        <HeaderUp>
+          <Profile user={user} />
+          <ProfileButtonContainer>
+            <ProfileButton>
+              <EditIcon />
+              <span>프로필 편집</span>
+            </ProfileButton>
+            <ProfileButton onClick={handlePaymentClick}>
+              <span>결제하기</span>
+            </ProfileButton>
+          </ProfileButtonContainer>
+        </HeaderUp>
+        <HeaderDown>
+          <UserStats>
+            <span>
+              게시글: <strong>{user.postsCount}</strong>
+            </span>
+            <span>
+              받은 추천: <strong>{user.likesCount}</strong>
+            </span>
+          </UserStats>
+        </HeaderDown>
       </ProfilePageHeader>
       <ProfileTabs />
     </ProfilePageContainer>
   );
 };
-
 export default ProfilePage;
