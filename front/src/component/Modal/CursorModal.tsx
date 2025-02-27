@@ -1,21 +1,39 @@
 import styled from "styled-components";
+import {useDispatch, useSelector} from "react-redux";
+import {RootState, AppDispatch} from "../../context/Store";
+import {closeCursorModal} from "../../context/redux/ModalReducer";
+import React from 'react';  // React를 명시적으로 import
+
+// 나머지 코드...
 
 
-const CursorModal = ({ open, message, options, onOption, onCancel, position, id }) => {
-	if (!open || !position) return null;
-	
+
+const CursorModal = () => {
+	const cursor = useSelector((state : RootState) => state.modal.cursorModal)
+	const dispatcher = useDispatch<AppDispatch>()
+
+	if (!cursor.open || !cursor.position) return null;
+	const onCancel = () => {
+		cursor.onCancel()
+		dispatcher(closeCursorModal())
+	}
+	const onOption = (value:any) => {
+		cursor.onOption(value, cursor.id);
+		dispatcher(closeCursorModal())
+	}
 	return (
 		<ModalOverlay onClick={onCancel}>
 			<ModalContainer
 				style={{
-					top: `${position.y + 20}px`,
-					left: `${position.x + 20}px`,
+					top: `${cursor.position.y}px`,
+					left: `${cursor.position.x + 10}px`,
+					transform: "translateY(100%)"
 				}}
 			>
 				<ModalContent>
-					{message && <MessageText>{message}</MessageText>}
-					{options.map((option, index) => (
-						<ModalButton key={index} onClick={() => onOption(option.value, id)}>
+					{cursor.message && <MessageText>{cursor.message}</MessageText>}
+					{cursor.options.map((option, index) => (
+						<ModalButton key={index} onClick={() => onOption(option.value)}>
 							{option.label}
 						</ModalButton>
 					))}

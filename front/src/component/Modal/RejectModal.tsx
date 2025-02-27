@@ -1,14 +1,24 @@
 import React from "react";
 import { Dialog, DialogContent, DialogActions, Typography, Button } from "@mui/material";
 import styled from "styled-components";
+import {useDispatch, useSelector} from "react-redux";
+import {AppDispatch, RootState} from "../../context/Store";
+import {closeRejectModal} from "../../context/redux/ModalReducer";
+
 
 const
-	RejectModal = ({ open, message, onClose }) => {
+RejectModal = () => {
+	const reject = useSelector((state : RootState) => state.modal.rejectModal)
+	const dispatcher = useDispatch<AppDispatch>()
+	const onCancel = () => {
+		reject.onCancel()
+		dispatcher(closeRejectModal())
+	}
 	return (
-		<Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+		<Dialog open={reject.open} onClose={onCancel} maxWidth="xs" fullWidth>
 			<CustomDialogContent>
 				<Typography variant="h6" gutterBottom>
-					{message && message.split("\n").map((line, index) => (
+					{reject.message && reject.message.split("\n").map((line, index) => (
 						<span key={index}>
 							{line}
 							<br />
@@ -17,7 +27,7 @@ const
 				</Typography>
 			</CustomDialogContent>
 			<DialogActions>
-				<StyledButton variant="contained" color="error" onClick={onClose}>
+				<StyledButton variant="contained" color="error" onClick={onCancel}>
 					닫기
 				</StyledButton>
 			</DialogActions>
