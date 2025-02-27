@@ -26,13 +26,13 @@ function App() {
             {/* /sandbox/success 경로에 SuccessPage 연결 */}
             <Route path="/sandbox/fail" element={<FailPage />} />{" "}
             {/* /sandbox/fail 경로에 FailPage 연결 */}
-            {/* 레시피 페이지 */}
-            <Route path="/cocktails" element={<CocktailListPage />} />
-            {/* 칵테일 리스트 페이지 */}
-            <Route path="/cocktails/:id" element={<CocktailDetailPage />} />
-            {/* 칵테일 상세 페이지: :id 파라미터 사용 */}
-            <Route path="foodrecipes" element={<FoodListPage />} />
-            {/* 음식 리스트 페이지 */}
+            {/* 레시피 페이지 (라우트 경로 수정됨) */}
+            <Route path="/cocktail-recipe" element={<CocktailListPage />} />
+            <Route
+              path="/cocktail-recipe/:id"
+              element={<CocktailDetailPage />}
+            />
+            <Route path="/food-recipe" element={<FoodListPage />} />
           </Routes>
         </MainContainer>
       </Router>

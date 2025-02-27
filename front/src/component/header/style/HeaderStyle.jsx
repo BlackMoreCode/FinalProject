@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { NavLink as RouterNavLink } from "react-router-dom";
 
+// 네비게이션 전체 래퍼
 export const Navbar = styled.nav`
   display: flex;
   flex-direction: column;
@@ -9,8 +10,9 @@ export const Navbar = styled.nav`
   /* background-color: #fff; */
   position: relative;
   z-index: 10;
-  overflow-x: hidden;
-  overflow-y: visible;
+  /* overflow-x: hidden;
+  overflow-y: visible; */
+  overflow: visible; // 부모 요소가 드롭다운을 잘라내지 않도록 overflow를 visible로 설정
 
   @media (max-width: 768px) {
     background-color: #d1b6a3;
@@ -20,6 +22,7 @@ export const Navbar = styled.nav`
   }
 `;
 
+// 네비게이션 내부 컨테이너
 export const NavContainer = styled.div`
   max-width: 1200px;
   width: 100%;
@@ -34,6 +37,7 @@ export const NavContainer = styled.div`
   }
 `;
 
+// 상단 섹션 (로고, 로그인, 햄버거)
 export const TopSection = styled.div`
   display: flex;
   justify-content: space-between;
@@ -44,6 +48,7 @@ export const TopSection = styled.div`
   position: relative;
 `;
 
+// 하단 섹션 (PC 뷰용 메뉴)
 export const BottomSection = styled.div`
   display: flex;
   justify-content: flex-start;
@@ -55,6 +60,7 @@ export const BottomSection = styled.div`
   }
 `;
 
+// PC 뷰용 메뉴 리스트 (ul)
 export const NavLinks = styled.ul`
   list-style: none;
   display: flex;
@@ -70,6 +76,7 @@ export const NavLinks = styled.ul`
   }
 `;
 
+// 공통 링크 스타일 (NavLink)
 export const NavLink = styled(RouterNavLink)`
   text-decoration: none;
   color: #9f8473;
@@ -135,6 +142,7 @@ export const NavLink = styled(RouterNavLink)`
   }
 `;
 
+// 로그인 버튼
 export const LoginButton = styled.button`
   background: none;
   border: 1px solid #6a4e23;
@@ -151,6 +159,7 @@ export const LoginButton = styled.button`
   }
 `;
 
+// 햄버거 아이콘
 export const HamburgerIcon = styled.div`
   display: none;
   font-size: 30px;
@@ -166,6 +175,7 @@ export const HamburgerIcon = styled.div`
   }
 `;
 
+// 모바일 메뉴 (햄버거 클릭 시 표시)
 export const MobileMenu = styled.div`
   display: flex;
   flex-direction: column;
@@ -188,6 +198,7 @@ export const MobileMenu = styled.div`
   ${({ isMenuOpen }) => isMenuOpen && `transform: translateX(0);`}
 `;
 
+// 모바일 메뉴용 로그인 버튼
 export const MobileLoginButton = styled.button`
   background: none;
   border: 1px solid #6a4e23;
@@ -205,11 +216,70 @@ export const MobileLoginButton = styled.button`
   }
 `;
 
+// 모바일 메뉴 아이템
 export const MenuItem = styled.div`
   width: 100%;
   text-align: center;
 
   ${NavLink} {
     color: #6a4e23;
+  }
+`;
+
+/* ---------------------------------------
+   드롭다운 관련 스타일
+   PC 뷰에서 "Recipe" 메뉴에 마우스 올렸을 때
+   서브 메뉴가 보이는 형태
+---------------------------------------- */
+
+// 드롭다운을 감싸는 컨테이너
+export const DropdownContainer = styled.div`
+  position: relative; /* 서브 메뉴 위치 조절을 위한 relative */
+  display: inline-block;
+
+  // 마우스 오버 시 내부의 ul 표시
+  &:hover > ul {
+    display: block;
+  }
+
+  // .noUnderline가 active일 때도 밑줄 제거
+  .noUnderline.active::after,
+  .noUnderline.active::before {
+    content: none !important;
+  }
+`;
+
+// 드롭다운 메뉴 (서브 메뉴 ul)
+export const DropdownMenu = styled.ul`
+  display: none;
+  position: absolute;
+  top: 2rem; /* 부모 메뉴 아래에 표시 */
+  left: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background-color: #fff;
+  border: 1px solid #6a4e23;
+  z-index: 9999;
+`;
+
+// 드롭다운 메뉴 아이템 (li)
+export const DropdownItem = styled.li`
+  margin: 0.5rem 0;
+
+  ${NavLink} {
+    color: #6a4e23;
+    text-decoration: none;
+    font-weight: normal;
+
+    // 드롭다운 내의 active 상태에서 나타나는 밑줄/바를 제거
+    &.active::after,
+    &.active::before {
+      content: none !important;
+    }
+
+    &:hover {
+      color: #d1b6a3;
+    }
   }
 `;
