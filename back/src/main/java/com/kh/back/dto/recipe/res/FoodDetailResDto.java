@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FoodResDto  implements SearchResDto {
+public class FoodDetailResDto implements SearchResDto {
     private String name;
     private String RCP_WAY2;
     private String RCP_PAT2;
