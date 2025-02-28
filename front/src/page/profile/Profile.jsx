@@ -10,6 +10,7 @@ import {
   Introduce,
 } from "./style/ProfileStyle";
 
+// 나중에 유저 id값만 넣으면 알아서 서치 할 수 있도록 하는것이 목적
 const Profile = ({ user, customStyle }) => {
   return (
     <ProfileCard style={{ backgroundColor: customStyle.bgColor }}>
