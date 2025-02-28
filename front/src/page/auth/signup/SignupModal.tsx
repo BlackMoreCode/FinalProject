@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import AuthApi from "../../../../../../Uniguide/BackendCapstone/src/main/react/src/api/AuthApi";
 import {useRecoilState} from "recoil";
 import {emailState, isChecked, nicknameState, phoneState} from "../../../context/recoil/AuthState";
 import {AppDispatch, RootState} from "../../../context/Store";
@@ -11,7 +10,8 @@ import {ButtonContainer,  SignupButton } from "../Style";
 import {closeModal, openModal, setConfirmModal, setRejectModal} from "../../../context/redux/ModalReducer";
 import VerifyPhone from "./VerifyPhone";
 import TermsContainer from "./TermsContainer";
-
+import AuthApi from "../../../api/AuthApi";
+import {signupReqDto} from "../../../api/dto/AuthDto";
 
 const SignupModal = () => {
   const signup = useSelector((state: RootState) => state.modal.signupModal);
@@ -57,7 +57,13 @@ const SignupModal = () => {
 
     const onClickSignup = async () => {
       try {
-        const rsp = await AuthApi.signup(check);
+        const signupReq : signupReqDto = {
+          email: check.email,
+          phone: check.phone,
+          pwd: check.password,
+          nickname: check.nickname,
+        }
+        const rsp = await AuthApi.signup(signupReq);
         if (rsp.data === "성공") {
           dispatch(setConfirmModal({
             message: "회원가입에 성공했습니다.\n바로 로그인 하시겠습니까?",
