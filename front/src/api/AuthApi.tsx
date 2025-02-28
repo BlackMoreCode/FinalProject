@@ -1,4 +1,4 @@
-import {loginReqDto, signupReqDto} from "./dto/AuthDto";
+import {loginReqDto, loginResDto, signupReqDto} from "./dto/AuthDto";
 import axios from "axios";
 import Commons from "../util/Common";
 
@@ -6,7 +6,7 @@ import Commons from "../util/Common";
 
 const AuthApi = {
   login: async (loginReq : loginReqDto) => {
-    return await axios.get<boolean>(Commons.BASE_URL + "/auth/login")
+    return await axios.get<loginResDto>(Commons.BASE_URL + "/auth/login")
   },
   emailExists: async (email: string) => {
     return await axios.get<boolean>(Commons.BASE_URL + "/auth/exists/" + email);
