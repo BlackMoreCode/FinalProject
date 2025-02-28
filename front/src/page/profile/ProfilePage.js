@@ -48,6 +48,10 @@ const ProfilePage = () => {
     navigate("/sandbox"); // 결제 페이지로 이동
   };
 
+  const handleCustomClick = () => {
+    navigate("/profile/cardcustom");
+  };
+
   return (
     <ProfilePageContainer>
       <ProfilePageHeader>
@@ -56,17 +60,20 @@ const ProfilePage = () => {
           <ProfileButtonContainer>
             <ProfileButton>
               <EditIcon />
-              <span>프로필 편집</span>
+              <span>프로필 수정</span>
             </ProfileButton>
             <ProfileButton onClick={handlePaymentClick}>
               <span>결제하기</span>
+            </ProfileButton>
+            <ProfileButton onClick={handleCustomClick}>
+              <span>프로필 디자인</span>
             </ProfileButton>
           </ProfileButtonContainer>
         </HeaderUp>
         <HeaderDown>
           <UserStats>
             <span>
-              게시글: <strong>{user.postsCount}</strong>
+              게시글 작성수: <strong>{user.postsCount}</strong>
             </span>
             <span>
               받은 추천: <strong>{user.likesCount}</strong>
@@ -74,104 +81,6 @@ const ProfilePage = () => {
           </UserStats>
         </HeaderDown>
       </ProfilePageHeader>
-      {/* 유저가 스타일 변경할 수 있는 UI */}
-      <div>
-        <label>
-          배경색:
-          <input
-            type="color"
-            name="bgColor"
-            value={customStyle.bgColor}
-            onChange={handleStyleChange}
-          />
-        </label>
-        <br />
-        <label>
-          닉네임 폰트:
-          <select
-            name="nicknameFont"
-            value={customStyle.nicknameFont}
-            onChange={handleStyleChange}
-          >
-            <option value="Arial, sans-serif">Arial</option>
-            <option value="Courier New, monospace">Courier New</option>
-            <option value="Georgia, serif">Georgia</option>
-            <option value="Tahoma, sans-serif">Tahoma</option>
-          </select>
-        </label>
-        <label>
-          닉네임 폰트 크기:
-          <input
-            type="range"
-            name="nicknameSize" // 수정된 부분
-            min="1.0"
-            max="2.9"
-            step="0.1"
-            value={parseFloat(customStyle.nicknameSize)}
-            onChange={(e) =>
-              setCustomStyle((prev) => ({
-                ...prev,
-                nicknameSize: `${e.target.value}rem`, // 수정된 부분
-              }))
-            }
-          />
-          <input
-            type="number"
-            value={parseFloat(customStyle.nicknameSize)}
-            readOnly
-            style={{
-              width: "50px",
-              marginLeft: "10px",
-              textAlign: "center",
-              border: "none",
-              background: "transparent",
-            }}
-          />
-        </label>
-        <br />
-        <label>
-          소개 폰트:
-          <select
-            name="introduceFont"
-            value={customStyle.introduceFont}
-            onChange={handleStyleChange}
-          >
-            <option value="Arial, sans-serif">Arial</option>
-            <option value="Courier New, monospace">Courier New</option>
-            <option value="Georgia, serif">Georgia</option>
-            <option value="Tahoma, sans-serif">Tahoma</option>
-          </select>
-        </label>
-        <label>
-          소개 폰트 크기:
-          <input
-            type="range"
-            name="introduceSize" // 수정된 부분
-            min="0.8"
-            max="1.5"
-            step="0.1"
-            value={parseFloat(customStyle.introduceSize)}
-            onChange={(e) =>
-              setCustomStyle((prev) => ({
-                ...prev,
-                introduceSize: `${e.target.value}rem`, // 수정된 부분
-              }))
-            }
-          />
-          <input
-            type="number"
-            value={parseFloat(customStyle.introduceSize)}
-            readOnly
-            style={{
-              width: "50px",
-              marginLeft: "10px",
-              textAlign: "center",
-              border: "none",
-              background: "transparent",
-            }}
-          />
-        </label>
-      </div>
       <ProfileTabs />
     </ProfilePageContainer>
   );
