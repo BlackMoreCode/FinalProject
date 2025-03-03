@@ -31,7 +31,7 @@ const OptionsModal = () => {
 						key={index}
 						variant={option.type === "outlined" ? "outlined" : "contained"}
 						color={option.type === "outlined" ? "error" : "primary"}
-						onClick={() => optionModal.onOption(option.value)}
+						onClick={() => optionModal.onOption?.(option.value)}
 						fullWidth
 					>
 						{option.label}

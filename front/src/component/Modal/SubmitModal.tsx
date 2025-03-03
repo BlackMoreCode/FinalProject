@@ -19,7 +19,7 @@ const SubmitModal = () => {
 
 	const onChangeContent: Change = (e) => {
 		if (submit.restriction) {
-			dispatcher(setRejectModal({message: submit.restriction, onCancel: () => {} }));
+			dispatcher(setRejectModal({message: submit.restriction, onCancel: null }));
 			return;
 		}
 		setContent(e.target.value);
@@ -27,17 +27,17 @@ const SubmitModal = () => {
 
 	const onSubmitHandler = () => {
 		if (content.trim() === "") {
-			dispatcher(setRejectModal({message: "메세지를 입력하세요.", onCancel: () => {} }));
+			dispatcher(setRejectModal({message: "메세지를 입력하세요.", onCancel: null }));
 			return;
 		}
 
-		submit.onSubmit({ content: content, id: id }); // 댓글 제출 또는 수정 처리
+		submit.onSubmit?.({ content: content, id: id }); // 댓글 제출 또는 수정 처리
 		setContent(""); // 내용 초기화
 		onCancel(); // 모달 닫기
 	};
 
 	const onCancel = () => {
-		submit.onCancel();
+		submit.onCancel?.();
 		dispatcher(closeSubmitModal())
 	}
 

@@ -1,6 +1,36 @@
 import styled from "styled-components";
 import { NavLink as RouterNavLink } from "react-router-dom";
 
+export const Background = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+`;
+
+export const Header = styled.div`
+  width: 100%;
+  height: 100px;
+  position: relative;
+  z-index: 10;
+`;
+
+export const PC = styled.div`
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+export const Mobile = styled.div`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: flex;
+  }
+`;
+
+
 // 네비게이션 전체 래퍼
 export const Navbar = styled.nav`
   display: flex;
@@ -10,8 +40,6 @@ export const Navbar = styled.nav`
   /* background-color: #fff; */
   position: relative;
   z-index: 10;
-  /* overflow-x: hidden;
-  overflow-y: visible; */
   overflow: visible; // 부모 요소가 드롭다운을 잘라내지 않도록 overflow를 visible로 설정
 
   @media (max-width: 768px) {
@@ -26,11 +54,10 @@ export const Navbar = styled.nav`
 export const NavContainer = styled.div`
   max-width: 1200px;
   width: 100%;
-  margin: 0 auto;
+  margin: 10px auto;
   padding: 0 1rem; /* 기존 2rem에서 줄여서 여백 문제 해결 */
   display: flex;
-  flex-direction: column;
-  overflow-x: visible;
+  justify-content: space-between;
 
   @media (max-width: 768px) {
     padding: 0 0.5rem; /* 좁은 화면에서 패딩을 줄여서 너비 확보 */
@@ -40,11 +67,10 @@ export const NavContainer = styled.div`
 // 상단 섹션 (로고, 로그인, 햄버거)
 export const TopSection = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  margin-right: 50px;
   align-items: center;
-  width: 100%;
   color: #6a4e23;
-  overflow: hidden;
   position: relative;
 `;
 
@@ -52,12 +78,9 @@ export const TopSection = styled.div`
 export const BottomSection = styled.div`
   display: flex;
   justify-content: flex-start;
-  width: 100%;
+  align-items: center;
   position: relative;
-
-  @media (max-width: 768px) {
-    display: none; /* 모바일에서 숨기기 */
-  }
+  
 `;
 
 // PC 뷰용 메뉴 리스트 (ul)
@@ -83,7 +106,7 @@ export const NavLink = styled(RouterNavLink)`
   font-weight: bold;
   cursor: pointer;
   position: relative;
-  padding-bottom: 5px;
+  
 
   &:hover {
     color: #d1b6a3;
@@ -93,7 +116,7 @@ export const NavLink = styled(RouterNavLink)`
     content: "";
     position: absolute;
     left: 0;
-    bottom: -15px; /* 네비 바 하단 보더와 겹치도록 조정 */
+    bottom: -20px; /* 네비 바 하단 보더와 겹치도록 조정 */
     width: 100%;
     height: 3px;
     background-color: #6a4e23;
@@ -141,6 +164,30 @@ export const NavLink = styled(RouterNavLink)`
     }
   }
 `;
+
+export const DropDownButton = styled.button`
+    text-decoration: none;
+    color: #9f8473;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+
+
+    &:hover {
+        color: #d1b6a3;
+    }
+
+    &.active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -20px; /* 네비 바 하단 보더와 겹치도록 조정 */
+        width: 100%;
+        height: 3px;
+        background-color: #6a4e23;
+        transition: left 0.3s ease, width 0.3s ease; /* 밑줄 이동 애니메이션 */
+    }
+`
 
 // 로그인 버튼
 export const LoginButton = styled.button`

@@ -17,3 +17,13 @@ export interface signupReqDto {
   nickname: string;
   phone: string;
 }
+
+export interface SmsTokenVerificationDto {
+  inputToken: string;
+  phone: string;
+}
+
+export interface EmailTokenVerificationDto {
+  inputToken: string;
+  email: string;
+}

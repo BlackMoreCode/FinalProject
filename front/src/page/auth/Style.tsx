@@ -1,90 +1,51 @@
 import styled from "styled-components";
 import React from "react";
+import {IconButton} from "@mui/material";
 
 
 
 export const SocialButtonsContainer = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 10px; // 버튼 간 간격
+  justify-content: space-evenly;  
 `;
 
-export const NaverButton = styled.button`
-  width: 100%;
-  height: 45px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-top: 10px;
-  background-color: #03c75a;    // 네이버에서 스포이드로 가져옴
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2vw;
-  > p {
-    font-size: 16px;
-    color: #FFF;
-  }
+interface SnsSignInButtonProps {
+  bgColor?: string;
+  color?: string;
+}
+
+export const SnsSignInButton = styled(IconButton).attrs<SnsSignInButtonProps>(
+  (props) => ({
+    style: {
+      backgroundColor: props.bgColor || "white",
+      color: props.color || "white",
+    },
+  })
+)`
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: 10px;
 `;
 
-export const KakaoButton = styled.button`
-  width: 100%;
-  height: 45px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-top: 10px;
-  background-color: #fee500;    // 카카오에서 스포이드로 가져옴
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2vw;
-  > p {
-    font-size: 16px;
-    color: #3e2723; // 카카오 로고에서 스포이드로 가져옴
-  }
-`;
-
-
-export const GoogleButton = styled.button`
-  width: 100%;
-  height: 45px;
-  border: 1px solid black;  // 테두리 검은색 설정
-  border-radius: 20px;
-  cursor: pointer;
-  margin-top: 10px;
-  background-color: white;  // 카카오에서 스포이드로 가져옴
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2vw;
-  > p {
-    font-size: 16px;
-    color: black;  // 카카오 로고에서 스포이드로 가져옴
-  }
-`;
-
-
-export const LogoImg = styled.img`
-  width: 25px;
-  cursor: pointer;
-`
 
 // 모달 콘텐츠
-export const ModalContent = styled.div`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 40px;
-  border-radius: 8px;
-  z-index: 9999;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 600px; // 높이 조정
+export const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+
+    // 모바일 환경에서는 꽉 찬 너비, PC에서는 너비 제한
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+
+    // 모바일 환경에서 padding 조정
+    @media (max-width: 768px) {
+        padding: 10px;
+    }
 `;
 
 // 입력 필드 스타일
@@ -235,12 +196,14 @@ export const ModalContainer = styled.div`
 
 export const InputContainer = styled.div`
   margin-bottom: 5px;
+  width: 100%;  
   display: flex;
   justify-content: center;
   flex-direction: column;
 `;
 
 export const Input = styled.input`
+  width: 100%;  
   padding: 9px;
   margin-bottom: 2px;
   border: 1px solid ${({ theme }) => theme.border || "#dccafc"};

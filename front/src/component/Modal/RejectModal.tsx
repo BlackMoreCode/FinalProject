@@ -11,7 +11,7 @@ RejectModal = () => {
 	const reject = useSelector((state : RootState) => state.modal.rejectModal)
 	const dispatcher = useDispatch<AppDispatch>()
 	const onCancel = () => {
-		reject.onCancel()
+		reject.onCancel?.()
 		dispatcher(closeRejectModal())
 	}
 	return (

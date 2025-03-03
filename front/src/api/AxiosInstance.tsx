@@ -1,76 +1,58 @@
-import axios, { AxiosError, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
-import { RootState } from "../context/Store";
-import { logout, handleUnauthorized } from "../context/redux/TokenReducer";
-import { store } from "../context/Store";
+// src/api/axiosInstance.ts
+import axios from 'axios';
 
-// Axios 인스턴스 생성
-const AxiosInstance = axios.create({
-  baseURL: "",
+import ReduxApi from "./ReduxApi";
+import store from '../context/Store';
+import {setToken } from '../context/redux/TokenReducer';
+import {logout} from "../context/redux/CommonAction";
+
+// axios 인스턴스를 생성합니다.
+const axiosInstance = axios.create({
+  baseURL: 'http://localhost:8111',  // 서버 URL
 });
 
-// 요청 인터셉터: Access Token 자동 추가
-AxiosInstance.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
-    const state: RootState = store.getState();
-    const accessToken = state.token.accessToken; // 리덕스에서 가져오기
-
-    if (accessToken) {
-      // AxiosHeaders를 사용하여 headers를 생성
-      const headers = new AxiosHeaders({
-        Authorization: `Bearer ${accessToken}`,
-      });
-
-      config.headers = headers;
-    } else {
-      console.warn("🔴 Access Token 없음. 요청 취소");
-      return Promise.reject(new Error("Access Token 없음"));
+// 요청 인터셉터 설정: 요청 전 설정할 부분
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const state = store.getState();
+    const token = state.token.accessToken;
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`; // 토큰을 헤더에 추가
     }
-
     return config;
   },
-  (error: AxiosError) => Promise.reject(error)
-);
-
-// 응답 인터셉터: 401 처리
-AxiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      console.warn("🔴 401 Unauthorized 발생! 토큰 갱신 시도...");
-      originalRequest._retry = true;
-
-      try {
-        const result = await store.dispatch(handleUnauthorized()).unwrap();
-
-        if (!result) {
-          console.warn("🔴 새 토큰 갱신 실패. 로그아웃 처리");
-          store.dispatch(logout());
-          return Promise.reject(new Error("새 토큰 갱신 실패"));
-        }
-
-        // 갱신된 토큰 가져오기
-        const newState: RootState = store.getState();
-        const newAccessToken = newState.token.accessToken;
-
-        // AxiosHeaders 사용하여 새로운 헤더 설정
-        const newHeaders = new AxiosHeaders({
-          Authorization: `Bearer ${newAccessToken}`,
-        });
-
-        originalRequest.headers = newHeaders;
-
-        return AxiosInstance(originalRequest);
-      } catch (refreshError) {
-        console.error("🔴 토큰 갱신 중 오류 발생. 로그아웃 처리");
-        store.dispatch(logout());
-        return Promise.reject(refreshError);
-      }
-    }
-
+  (error) => {
     return Promise.reject(error);
   }
 );
 
-export default AxiosInstance;
+// 응답 인터셉터 설정: 401 오류가 발생했을 때 토큰 갱신
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      // 401 Unauthorized 에러가 발생하면 토큰 갱신 시도
+      try {
+        const refreshToken = store.getState().token.refreshToken;
+        if (refreshToken) {
+          // refreshToken을 사용하여 토큰 갱신
+          const rsp = await ReduxApi.refresh(refreshToken);
+          store.dispatch(setToken({ accessToken: rsp.data, refreshToken : null }));
+
+          // 토큰 갱신 후 다시 요청을 보냄
+          error.config.headers['Authorization'] = `Bearer ${rsp.data}`;
+          return axiosInstance(error.config); // 재요청
+        }
+      } catch (e) {
+        console.error('토큰 갱신 실패:', e);
+        store.dispatch(logout()); // 갱신 실패 시 로그아웃 처리
+        return Promise.reject(error); // 에러 반환
+      }
+    }
+    return Promise.reject(error); // 401이 아닌 경우 그대로 에러 반환
+  }
+);
+
+export default axiosInstance;

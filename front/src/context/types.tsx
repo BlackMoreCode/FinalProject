@@ -5,7 +5,11 @@ import {MyInfo} from "../api/dto/ReduxDto";
 export interface TokenState{
   accessToken: string | null,
   refreshToken: string | null,
-  info: MyInfo | null,
+}
+export interface UserState{
+  id: number | null,
+  email: string,
+  nickname: string,
   guest: boolean,
   admin: boolean,
 }
@@ -22,20 +26,20 @@ export interface ModalState {
   rejectModal: {
     open: boolean;
     message: string;
-    onCancel: () => void;
+    onCancel: (() => void) | null;
   };
   confirmModal: {
     open: boolean;
     message: string;
-    onConfirm: () => void;
-    onCancel: () => void;
+    onConfirm: (() => void) | null;
+    onCancel: (() => void) | null;
   };
   optionModal: {
     open: boolean;
     message: string;
     options: Option[];
-    onOption: (value: string) => void;
-    onCancel: () => void;
+    onOption: ((value: string) => void) | null;
+    onCancel: (() => void) | null;
   };
   submitModal: {
     open: boolean;
@@ -45,15 +49,15 @@ export interface ModalState {
       id: string;
     };
     restriction?: string;
-    onSubmit: (data: { content: string; id: string }) => void;
-    onCancel: () => void;
+    onSubmit: ((data: { content: string; id: string }) => void) | null;
+    onCancel: (() => void) | null;
   };
   cursorModal: {
     open: boolean;
     message: string;
     options: Option[];
-    onOption: (value: string | number, id: string | number) => void;
-    onCancel: () => void;
+    onOption: ((value: string | number, id: string | number) => void) | null;
+    onCancel: (() => void) | null;
     position: Position | null;
     id: string | number;
   };
@@ -61,9 +65,10 @@ export interface ModalState {
     open: boolean;
     title: string;
     content: string;
-    onCancel: () => void;
-  }
+    onCancel: (() => void) | null;
+  };
 }
+
 
 // 옵션 모달에 들어가는 옵션객체의 데이터 타입
 export interface Option {
