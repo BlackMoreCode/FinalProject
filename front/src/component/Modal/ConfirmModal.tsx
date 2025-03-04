@@ -3,7 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {AppDispatch, RootState} from "../../context/Store";
 import React from "react";
 import styled from "styled-components";
-import {closeConfirmModal} from "../../context/redux/ModalReducer";
+import {closeConfirmModal, openModal} from "../../context/redux/ModalReducer";
 
 
 const ConfirmModal = () => {
@@ -11,11 +11,12 @@ const ConfirmModal = () => {
   const confirm = useSelector((state: RootState) => state.modal.confirmModal);
   const dispatcher = useDispatch<AppDispatch>()
   const onCancel = () => {
-    confirm.onCancel()
+    confirm.onCancel?.()
     dispatcher(closeConfirmModal())
   }
   const onConfirm = () => {
-    confirm.onConfirm()
+    confirm.onConfirm?.()
+    if(confirm.message === "로그아웃 되었습니다. \n 다시 로그인 하시겠습니까?") dispatcher(openModal("login"))
     dispatcher(closeConfirmModal())
   }
   return (

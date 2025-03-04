@@ -5,6 +5,8 @@ import com.kh.back.entity.Member;
 import com.kh.back.entity.auth.email_auth_token;
 import com.kh.back.repository.MemberRepository;
 import com.kh.back.repository.auth.EmailAuthTokenRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
+@RequiredArgsConstructor
+@Slf4j
 @Service
 public class EmailService {
 
@@ -22,12 +26,7 @@ public class EmailService {
     private final MemberRepository memberRepository;
     private final HttpServletRequest request;
 
-    public EmailService(JavaMailSender mailSender, EmailAuthTokenRepository emailAuthTokenRepository, HttpServletRequest request, MemberRepository memberRepository) {
-        this.mailSender = mailSender;
-        this.emailAuthTokenRepository = emailAuthTokenRepository;
-        this.request = request;
-        this.memberRepository = memberRepository;
-    }
+    
 
     // 이메일 전송 메서드 (토큰 발급 및 전송)
     public boolean sendPasswordResetToken(String email) {
@@ -94,19 +93,24 @@ public class EmailService {
     }
 
     @Transactional
-
-    public void changePassword(String newPassword, PasswordEncoder passwordEncoder) {
-        String email = (String) request.getSession().getAttribute("email"); // 수정된 세션 접근 방식
-        System.out.println("세션 ID: " + request.getSession().getId() + " --- " + email);
-        if (email == null) {
-            throw new RuntimeException("정보가 만료 되었습니다. 인증을 다시 진행해주세요.");
+    public boolean changePassword(String newPassword, PasswordEncoder passwordEncoder) {
+        try{
+            String email = (String) request.getSession().getAttribute("email"); // 수정된 세션 접근 방식
+            System.out.println("세션 ID: " + request.getSession().getId() + " --- " + email);
+            if (email == null) {
+                throw new RuntimeException("정보가 만료 되었습니다. 인증을 다시 진행해주세요.");
+            }
+            Optional<Member> memberOptional = memberRepository.findByEmail(email);
+            Member member = memberOptional.orElseThrow(() -> new RuntimeException("이메일에 해당하는 회원이 존재하지 않습니다."));
+            
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            member.setPwd(encodedPassword);
+            memberRepository.save(member);
+            request.getSession().removeAttribute("email"); // 세션에서 이메일 제거
+            return true;
+            } catch (Exception e) {
+            log.error(e.getMessage());
+            return false;
         }
-        Optional<Member> memberOptional = memberRepository.findByEmail(email);
-        Member member = memberOptional.orElseThrow(() -> new RuntimeException("이메일에 해당하는 회원이 존재하지 않습니다."));
-
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        member.setPwd(encodedPassword);
-        memberRepository.save(member);
-        request.getSession().removeAttribute("email"); // 세션에서 이메일 제거
     }
 }

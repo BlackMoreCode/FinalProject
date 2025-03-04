@@ -1,46 +1,94 @@
-import { useRecoilState, useRecoilValue } from "recoil";
-import { passwordState } from "../../../context/recoil/AuthState";
-import { isPasswordMatchState } from "../../../context/recoil/Selector";
-import { Input, InputContainer, Message } from '../Style';
-import React, { useEffect } from "react";
-
+import React, { useState, useEffect, useCallback } from "react";
+import { Input, InputContainer, Message } from "../Style";
 
 type MatchInputProps = {
-  setter: (value : string, type: string) => void;  // setter prop 추가
+  setter: (value: string, type: string) => void;
 };
 
 const MatchInput = ({ setter }: MatchInputProps) => {
-  const [info, setInfo] = useRecoilState(passwordState);
-  const pwdValid = useRecoilValue(isPasswordMatchState);
+  const [value, setValue] = useState("");
+  const [confirmValue, setConfirmValue] = useState("");
+  const [isValidFormat, setIsValidFormat] = useState(false);
+  const [isDuplicate, setIsDuplicate] = useState(false);
+  const [message, setMessage] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
+
+  const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,25}$/;
 
   const onChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInfo((prev) => ({ ...prev, value: e.target.value }));
+    setValue(e.target.value);
   };
 
   const onChangePwdConfirm = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInfo((prev) => ({ ...prev, confirmValue: e.target.value }));
+    setConfirmValue(e.target.value);
   };
 
-  useEffect(() => {
-    setInfo((prev) => ({ ...prev, pwdValid }));
-  }, [pwdValid]);
+  // 비밀번호 형식 및 일치 여부 체크
+  const validatePassword = useCallback(() => {
+    if (!value) {
+      return;
+    }
+
+    const isFormatValid = passwordRegex.test(value);
+
+    if(isFormatValid) {
+      const isMatch = value === confirmValue;
+      setIsDuplicate(isMatch);
+      if (isMatch) {
+        setConfirmMessage("비밀번호와 일치합니다.");
+      } else {
+        setConfirmMessage("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+      }
+    }
+
+    setIsValidFormat(isFormatValid);
+
+    if (!isFormatValid) {
+      setMessage("비밀번호 형식이 올바르지 않습니다.");
+    } else {
+      setMessage("비밀번호 형식이 올바릅니다.");
+    }
+
+  }, [value, confirmValue]);
 
   useEffect(() => {
-    // setter를 통해 info.isValidFormat && !info.isDuplicate인 경우 value를 넘긴다
-    setter(info.isValidFormat && info.isDuplicate ? info.value : "", "비밀번호");
-  }, [pwdValid]);
+    validatePassword();
+  }, [value, confirmValue, validatePassword]);
+
+  const handleSetter = useCallback(() => {
+    if (isValidFormat && isDuplicate && value !== "") {
+      setter(value, "비밀번호");
+    }
+  }, [isValidFormat, isDuplicate, value, setter]);
+
+  useEffect(() => {
+    handleSetter();
+  }, [handleSetter]);
 
   return (
     <>
       <InputContainer>
         <p>비밀번호</p>
-        <Input type="password" placeholder="비밀번호를 입력해 주세요" value={info.value} onChange={onChangePassword} />
-        {info.message && <Message isValid={info.isValidFormat}>{info.message}</Message>}
+        <Input
+          type="password"
+          placeholder="비밀번호를 입력해 주세요"
+          value={value}
+          onChange={onChangePassword}
+        />
+        {message && <Message isValid={isValidFormat}>{message}</Message>}
       </InputContainer>
       <InputContainer>
         <p>비밀번호 확인</p>
-        <Input type="password" placeholder="비밀번호를 다시 입력해 주세요" value={info.confirmValue} onChange={onChangePwdConfirm} disabled={!info.isValidFormat} />
-        {info.isValidFormat && info.message && <Message isValid={info.isDuplicate}>{info.message}</Message>}
+        <Input
+          type="password"
+          placeholder="비밀번호를 다시 입력해 주세요"
+          value={confirmValue}
+          onChange={onChangePwdConfirm}
+          disabled={!isValidFormat}
+        />
+        {isValidFormat && message && (
+          <Message isValid={isDuplicate}>{confirmMessage}</Message>
+        )}
       </InputContainer>
     </>
   );

@@ -14,16 +14,12 @@ import {
 } from "../../../context/types";
 import {
   Button,
-  GoogleButton,
+  Container,
   InputField,
-  KakaoButton,
   Line,
-  LogoImg,
-  ModalContent,
-  NaverButton,
   SignupTextButton,
   Slash,
-  SnsLoginText,
+  SnsLoginText, SnsSignInButton,
   SocialButtonsContainer,
   TextButton,
   TextButtonContainer,
@@ -32,20 +28,28 @@ import { setToken } from "../../../context/redux/TokenReducer";
 import { loginReqDto, loginResDto } from "../../../api/dto/AuthDto";
 import AuthApi from "../../../api/AuthApi";
 import axios from "axios";
-import { Dialog, DialogTitle } from "@mui/material";
+import { Dialog, DialogTitle, Tooltip } from "@mui/material";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faComment, faN} from "@fortawesome/free-solid-svg-icons";
+import GoogleIcon from '@mui/icons-material/Google';
 
 const LoginModal = () => {
   const dispatch = useDispatch<AppDispatch>();
   const loginModal = useSelector((state: RootState) => state.modal.loginModal);
-  if (!loginModal) return null;
+  const [inputEmail, setInputEmail] = useState<string>("");
+  const [inputPw, setInputPw] = useState<string>("");
 
   const SNS_SIGN_IN_URL = (type: SNSLoginType) =>
     `${Commons.BASE_URL}/api/v1/auth/oauth2/${type}`;
   const onSnsSignInButtonClickHandler = (type: SNSLoginType) => {
     window.location.href = SNS_SIGN_IN_URL(type);
   };
-  const [inputEmail, setInputEmail] = useState<string>("");
-  const [inputPw, setInputPw] = useState<string>("");
+
+  const onClickOpenModal = (type : "signup" | "findPw" | "findId") => {
+    dispatch(closeModal("login"))
+    dispatch(openModal(type))
+  }
+
 
   const onClickLogin = async () => {
     try {
@@ -107,73 +111,66 @@ const LoginModal = () => {
   };
 
   return (
-    <Dialog open={loginModal} onClose={() => dispatch(closeModal("login"))}>
+    <Dialog open={loginModal} onClose={() => dispatch(closeModal("login"))} sx={{padding: "10px"}}>
       <DialogTitle>로그인</DialogTitle>
-      <form onSubmit={(e) => e.preventDefault()}>
-        <InputField
-          type="text"
-          placeholder="이메일"
-          value={inputEmail}
-          onChange={(e) => handleInputChange(e, setInputEmail)}
-          onKeyDown={handleKeyPress}
-        />
-        <InputField
-          type="password"
-          placeholder="비밀번호"
-          value={inputPw}
-          onChange={(e) => handleInputChange(e, setInputPw)}
-          onKeyDown={handleKeyPress}
-        />
-        <Button type="button" onClick={onClickLogin}>
-          로그인
-        </Button>
+      <Container>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <InputField
+            type="text"
+            placeholder="이메일"
+            value={inputEmail}
+            onChange={(e) => handleInputChange(e, setInputEmail)}
+            onKeyDown={handleKeyPress}
+          />
+          <InputField
+            type="password"
+            placeholder="비밀번호"
+            value={inputPw}
+            onChange={(e) => handleInputChange(e, setInputPw)}
+            onKeyDown={handleKeyPress}
+          />
+          <Button type="button" onClick={onClickLogin}>
+            로그인
+          </Button>
 
-        {/* 아이디찾기 / 비밀번호 찾기 */}
-        <TextButtonContainer>
-          <div>
-            <TextButton onClick={() => dispatch(openModal("findId"))}>
-              이메일 찾기
-            </TextButton>
-            <Slash>/</Slash>
-            <TextButton onClick={() => dispatch(openModal("findPw"))}>
-              비밀번호 찾기
-            </TextButton>
-          </div>
-          <SignupTextButton onClick={() => dispatch(openModal("signup"))}>
-            회원가입
-          </SignupTextButton>
-        </TextButtonContainer>
+          {/* 아이디찾기 / 비밀번호 찾기 */}
+          <TextButtonContainer>
+            <div>
+              <TextButton onClick={() => onClickOpenModal("findId")}>
+                이메일 찾기
+              </TextButton>
+              <Slash>/</Slash>
+              <TextButton onClick={() => onClickOpenModal("findPw")}>
+                비밀번호 찾기
+              </TextButton>
+            </div>
+            <SignupTextButton onClick={() => onClickOpenModal("signup")}>
+              회원가입
+            </SignupTextButton>
+          </TextButtonContainer>
 
-        {/* 라인 및 SNS 로그인 섹션 */}
-        <Line />
-        <SnsLoginText>SNS 계정 간편 로그인</SnsLoginText>
-        <SocialButtonsContainer>
-          <NaverButton onClick={() => onSnsSignInButtonClickHandler("naver")}>
-            <LogoImg
-              src={
-                "https://firebasestorage.googleapis.com/v0/b/ipsi-f2028.firebasestorage.app/o/firebase%2Flogo%2Fnaver_logo.png?alt=media"
-              }
-            />
-            <p>네이버 로그인</p>
-          </NaverButton>
-          <KakaoButton onClick={() => onSnsSignInButtonClickHandler("kakao")}>
-            <LogoImg
-              src={
-                "https://firebasestorage.googleapis.com/v0/b/ipsi-f2028.firebasestorage.app/o/firebase%2Flogo%2Fkakao_logo.png?alt=media"
-              }
-            />
-            <p>카카오 로그인</p>
-          </KakaoButton>
-          <GoogleButton onClick={() => onSnsSignInButtonClickHandler("google")}>
-            <LogoImg
-              src={
-                "https://firebasestorage.googleapis.com/v0/b/ipsi-f2028.firebasestorage.app/o/firebase%2Flogo%2Fgoogle_logo.png?alt=media"
-              }
-            />
-            <p>구글 로그인</p>
-          </GoogleButton>
-        </SocialButtonsContainer>
-      </form>
+          {/* 라인 및 SNS 로그인 섹션 */}
+          <Line />
+          <SnsLoginText>SNS 계정 간편 로그인</SnsLoginText>
+          <SocialButtonsContainer>
+            <Tooltip title="네이버 로그인">
+              <SnsSignInButton onClick={() => onSnsSignInButtonClickHandler("naver")} color = "white" bgColor = "#03C75A">
+                <FontAwesomeIcon icon={faN} />
+              </SnsSignInButton>
+            </Tooltip>
+            <Tooltip title="카카오 로그인">
+              <SnsSignInButton onClick={() => onSnsSignInButtonClickHandler("kakao")} color="#3C1E1E" bgColor="#FEE500">
+                <FontAwesomeIcon icon={faComment}/>
+              </SnsSignInButton>
+            </Tooltip>
+            <Tooltip title="구글 로그인">
+              <SnsSignInButton onClick={() => onSnsSignInButtonClickHandler("google")} color="white" bgColor="#4285F4">
+                <GoogleIcon/>
+              </SnsSignInButton>
+            </Tooltip>
+          </SocialButtonsContainer>
+        </form>
+      </Container>
     </Dialog>
   );
 };

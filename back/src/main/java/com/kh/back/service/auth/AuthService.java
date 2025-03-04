@@ -55,47 +55,46 @@ public class AuthService {
 //-----------------------------------회원가입 및 로그인 ----------------------------------------
 
 	// 회원가입
+	
+	public boolean signup(SignupDto signupDto) {
 
+		if (memberRepository.existsByEmail(signupDto.getEmail())) {
+			throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+		}
 
-			public boolean signup(SignupDto signupDto) {
-
-				if (memberRepository.existsByEmail(signupDto.getEmail())) {
-					throw new RuntimeException("이미 가입되어 있는 유저입니다.");
-				}
-
-				// 엔티티 변환 및 저장
-				Member member = signupDto.toEntity(passwordEncoder);
-				memberRepository.save(member);
-				return true;
-			}
+		// 엔티티 변환 및 저장
+		Member member = signupDto.toEntity(passwordEncoder);
+		memberRepository.save(member);
+		return true;
+	}
 
 
 	// member 로그인
 
-			public TokenDto login(LoginDto loginDto) {
-				try {
-					Member member = memberRepository.findByEmail(loginDto.getEmail())
-							.orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+	public TokenDto login(LoginDto loginDto) {
+		try {
+			Member member = memberRepository.findByEmail(loginDto.getEmail())
+					.orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
 
-					// 회원의 membership 상태 확인
-					if (member.getAuthority() == Authority.REST_USER) {
-						// 탈퇴된 회원일 경우 예외 처리
-						throw new RuntimeException("탈퇴한 회원입니다.");
-					}
-					UsernamePasswordAuthenticationToken authenticationToken = loginDto.toAuthentication();
-					log.info("authenticationToken : {}", authenticationToken);
-
-					Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
-					log.info("authentication : {}", authentication);
-
-					TokenDto token = tokenProvider.generateTokenDto(authentication);
-					refreshTokenSave(member, token);
-					return token;
-				} catch (Exception e) {
-					log.error("로그인 중 에러 발생 : ", e);
-					throw new RuntimeException("로그인 중 에러 발생", e);
-				}
+			// 회원의 membership 상태 확인
+			if (member.getAuthority() == Authority.REST_USER) {
+				// 탈퇴된 회원일 경우 예외 처리
+				throw new RuntimeException("탈퇴한 회원입니다.");
 			}
+			UsernamePasswordAuthenticationToken authenticationToken = loginDto.toAuthentication();
+			log.info("authenticationToken : {}", authenticationToken);
+
+			Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
+			log.info("authentication : {}", authentication);
+
+			TokenDto token = tokenProvider.generateTokenDto(authentication);
+			refreshTokenSave(member, token);
+			return token;
+		} catch (Exception e) {
+			log.error("로그인 중 에러 발생 : ", e);
+			throw new RuntimeException("로그인 중 에러 발생", e);
+		}
+	}
 
 	public AccessTokenDto refreshAccessToken(String refreshToken) {
 		log.info("일반refreshExist : {}", refreshTokenRepository.existsByRefreshToken(refreshToken));
@@ -112,9 +111,6 @@ public class AuthService {
 		}
 		return null;
 	}
-
-
-
 	
 	public void refreshTokenSave(Member member, TokenDto token) {
 		try {
@@ -123,16 +119,26 @@ public class AuthService {
 			if(refreshTokenRepository.existsByMember(member)) {
 				refreshTokenRepository.deleteByMember(member);
 			}
-			
 			RefreshToken refreshToken = new RefreshToken();
 			String encodedToken = token.getRefreshToken();
 			refreshToken.setRefreshToken(encodedToken);
 			refreshToken.setRefreshTokenExpiresIn(token.getRefreshTokenExpiresIn());
 			refreshToken.setMember(member);
-			
 			refreshTokenRepository.save(refreshToken);
 		} catch (Exception e) {
 			log.error("리프레시 토큰 저장 실패 : {}", e.getMessage());
+		}
+	}
+	
+	public String getEmailByPhone(String phone) {
+		try {
+			Member member = memberRepository.findByPhone(phone)
+				.orElseThrow(() -> new RuntimeException("존재하지 않는 회원입니다."));
+			return member.getEmail();
+		}
+		catch (Exception e) {
+			log.error("전화번호 : {} 를 통해 이메일 찾는 도중 실패 : {}", phone, e.getMessage());
+			return null;
 		}
 	}
 }

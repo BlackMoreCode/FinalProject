@@ -6,7 +6,7 @@ import {setTitleNContentModal} from "../../../context/redux/ModalReducer";
 import {privacyPolicy, termsOfService} from "../../../util/Term";
 
 interface TermsContainerProps {
-  setter : (value: boolean, type: string) => {};
+  setter : (value: boolean, type: string) => void;
   serviceTerm : boolean,
   privacyTerm : boolean,
 }
@@ -22,7 +22,7 @@ const TermsContainer = ({setter, serviceTerm, privacyTerm} : TermsContainerProps
           <TermsCheckbox
             type="checkbox"
             checked={serviceTerm}
-            onChange={(e) => setter(e.target.checked, "서비스")}
+            onChange={(e) => setter(e.target.checked, "serviceTerm")}
           />
           <TermLabel>
             [필수]{" "}
@@ -36,7 +36,7 @@ const TermsContainer = ({setter, serviceTerm, privacyTerm} : TermsContainerProps
           <TermsCheckbox
             type="checkbox"
             checked={privacyTerm}
-            onChange={(e) => setter(e.target.checked, "개인정보")}
+            onChange={(e) => setter(e.target.checked, "privacyTerm")}
           />
           <TermLabel>
             [필수]{" "}

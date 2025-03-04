@@ -14,11 +14,11 @@ const CursorModal = () => {
 
 	if (!cursor.open || !cursor.position) return null;
 	const onCancel = () => {
-		cursor.onCancel()
+		cursor.onCancel?.()
 		dispatcher(closeCursorModal())
 	}
 	const onOption = (value:any) => {
-		cursor.onOption(value, cursor.id);
+		cursor.onOption?.(value, cursor.id);
 		dispatcher(closeCursorModal())
 	}
 	return (

@@ -14,12 +14,13 @@ services:
       - app-network
 
   redis:
-    image: "redis:latest"
+    image: "redis:alpine"
     container_name: redis-container
     ports:
-      - "6379:6379"  # 로컬 머신의 6379 포트를 컨테이너의 6379 포트에 매핑
+      - "6379:6379"
     networks:
       - app-network
+    mem_limit: 512m  # 메모리 제한을 512MB로 설정
 
   flask:
     build:
@@ -42,10 +43,22 @@ services:
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g  # 최소 2GB, 최대 2GB로 JVM 힙 메모리 설정
+      - "xpack.security.enabled=false"  # 보안을 비활성화하여 성능 최적화
+      - "xpack.monitoring.enabled=false"  # 모니터링 비활성화 (불필요한 리소스 사용 방지)
+      - "xpack.ml.enabled=false"  # 머신러닝 기능 비활성화
+      - "indices.fielddata.cache.size=50%"  # 필드 데이터 캐시 크기 제한
+      - "indices.query.bool.max_clause_count=1024"  # 복잡한 쿼리의 최대 클라우드 수 제한
+      - "action.destructive_requires_name=true"  # 중요한 삭제 작업의 실수 방지
     ports:
       - "9200:9200"
     networks:
       - backend
+    mem_limit: 4g  # Elasticsearch 메모리 제한 설정
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
 
 volumes:
   mysql-data:

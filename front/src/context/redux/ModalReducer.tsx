@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {ModalState, Option, Position} from "../types";
 import {RootState} from "../Store";
+import {logout} from "./CommonAction";
 
 // 초기 상태 설정
 const initialState: ModalState = {
@@ -12,20 +13,20 @@ const initialState: ModalState = {
   rejectModal: {
     open: false,
     message: "",
-    onCancel: () => {},
+    onCancel: null,
   },
   confirmModal: {
     open: false,
     message: "",
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: null,
+    onCancel: null,
   },
   optionModal: {
     open: false,
     message: "",
     options: [],
-    onOption: (value: string) => {},
-    onCancel: () => {},
+    onOption: null,
+    onCancel: null,
   },
   submitModal: {
     open: false,
@@ -35,15 +36,15 @@ const initialState: ModalState = {
       id: "",
     },
     restriction: undefined,
-    onSubmit: (data: { content: string; id: string }) => {},
-    onCancel: () => {},
+    onSubmit: null,
+    onCancel: null,
   },
   cursorModal: {
     open: false,
     message: "",
     options: [],
-    onOption: (value: string | number, id: string | number) => {},
-    onCancel: () => {},
+    onOption: null,
+    onCancel: null,
     position: null,
     id: "",
   },
@@ -51,7 +52,7 @@ const initialState: ModalState = {
     open: false,
     title: "",
     content: "",
-    onCancel: () => {},
+    onCancel: null,
   }
 };
 
@@ -96,7 +97,7 @@ const ModalReducer = createSlice({
       state,
       action: PayloadAction<{
         message: string;
-        onCancel: () => void;
+        onCancel: (() => void) | null
       }>
     ) => {
       state.rejectModal = { ...action.payload, open: true };
@@ -107,8 +108,8 @@ const ModalReducer = createSlice({
       state,
       action: PayloadAction<{
         message: string;
-        onConfirm: () => void;
-        onCancel: () => void;
+        onConfirm: (() => void) | null
+        onCancel: (() => void) | null
       }>
     ) => {
       state.confirmModal = { ...action.payload, open: true };
@@ -120,8 +121,8 @@ const ModalReducer = createSlice({
       action: PayloadAction<{
         message: string;
         options: Option[];
-        onOption: (value: string) => void;
-        onCancel: () => void;
+        onOption: ((value: string) => void ) | null;
+        onCancel: (() => void) | null
       }>
     ) => {
       state.optionModal = { ...action.payload, open: true };
@@ -134,8 +135,8 @@ const ModalReducer = createSlice({
         message: string;
         initial: { content: string; id: string };
         restriction?: string;
-        onSubmit: (data: { content: string; id: string }) => void;
-        onCancel: () => void;
+        onSubmit: ((data: { content: string; id: string }) => void) | null;
+        onCancel: (() => void) | null
       }>
     ) => {
       state.submitModal = { ...action.payload, open: true };
@@ -147,8 +148,8 @@ const ModalReducer = createSlice({
       action: PayloadAction<{
         message: string;
         options: Option[];
-        onOption: (value: string | number, id: string | number) => void;
-        onCancel: () => void;
+        onOption: ((value: string | number, id: string | number) => void) | null;
+        onCancel: (() => void) | null
         position: Position | null;
         id: string | number;
       }>
@@ -157,7 +158,7 @@ const ModalReducer = createSlice({
     },
     setTitleNContentModal: (
       state,
-      action: PayloadAction<{title: string, content: string, onCancel: () => void}>
+      action: PayloadAction<{title: string, content: string, onCancel: (() => void) | null}>
     ) => {
       state.titleNContentModal = {...action.payload, open : true };
     },
@@ -187,22 +188,22 @@ const ModalReducer = createSlice({
       state.loadingModal = null;
     },
     closeRejectModal: (state) => {
-      state.rejectModal = { open: false, message: "", onCancel: () => {} };
+      state.rejectModal = { open: false, message: "", onCancel: null };
     },
     closeConfirmModal: (state) => {
-      state.confirmModal = { open: false, message: "", onConfirm: () => {}, onCancel: () => {} };
+      state.confirmModal = { open: false, message: "", onConfirm: null, onCancel: null };
     },
     closeOptionModal: (state) => {
-      state.optionModal = { open: false, message: "", options: [], onOption: (value: string) => {}, onCancel: () => {} };
+      state.optionModal = { open: false, message: "", options: [], onOption: (value: string) => {}, onCancel: null };
     },
     closeSubmitModal: (state) => {
-      state.submitModal = { open: false, message: "", initial: { content: "", id: "" }, restriction: undefined, onSubmit: (data: { content: string; id: string }) => {}, onCancel: () => {} };
+      state.submitModal = { open: false, message: "", initial: { content: "", id: "" }, restriction: undefined, onSubmit: null, onCancel: null };
     },
     closeCursorModal: (state) => {
-      state.cursorModal = { open: false, message: "", options: [], onOption: (value: string | number, id: string | number) => {}, onCancel: () => {}, position: null, id: "" };
+      state.cursorModal = { open: false, message: "", options: [], onOption: null, onCancel: null, position: null, id: "" };
     },
     closeTitleNContentModal: (state) => {
-      state.titleNContentModal = {open: false, title: "", content: "", onCancel: () => {} };
+      state.titleNContentModal = {open: false, title: "", content: "", onCancel: null };
     },
 
     // 모든 모달을 초기화하는 액션
@@ -212,13 +213,19 @@ const ModalReducer = createSlice({
       state.findPwModal = false;
       state.findIdModal = false;
       state.loadingModal = null;
-      state.rejectModal = { open: false, message: "", onCancel: () => {} };
-      state.confirmModal = { open: false, message: "", onConfirm: () => {}, onCancel: () => {} };
-      state.optionModal = { open: false, message: "", options: [], onOption: (value: string) => {}, onCancel: () => {} };
-      state.submitModal = { open: false, message: "", initial: { content: "", id: "" }, restriction: undefined, onSubmit: (data: { content: string; id: string }) => {}, onCancel: () => {} };
-      state.cursorModal = { open: false, message: "", options: [], onOption: (value: string | number, id: string | number) => {}, onCancel: () => {}, position: null, id: "" };
-      state.titleNContentModal = {open : false, title: "", content: "", onCancel: () => {} };
+      state.rejectModal = { open: false, message: "", onCancel: null };
+      state.confirmModal = { open: false, message: "", onConfirm: null, onCancel: null };
+      state.optionModal = { open: false, message: "", options: [], onOption: null, onCancel: null };
+      state.submitModal = { open: false, message: "", initial: { content: "", id: "" }, restriction: undefined, onSubmit: (data: { content: string; id: string }) => {}, onCancel: null };
+      state.cursorModal = { open: false, message: "", options: [], onOption: null, onCancel: null, position: null, id: "" };
+      state.titleNContentModal = {open : false, title: "", content: "", onCancel: null };
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(logout, (state) => {
+      // 로그아웃 시 유저 정보 초기화
+      state.confirmModal = {open: true, message: "로그아웃 되었습니다. \n 다시 로그인 하시겠습니까?", onConfirm: null, onCancel: null};
+    });
   },
 });
 

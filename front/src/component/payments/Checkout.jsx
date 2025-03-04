@@ -142,11 +142,11 @@ export function CheckoutPage() {
                   customerEmail: paymentDetails.customerEmail,
                   successUrl:
                     window.location.origin +
-                    "/sandbox/success" +
+                    "/pay/success" +
                     window.location.search,
                   failUrl:
                     window.location.origin +
-                    "/sandbox/fail" +
+                    "/pay/fail" +
                     window.location.search,
                 });
               } catch (error) {

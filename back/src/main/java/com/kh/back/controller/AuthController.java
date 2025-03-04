@@ -33,7 +33,7 @@
 		private final MemberService memberService;
 		
 		// 회원가입 여부 확인 , 이메일 중복 확인
-		@GetMapping("/exist/{email}")
+		@GetMapping("/email/{email}")
 		public ResponseEntity<Boolean> existEmail(@PathVariable String email) {
 			boolean isMember = authService.existEmail(email);
 			log.info("isMember : {}", isMember);
@@ -64,27 +64,25 @@
 
 		// 이메일 전송 - 비밀번호 찾기
 		@PostMapping("/sendPw")
-		public ResponseEntity<Boolean> sendPw(@RequestBody Member member) {
-			log.info("메일:{}", member.getEmail());
-			boolean result = emailService.sendPasswordResetToken(member.getEmail());
+		public ResponseEntity<Boolean> sendPw(@RequestBody String email) {
+			log.info("메일:{}", email);
+			boolean result = emailService.sendPasswordResetToken(email);
 			return ResponseEntity.ok(result);
 		}
 
 		// 이메일 인증 토큰 검증
-		@PostMapping("/verify-email-token")
+		@PostMapping("/verify/email")
 		public ResponseEntity<Boolean> verifyEmailToken(@RequestBody EmailTokenVerificationDto request) {
 			boolean isValid = emailService.verifyEmailToken(request.getEmail(), request.getInputToken());
 			return ResponseEntity.ok(isValid);
 		}
 
 		@PostMapping("/sendSms")
-		public ResponseEntity<String> sendSms(@RequestBody Member member) {
-			String result = smsService.sendVerificationCode(member.getPhone());
+		public ResponseEntity<String> sendSms(@RequestBody String phone) {
+			String result = smsService.sendVerificationCode(phone);
 			log.info("SMS 전송 결과: {}", ResponseEntity.ok(result));
 			return ResponseEntity.ok(result);
 		}
-
-
 
 		// SMS 인증 토큰 검증
 		@PostMapping("/verify-sms-token")
@@ -93,21 +91,12 @@
 			return ResponseEntity.ok(isValid);
 		}
 
-
-//		@GetMapping("/email/{phone}")
-//		public ResponseEntity<?> findEmailByPhone(@PathVariable String phone) {
-//			try {
-//				MemberResDto memberResDto = memberService.findEmailByPhone(phone);
-//				log.info("memberResDto : {}", memberResDto);
-//				return ResponseEntity.ok(memberResDto.getEmail());
-//			} catch (RuntimeException e) {
-//				log.warn("회원 정보를 찾을 수 없습니다. phone: {}", phone, e);
-//				return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//						.body("해당 회원이 존재하지 않습니다.");
-//			}
-//		}
-
-
+		@GetMapping("/email/phone/{phone}")
+		public ResponseEntity<String> findEmailByPhone(@PathVariable String phone) {
+			String email = authService.getEmailByPhone(phone);
+			return ResponseEntity.ok(email);
+		}
+		
 		// 리프레시 토큰으로 새 액세스 토큰 발급
 		@GetMapping("/refresh")
 		public ResponseEntity<AccessTokenDto> newToken(@RequestParam String refreshToken) {
@@ -122,16 +111,11 @@
 			return ResponseEntity.ok(tokenDto);
 		}
 		
-//		@PostMapping("/change-password")
-//		public ResponseEntity<Boolean> changePassword(@RequestBody MemberReqDto memberReqDto) {
-//			try {
-//				emailService.changePassword(memberReqDto.getPwd(), passwordEncoder); // 비밀번호 변경 로직 호출
-//				return ResponseEntity.ok(true); // 성공적으로 변경되었음을 true로 반환
-//			} catch (RuntimeException e) {
-//				return ResponseEntity.ok(false); // 실패했음을 false로 반환
-//			}
-//		}
-	
+		@PostMapping("/change/password")
+		public ResponseEntity<Boolean> changePassword(@RequestBody String pwd) {
+				boolean isSuccess = emailService.changePassword(pwd, passwordEncoder); // 비밀번호 변경 로직 호출
+				return ResponseEntity.ok(isSuccess); // 성공적으로 변경되었음을 true로 반환
+		}
 	}
 
 
