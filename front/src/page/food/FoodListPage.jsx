@@ -1,72 +1,146 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchFoodList } from "../../api/FoodApi";
-import placeholder from "./style/placeholder.jpg";
 import placeholder2 from "./style/placeholder2.png";
 
 /**
  * 음식 레시피 목록 페이지
- * - 검색어와 카테고리 필터를 함께 적용할 수 있는 UI 구성
- * - 카테고리를 클릭하면 선택된 카테고리를 state로 저장하고, 검색어와 함께 API를 호출
- * - "전체" 카테고리를 선택하면 빈 문자열("")로 처리하여 필터 해제
+ * - 검색어(query)와 필터(카테고리 또는 조리방법)를 적용
+ * - Intersection Observer와 React ref를 사용해 무한 스크롤 구현
+ * - 필터 클릭 시, 인자로 직접 넘겨 "두 번 클릭" 문제를 방지
  */
 const FoodListPage = () => {
-  // 음식 레시피 목록 상태
-  const [foods, setFoods] = useState([]);
-  // 검색어 상태
-  const [query, setQuery] = useState("");
-  // 선택된 카테고리 상태
+  // -------------------- 기존 상태 --------------------
+  const [foods, setFoods] = useState([]); // 음식 레시피 목록
+  const [query, setQuery] = useState(""); // 검색어
+  const [selectedFilterType, setSelectedFilterType] = useState("카테고리");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCookingMethod, setSelectedCookingMethod] = useState("");
+
+  // -------------------- 무한 스크롤 상태 --------------------
+  const [page, setPage] = useState(1); // 현재 페이지 번호
+  const [hasMore, setHasMore] = useState(true); // 추가 데이터 존재 여부
+  const observerRef = useRef(null); // IntersectionObserver 저장용 ref
+  const sentinelRef = useRef(null); // 감시 대상 요소(신호 역할)의 ref
 
   const navigate = useNavigate();
 
+  // -------------------- 데이터 로딩 함수 --------------------
   /**
-   * 백엔드(Flask)에서 음식 레시피 검색 API 호출
-   * @param {string} searchQuery - 검색어 (빈 문자열이면 전체)
-   * @param {string} category - 카테고리 필터 (빈 문자열이면 필터 해제)
+   * @param {number} pageNumber - 불러올 페이지 번호
+   * @param {string} catParam - 새 카테고리 (있다면), 없으면 selectedCategory 사용
+   * @param {string} methodParam - 새 조리방법 (있다면), 없으면 selectedCookingMethod 사용
    */
-  const fetchFoods = async (searchQuery, category) => {
-    try {
-      // API 호출: query, category, page=1, size=20
-      const response = await fetchFoodList(searchQuery, category, 1, 20);
-      console.log("fetchFoods 응답:", response);
-      if (response !== null) {
-        setFoods(response);
-      }
-    } catch (error) {
-      console.error("음식 레시피 목록 조회 중 에러:", error);
-    }
-  };
+  const loadFoods = useCallback(
+    async (pageNumber, catParam, methodParam) => {
+      try {
+        // 인자로 받은 값이 있으면 우선 사용, 없으면 상태값 사용
+        let finalCategory =
+          catParam !== undefined ? catParam : selectedCategory;
+        let finalMethod =
+          methodParam !== undefined ? methodParam : selectedCookingMethod;
 
-  /**
-   * 레시피 카드를 클릭 시 상세 페이지로 이동
-   * @param {string} id - 음식 레시피의 고유 ID
-   */
+        // 필터 타입에 따라 필요없는 필드는 빈 문자열 처리
+        if (selectedFilterType === "카테고리") {
+          finalMethod = "";
+        } else {
+          finalCategory = "";
+        }
+
+        const response = await fetchFoodList(
+          query,
+          finalCategory,
+          finalMethod,
+          pageNumber,
+          20
+        );
+        console.log("loadFoods 응답:", response);
+
+        if (pageNumber === 1) {
+          setFoods(response);
+        } else {
+          setFoods((prev) => [...prev, ...response]);
+        }
+
+        if (!response || response.length < 20) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+      } catch (error) {
+        console.error("음식 레시피 목록 조회 중 에러:", error);
+      }
+    },
+    [query, selectedCategory, selectedCookingMethod, selectedFilterType]
+  );
+
+  // -------------------- 검색/필터 버튼 클릭 시 --------------------
+  const handleSearch = useCallback(() => {
+    setPage(1);
+    loadFoods(1);
+    resetObserver();
+  }, [loadFoods]);
+
+  // -------------------- Intersection Observer 콜백 --------------------
+  const handleObserver = useCallback(
+    (entries) => {
+      const target = entries[0];
+      if (target.isIntersecting && hasMore) {
+        setPage((prev) => prev + 1);
+      }
+    },
+    [hasMore]
+  );
+
+  // -------------------- Observer 재설정 (React ref 사용) --------------------
+  const resetObserver = useCallback(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    const observer = new IntersectionObserver(handleObserver, {
+      threshold: 0.1,
+    });
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+    observerRef.current = observer;
+  }, [handleObserver]);
+
+  // -------------------- page 변경 시 추가 로딩 --------------------
+  useEffect(() => {
+    if (page > 1) {
+      loadFoods(page);
+    }
+  }, [page, loadFoods]);
+
+  // -------------------- 컴포넌트 마운트 시 Observer 설정 --------------------
+  useEffect(() => {
+    resetObserver();
+    // 첫 페이지 데이터 로딩
+    loadFoods(1);
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [resetObserver, loadFoods]);
+
+  // -------------------- 상세 페이지 이동 --------------------
   const handleSelectFood = (id) => {
     navigate(`/foodrecipes/${id}`);
   };
 
-  // 예시 추천 레시피 (실제 데이터에 맞춰 조정)
+  // -------------------- 예시 추천 레시피 --------------------
   const recommendedRecipes = [
-    {
-      id: "rec_1",
-      name: "비빔밥",
-      image: placeholder2,
-    },
-    {
-      id: "rec_2",
-      name: "김치찌개",
-      image: placeholder2,
-    },
-    {
-      id: "rec_3",
-      name: "불고기",
-      image: placeholder2,
-    },
+    { id: "rec_1", name: "비빔밥", image: placeholder2 },
+    { id: "rec_2", name: "김치찌개", image: placeholder2 },
+    { id: "rec_3", name: "불고기", image: placeholder2 },
   ];
 
-  // 예시 카테고리 목록 (실제 데이터에 맞춰 조정)
+  // -------------------- 필터 옵션 --------------------
+  const filterTypes = ["카테고리", "조리방법"];
   const categories = ["전체", "반찬", "국&찌개", "일품", "후식"];
+  const cookingMethods = ["전체", "찌기", "끓이기", "굽기", "기타"];
 
   return (
     <div className="px-4 py-8">
@@ -91,7 +165,7 @@ const FoodListPage = () => {
             className="flex-1 p-2 border border-kakiBrown dark:border-darkKaki rounded md:rounded-r-none focus:outline-none"
           />
           <button
-            onClick={() => fetchFoods(query, selectedCategory)}
+            onClick={handleSearch}
             className="p-2 bg-warmOrange dark:bg-deepOrange text-white rounded md:rounded-l-none hover:bg-orange-600 dark:hover:bg-deepOrange/90"
           >
             Search
@@ -125,30 +199,79 @@ const FoodListPage = () => {
         </div>
       </section>
 
-      {/* 카테고리 필터 섹션 */}
+      {/* 필터 타입 선택 섹션 */}
       <section className="mb-8 text-center">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
-          원하는 카테고리를 선택하세요
+          원하는 필터 유형을 선택하세요
         </h2>
+        <div className="flex justify-center mb-4">
+          <select
+            value={selectedFilterType}
+            onChange={(e) => {
+              setSelectedFilterType(e.target.value);
+              setSelectedCategory("");
+              setSelectedCookingMethod("");
+              setPage(1);
+              loadFoods(1); // 필터 변경 시 첫 페이지 로드
+              resetObserver();
+            }}
+            className="p-2 border rounded border-kakiBrown dark:border-darkKaki"
+          >
+            {filterTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex flex-wrap justify-center gap-3">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
+          {selectedFilterType === "카테고리"
+            ? categories.map((cat) => {
                 const newCat = cat === "전체" ? "" : cat;
-                setSelectedCategory(newCat);
-                fetchFoods(query, newCat);
-              }}
-              className={`px-4 py-2 border rounded transition-colors ${
-                selectedCategory === cat ||
-                (cat === "전체" && selectedCategory === "")
-                  ? "bg-warmOrange dark:bg-deepOrange text-white"
-                  : "bg-white dark:bg-transparent text-kakiBrown dark:text-softBeige border-kakiBrown dark:border-darkKaki hover:bg-warmOrange dark:hover:bg-deepOrange"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setSelectedCategory(newCat);
+                      setSelectedCookingMethod("");
+                      setPage(1);
+                      loadFoods(1, newCat, undefined);
+                      resetObserver();
+                    }}
+                    className={`px-4 py-2 border rounded transition-colors ${
+                      selectedCategory === cat ||
+                      (cat === "전체" && selectedCategory === "")
+                        ? "bg-warmOrange dark:bg-deepOrange text-white"
+                        : "bg-white dark:bg-transparent text-kakiBrown dark:text-softBeige border-kakiBrown dark:border-darkKaki hover:bg-warmOrange dark:hover:bg-deepOrange"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })
+            : cookingMethods.map((method) => {
+                const newMethod = method === "전체" ? "" : method;
+                return (
+                  <button
+                    key={method}
+                    onClick={() => {
+                      setSelectedCookingMethod(newMethod);
+                      setSelectedCategory("");
+                      setPage(1);
+                      loadFoods(1, undefined, newMethod);
+                      resetObserver();
+                    }}
+                    className={`px-4 py-2 border rounded transition-colors ${
+                      selectedCookingMethod === method ||
+                      (method === "전체" && selectedCookingMethod === "")
+                        ? "bg-warmOrange dark:bg-deepOrange text-white"
+                        : "bg-white dark:bg-transparent text-kakiBrown dark:text-softBeige border-kakiBrown dark:border-darkKaki hover:bg-warmOrange dark:hover:bg-deepOrange"
+                    }`}
+                  >
+                    {method}
+                  </button>
+                );
+              })}
         </div>
       </section>
 
@@ -184,6 +307,9 @@ const FoodListPage = () => {
           ))}
         </div>
       </section>
+
+      {/* sentinel 요소: ref를 부여하여 Intersection Observer가 감시 */}
+      {hasMore && <div ref={sentinelRef} style={{ height: "50px" }} />}
     </div>
   );
 };

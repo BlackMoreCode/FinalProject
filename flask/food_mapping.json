@@ -1,10 +1,9 @@
 {
   "mappings": {
     "properties": {
-      "RCP_NM": {
+      "name": {
         "type": "text"
       },
-
       "RCP_WAY2": {
         "type": "keyword"
       },
@@ -18,13 +17,13 @@
       "ATT_FILE_NO_MK": {
         "type": "keyword"
       },
-      "RCP_PARTS_DTLS": {
+      "ingredients": {
         "type": "nested",
         "properties": {
-          "name": {
+          "ingredient": {
             "type": "text"
           },
-          "quantity": {
+          "amount": {
             "type": "text"
           }
         }
@@ -43,7 +42,7 @@
           }
         }
       },
-         "like": {
+      "like": {
         "type" : "long"
       },
       "report": {
