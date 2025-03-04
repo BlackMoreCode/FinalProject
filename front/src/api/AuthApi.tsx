@@ -11,7 +11,7 @@ import {string} from "yup";
 
 const AuthApi = {
   login: async (loginReq : loginReqDto) => {
-    return await axios.post<loginResDto>(Commons.BASE_URL + "/auth/login", {loginReqDto : loginReq});
+    return await axios.post<loginResDto>(Commons.BASE_URL + "/auth/login", loginReq);
   },
   emailExists: async (email: string) => {
     return await axios.get<boolean>(Commons.BASE_URL + `/auth/email/${email}`);
@@ -26,10 +26,10 @@ const AuthApi = {
     return await axios.post<string>(Commons.BASE_URL + "/auth/signup", signupReq)
   },
   verifySmsToken: async (verify : SmsTokenVerificationDto) => {
-    return await axios.post<boolean>(Commons.BASE_URL + `/auth/verify-sms-token`, {request : verify})
+    return await axios.post<boolean>(Commons.BASE_URL + `/auth/verify-sms-token`, verify)
   },
   sendVerificationCode: async (phone : string) => {
-    return await axios.post<string>(Commons.BASE_URL + "/auth/sendSms" , {phone : phone});
+    return await axios.post<string>(Commons.BASE_URL + "/auth/sendSms" , phone);
   },
   changePassword: async (pwd : string) => {
     return await axios.post<boolean>(Commons.BASE_URL + "/auth/change/password", pwd);

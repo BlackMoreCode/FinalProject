@@ -54,12 +54,12 @@ const LoginModal = () => {
   const onClickLogin = async () => {
     try {
       const loginReq: loginReqDto = { email: inputEmail, pwd: inputPw };
-      const res = await AuthApi.login(loginReq);
-      console.log(res);
+      const rsp = await AuthApi.login(loginReq);
+      console.log(rsp);
 
-      const loginRes: loginResDto | null = res.data;
+      const loginRes: loginResDto | null = rsp.data;
       if (loginRes !== null && loginRes.grantType === "Bearer") {
-        dispatch(setToken(loginRes.token));
+        dispatch(setToken({accessToken: loginRes.accessToken, refreshToken: loginRes.refreshToken}));
         dispatch(closeModal("login"));
       } else {
         console.log("잘못된 아이디 또는 비밀번호 입니다.");
