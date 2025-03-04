@@ -2,14 +2,16 @@ import React from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Header from "./component/header/Header";
 import MainContainer from "./component/MainContainer";
-import ProfilePage from "./page/profile/ProfilePage";
+// import ProfilePage from "./page/profile/ProfilePage";
 import { CheckoutPage } from "./component/payments/Checkout";
 import { SuccessPage } from "./component/payments/Succeess";
 import { FailPage } from "./component/payments/Fail";
-// import CocktailListPage from "./page/cocktail/CocktailListPage";
+import CocktailListPage from "./page/cocktail/CocktailListPage";
 import CocktailDetailPage from "./page/cocktail/CocktailDetailPage";
 import FoodListPage from "./page/food/FoodListPage";
 import ProfileCustomization from "./page/profile/cardcustom/ProfileCustomization";
+
+import RecipeDetail from "./page/RecipeDetail";
 
 function App() {
   return (
@@ -19,12 +21,15 @@ function App() {
         <Header />
         <MainContainer>
           <Routes>
-            <Route path="/" element={<ProfilePage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            {/* <Route path="/" element={<ProfilePage />} />
+            <Route path="/profile" element={<ProfilePage />} /> */}
             <Route
               path="/profile/cardcustom"
               element={<ProfileCustomization />}
             />
+            {/* <Route path="/addRecipe" element={<AddRecipeDetail/>}/>{" "} */}
+
+            <Route path="/recipe/:id/:type" element={<RecipeDetail />} />
             {/* 결제 페이지 */}
             <Route path="/sandbox" element={<CheckoutPage />} />{" "}
             {/* /sandbox 경로에 CheckoutPage 연결 */}
@@ -33,12 +38,12 @@ function App() {
             <Route path="/sandbox/fail" element={<FailPage />} />{" "}
             {/* /sandbox/fail 경로에 FailPage 연결 */}
             {/* 레시피 페이지 (라우트 경로 수정됨) */}
-            {/* <Route path="/cocktail-recipe" element={<CocktailListPage />} />
+            <Route path="/cocktail-recipe" element={<CocktailListPage />} />
             <Route
               path="/cocktail-recipe/:id"
               element={<CocktailDetailPage />}
             />
-            <Route path="/food-recipe" element={<FoodListPage />} /> */}
+            <Route path="/food-recipe" element={<FoodListPage />} />
           </Routes>
         </MainContainer>
       </Router>

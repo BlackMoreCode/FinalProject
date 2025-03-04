@@ -67,6 +67,7 @@ def upload_one():
         return jsonify({"error": str(e)}), 500
 
 
+
 # JSON 파일 업로드 (여러 개의 데이터 한 번에)
 @app.route("/upload/json", methods=["POST"])
 def upload_json():

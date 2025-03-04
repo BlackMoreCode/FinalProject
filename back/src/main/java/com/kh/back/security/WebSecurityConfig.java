@@ -62,7 +62,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 			"/", "/static/**", "/auth/**", "/ws/**", "/oauth2/**",
 			"/api/v1/auth/**", "/api/v1/payments/**", "/chat/**", "/flask/**", "/review/**",
 			"/**/public/**", "/pay/**", "/test/**", "/api/foodrecipes/**",
-			"/favicon.ico", "/manifest.json", "/logo192.png", "/logo512.png"
+			"/favicon.ico", "/manifest.json", "/logo192.png", "/logo512.png","/recipe/**"
 		).permitAll()
 		.antMatchers("/v2/api-docs", "/swagger-resources/**", "/swagger-ui.html", "/webjars/**", "/swagger/**", "/sign-api/exception").permitAll()
 		.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()

@@ -4,7 +4,6 @@
       "name": {
         "type": "text"
       },
-
       "RCP_WAY2": {
         "type": "keyword"
       },
@@ -43,7 +42,7 @@
           }
         }
       },
-         "like": {
+      "like": {
         "type" : "long"
       },
       "report": {

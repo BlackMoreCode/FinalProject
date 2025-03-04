@@ -8,6 +8,9 @@ import com.kh.back.dto.recipe.res.CocktailListResDto;
 import com.kh.back.dto.recipe.res.CocktailResDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -127,4 +130,31 @@ public class ElasticService {
 				return null;
 		}
 	}
+
+	public String uploadRecipe(String jsonData) {
+		try {
+			// Flask 서버의 엔드포인트 URL
+			URI uri = new URI(flaskBaseUrl + "/upload/one");
+
+			// HTTP 요청 헤더 설정
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			// HTTP 요청 본문 설정
+			HttpEntity<String> requestEntity = new HttpEntity<>(jsonData, headers);
+
+			// Flask 서버로 POST 요청 전송
+			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
+
+			// 응답 로그 기록
+			log.info("Flask 서버 응답: {}", response.getBody());
+
+			return response.getBody();
+		} catch (Exception e) {
+			log.error("레시피 업로드 중 에러 발생: {}", e.getMessage());
+			return null;
+		}
+	}
+
+
 }
