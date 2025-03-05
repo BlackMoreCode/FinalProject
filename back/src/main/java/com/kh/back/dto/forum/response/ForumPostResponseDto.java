@@ -1,5 +1,6 @@
 package com.kh.back.dto.forum.response;
 
+import com.kh.back.dto.python.SearchResDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
-public class ForumPostResponseDto {
+public class ForumPostResponseDto implements SearchResDto {
     // 기존 필드
     private Integer id; // 게시글 ID
     private String title; // 게시글 제목

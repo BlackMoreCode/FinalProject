@@ -45,13 +45,14 @@ def get_index_and_mapping(file_type: str):
         "food": ("recipe_food", "food_mapping.json"),
         "cocktail_ingredient": ("cocktail_ingredient", "cocktail_ingredient_mapping.json"),
         "food_ingredient": ("food_ingredient", "food_ingredient_mapping.json"),
+        "feed": ("feed", "feed_mapping.json"),
         "forum": ("forum", "forum_mapping.json"),
     }
     return index_mapping.get(file_type, (None, None))
 
 
 # ================================================================
-# 기존 도메인(칵테일, 음식 등) 관련 엔드포인트 (기존 코드 그대로)
+# 기존 도메인(칵테일, 음식 등) 관련 엔드포인트 (변경 없이 그대로 유지)
 # ================================================================
 
 # 글 하나 업로드
@@ -90,10 +91,8 @@ def upload_json():
         if not file_type:
             return jsonify({"error": "Type is required"}), 400
 
-        # 폼의 타입에 맞춰 인덱스 이름 설정
         index_name, mapping_file = get_index_and_mapping(file_type)
 
-        # 인덱스가 없으면 매핑을 적용하여 생성
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
@@ -120,14 +119,13 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
-        # type_filter에 따라 필드명을 설정 (음식과 칵테일을 구분)
         if type_filter == "food":
-            category_field = "RCP_PAT2"
-            cooking_field = "RCP_WAY2"
+            category_field = "RCP_PAT2"   # 음식은 ES 매핑에서 RCP_PAT2로 저장됨
+            cooking_field = "RCP_WAY2"    # 음식의 조리방법 필드
             multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
         else:
-            category_field = "category"
-            cooking_field = "cookingMethod"
+            category_field = "category"   # 칵테일은 기존 필드 사용
+            cooking_field = "cookingMethod"  # 칵테일은 조리방법 필터가 없을 수 있으므로 기본값
             multi_match_fields = ["name", "ingredients.ingredient", "category"]
 
         if q and category and cooking_method:
@@ -194,7 +192,8 @@ def search():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/search/alcohol", methods=["GET"])
+# 검색 알코올 (레시피용; 단 하나만 남김)
+@app.route("/search/alcohol", methods=["GET"], endpoint="unique_search_alcohol")
 def search_alcohol():
     try:
         min_abv = request.args.get("min_abv", 0, type=int)
@@ -206,9 +205,7 @@ def search_alcohol():
             "size": size,
             "_source": ["name", "category", "like"],
             "query": {
-                "range": {
-                    "abv": {"gte": min_abv, "lte": max_abv}
-                }
+                "range": {"abv": {"gte": min_abv, "lte": max_abv}}
             }
         })
         results = [{**hit["_source"], "id": hit["_id"]} for hit in res["hits"]["hits"]]
@@ -216,29 +213,31 @@ def search_alcohol():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-@app.route("/detail/<doc_id>", methods=["GET"])
+# 상세 조회 (레시피용)
+@app.route("/detail/<doc_id>", methods=["GET"], endpoint="recipe_detail")
 def detail(doc_id):
     type_filter = request.args.get("type", "")
     index_name, _ = get_index_and_mapping(type_filter)
     if not index_name:
         return jsonify({"error": "Invalid type filter"}), 400
     try:
+        # ES 에서 해당 ID 문서 검색 (주의: 변수 이름 수정)
         response = es.get(index=index_name, id=doc_id)
         return jsonify(response["_source"])
     except Exception as e:
         return jsonify({"error": str(e)}), 404
 
+
 # ================================================================
 # Forum Endpoints (ElasticSearch-based) - 새 Forum 기능
 # ================================================================
 
-# 1. Forum 게시글 생성
+# Forum 게시글 생성
 @app.route("/forum/post", methods=["POST"])
 def create_forum_post():
     """
     새 포럼 게시글 생성
     KR: 클라이언트로부터 받은 게시글 데이터를 기반으로 ES의 'forum' 인덱스에 게시글 문서를 생성합니다.
-        게시글 문서에는 ForumPost 엔티티의 필드(제목, 내용, contentJSON, 작성자 정보, 카테고리, 조회수, 좋아요 수 등)가 포함됩니다.
     """
     try:
         data = request.json
@@ -263,11 +262,11 @@ def create_forum_post():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 2. Forum 게시글 상세 조회
-@app.route("/forum/post/<doc_id>", methods=["GET"])
+# Forum 게시글 상세 조회
+@app.route("/forum/post/<doc_id>", methods=["GET"], endpoint="forum_post_detail")
 def get_forum_post(doc_id):
     """
-    게시글 상세 조회
+    게시글 상세 조회 (Forum)
     KR: ES 'forum' 인덱스에서 주어진 문서 ID의 게시글을 조회하여 반환합니다.
     """
     try:
@@ -277,11 +276,11 @@ def get_forum_post(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 404
 
-# 3. Forum 게시글 제목 수정
+# Forum 게시글 제목 수정
 @app.route("/forum/post/<doc_id>/title", methods=["PUT"])
 def update_forum_post_title(doc_id):
     """
-    게시글 제목 수정
+    게시글 제목 수정 (Forum)
     KR: 주어진 문서 ID의 게시글에서 제목(title)을 수정합니다.
     """
     try:
@@ -298,11 +297,11 @@ def update_forum_post_title(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 4. Forum 게시글 내용 수정 (TipTap JSON 전용)
+# Forum 게시글 내용 수정 (TipTap JSON 전용)
 @app.route("/forum/post/<doc_id>/content", methods=["PUT"])
 def update_forum_post_content(doc_id):
     """
-    게시글 내용 수정 (TipTap JSON 전용)
+    게시글 내용 수정 (Forum - TipTap JSON)
     KR: 게시글의 contentJSON 필드를 업데이트합니다.
     """
     try:
@@ -321,12 +320,12 @@ def update_forum_post_content(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 5. Forum 게시글 좋아요 토글
+# Forum 게시글 좋아요 토글
 @app.route("/forum/post/<doc_id>/like", methods=["POST"])
 def toggle_forum_post_like(doc_id):
     """
-    게시글 좋아요 토글
-    KR: 특정 게시글에 대해 좋아요를 추가 또는 취소할 수 있도록 likedBy 배열과 likesCount를 업데이트합니다.
+    게시글 좋아요 토글 (Forum)
+    KR: 특정 게시글에 대해 좋아요를 추가 또는 취소하여 likedBy 배열과 likesCount를 업데이트합니다.
     """
     try:
         req_data = request.json
@@ -351,11 +350,11 @@ def toggle_forum_post_like(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 6. Forum 게시글 신고 처리
+# Forum 게시글 신고 처리
 @app.route("/forum/post/<doc_id>/report", methods=["POST"])
 def report_forum_post(doc_id):
     """
-    게시글 신고 처리
+    게시글 신고 처리 (Forum)
     KR: 신고자 ID와 신고 사유를 받아 해당 게시글의 reportCount를 증가시키고, 신고 임계값 이상이면 게시글을 숨김 처리합니다.
     """
     try:
@@ -378,13 +377,44 @@ def report_forum_post(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 7. Forum 댓글 생성
+# Forum 게시글 삭제 (논리 삭제)
+@app.route("/forum/post/<doc_id>", methods=["DELETE"], endpoint="delete_forum_post")
+def delete_forum_post(doc_id):
+    """
+    게시글 삭제 (Forum, 논리 삭제)
+    KR: 게시글을 실제 삭제하지 않고, 삭제 상태로 표시합니다.
+        삭제 이력은 'forum_post_history' 인덱스에 기록됩니다.
+    """
+    try:
+        index_name, _ = get_index_and_mapping("forum")
+        post = es.get(index=index_name, id=doc_id)["_source"]
+
+        history = {
+            "postId": post.get("id", doc_id),
+            "title": post.get("title"),
+            "content": post.get("content"),
+            "authorName": post.get("member", {}).get("nickName", "Unknown"),
+            "deletedAt": datetime.utcnow().isoformat(),
+            "fileUrls": post.get("fileUrls", [])
+        }
+        es.index(index="forum_post_history", body=history)
+
+        post["removedBy"] = request.args.get("removedBy", "USER")
+        post["hidden"] = True
+        post["title"] = "[Deleted]"
+        post["content"] = "This post has been deleted."
+        post["updatedAt"] = datetime.utcnow().isoformat()
+        es.index(index=index_name, id=doc_id, body=post)
+        return jsonify({"message": "게시글이 삭제 처리되었습니다."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Forum 댓글 생성
 @app.route("/forum/comment", methods=["POST"])
 def create_forum_comment():
     """
-    새 댓글 생성
+    댓글 생성 (Forum)
     KR: 클라이언트로부터 받은 댓글 데이터를 기반으로, 해당 게시글의 'comments' 배열에 새 댓글을 추가합니다.
-        댓글 문서는 ForumPostComment 엔티티의 필드들을 반영합니다.
     """
     try:
         data = request.json
@@ -427,11 +457,11 @@ def create_forum_comment():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 8. Forum 댓글 조회
+# Forum 댓글 조회
 @app.route("/forum/comments", methods=["GET"])
 def get_forum_comments():
     """
-    특정 게시글의 댓글 조회
+    댓글 조회 (Forum)
     KR: 쿼리 파라미터 'postId'에 해당하는 게시글 문서에서 'comments' 배열을 반환합니다.
     """
     try:
@@ -445,11 +475,11 @@ def get_forum_comments():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 9. Forum 댓글 수정
+# Forum 댓글 수정
 @app.route("/forum/comment/<int:comment_id>", methods=["PUT"])
 def update_forum_comment(comment_id):
     """
-    댓글 수정
+    댓글 수정 (Forum)
     KR: 특정 댓글의 contentJSON (TipTap JSON)을 업데이트합니다.
     """
     try:
@@ -483,13 +513,13 @@ def update_forum_comment(comment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 10. Forum 댓글 삭제 (논리 삭제)
+# Forum 댓글 삭제 (논리 삭제)
 @app.route("/forum/comment/<int:comment_id>", methods=["DELETE"])
 def delete_forum_comment(comment_id):
     """
-    댓글 삭제 (논리 삭제)
+    댓글 삭제 (Forum, 논리 삭제)
     KR: 특정 댓글의 content를 "[Removed]"로 변경하고, hidden 상태를 true로 설정합니다.
-        삭제 이력은 별도 인덱스 'forum_comment_history'에 저장합니다.
+        삭제 이력은 'forum_comment_history' 인덱스에 기록됩니다.
     """
     try:
         post_id = request.args.get("postId")
@@ -523,11 +553,11 @@ def delete_forum_comment(comment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 11. Forum 댓글 신고 처리
+# Forum 댓글 신고 처리
 @app.route("/forum/comment/<int:comment_id>/report", methods=["POST"])
 def report_forum_comment(comment_id):
     """
-    댓글 신고 처리
+    댓글 신고 처리 (Forum)
     KR: 신고자 ID와 신고 사유를 받아 해당 댓글의 reportCount를 증가시키고,
          신고 임계값 이상이면 댓글을 숨김 처리합니다.
     """
@@ -563,11 +593,11 @@ def report_forum_comment(comment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 12. Forum 카테고리 조회
+# Forum 카테고리 조회
 @app.route("/forum/category", methods=["GET"])
 def get_forum_categories():
     """
-    포럼 카테고리 조회
+    포럼 카테고리 조회 (Forum)
     KR: ES의 'forum' 인덱스 내 게시글들을 대상으로 집계(aggregation)를 사용하여 카테고리 정보를 반환합니다.
     """
     try:
@@ -586,74 +616,6 @@ def get_forum_categories():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 13. Forum 게시글 삭제 (논리 삭제)
-@app.route("/forum/post/<doc_id>", methods=["DELETE"])
-def delete_forum_post(doc_id):
-    """
-    게시글 삭제 (논리 삭제)
-    KR: 게시글을 실제 삭제하지 않고, 삭제 상태로 표시합니다.
-        removedBy와 hidden 필드를 업데이트하고, 제목과 내용을 "[Deleted]"로 변경합니다.
-        삭제 이력은 'forum_post_history' 인덱스에 기록합니다.
-    """
-    try:
-        index_name, _ = get_index_and_mapping("forum")
-        post = es.get(index=index_name, id=doc_id)["_source"]
-
-        history = {
-            "postId": post.get("id", doc_id),
-            "title": post.get("title"),
-            "content": post.get("content"),
-            "authorName": post.get("member", {}).get("nickName", "Unknown"),
-            "deletedAt": datetime.utcnow().isoformat(),
-            "fileUrls": post.get("fileUrls", [])
-        }
-        es.index(index="forum_post_history", body=history)
-
-        post["removedBy"] = request.args.get("removedBy", "USER")
-        post["hidden"] = True
-        post["title"] = "[Deleted]"
-        post["content"] = "This post has been deleted."
-        post["updatedAt"] = datetime.utcnow().isoformat()
-        es.index(index=index_name, id=doc_id, body=post)
-        return jsonify({"message": "게시글이 삭제 처리되었습니다."}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# ================================================================
-# 기존 검색 및 기타 엔드포인트는 그대로 유지합니다.
-# ================================================================
-
-@app.route("/search/alcohol", methods=["GET"])
-def search_alcohol():
-    try:
-        min_abv = request.args.get("min_abv", 0, type=int)
-        max_abv = request.args.get("max_abv", 100, type=int)
-        page = request.args.get("page", 1, type=int)
-        size = request.args.get("size", 20, type=int)
-        res = es.search(index="recipe_cocktail", body={
-            "from": (page - 1) * size,
-            "size": size,
-            "_source": ["name", "category", "like"],
-            "query": {
-                "range": {"abv": {"gte": min_abv, "lte": max_abv}}
-            }
-        })
-        results = [{**hit["_source"], "id": hit["_id"]} for hit in res["hits"]["hits"]]
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-@app.route("/detail/<doc_id>", methods=["GET"])
-def detail(doc_id):
-    type_filter = request.args.get("type", "")
-    index_name, _ = get_index_and_mapping(type_filter)
-    if not index_name:
-        return jsonify({"error": "Invalid type filter"}), 400
-    try:
-        response = es.get(index=index_name, id=doc_id)
-        return jsonify(response["_source"])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
