@@ -30,9 +30,24 @@ public class ForumCategoryService {
     @PostConstruct
     private void initializeCategories() {
         log.info("ElasticSearch에 사전 정의된 포럼 카테고리 초기화 시작...");
-        // 필요 시, elasticService.createCategory(...) 로직 호출
-        // ...
+
+        List<ForumCategoryDto> predefinedCategories = List.of(
+                new ForumCategoryDto(null, "자유게시판", "자유롭게 이야기하는 공간입니다.", 0, 0, null, null, null, null),
+                new ForumCategoryDto(null, "만남 게시판", "만남을 어레인지 하는 공간입니다.", 0, 0, null, null, null, null),
+                new ForumCategoryDto(null, "레시피 리뷰/토론 게시판", "올라온 레시피들을 리뷰 및 토론하는 공간입니다.", 0, 0, null, null, null, null)
+        );
+
+        for (ForumCategoryDto categoryDto : predefinedCategories) {
+            ForumCategoryDto existing = elasticService.getCategoryByTitle(categoryDto.getTitle());
+            if (existing == null) {
+                log.info("Creating category: {}", categoryDto.getTitle());
+                elasticService.createCategory(categoryDto);
+            } else {
+                log.info("Category already exists: {}", categoryDto.getTitle());
+            }
+        }
     }
+
 
     /**
      * [전체 카테고리 조회 메서드]
