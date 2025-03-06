@@ -17,12 +17,6 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
   const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 
   useEffect(() => {
-    if (phone) {
-      setVerify((prev) => ({ ...prev, timer: 300, active: false }));
-    }
-  }, [phone]);
-
-  useEffect(() => {
     if (verify.active && verify.timer > 0) {
       const timer = setInterval(() => {
         setVerify((prev) => ({ ...prev, timer: prev.timer - 1 }));
@@ -42,7 +36,6 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
   const onClickPhoneVerify = async () => {
     if (isRequestInProgress) return;
     setIsRequestInProgress(true);
-
     if (!phone) {
       setIsRequestInProgress(false);
       return;
