@@ -57,7 +57,7 @@ const MatchInput = ({ setter }: MatchInputProps) => {
 
   const handleSetter = useCallback(() => {
     if (isValidFormat && isDuplicate && value !== "") {
-      setter(value, "비밀번호");
+      setter(value, "password");
     }
   }, [isValidFormat, isDuplicate, value, setter]);
 

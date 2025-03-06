@@ -53,16 +53,20 @@ public class AuthService {
 
 	// 회원가입
 	
-	public boolean signup(SignupDto signupDto) {
-
-		if (memberRepository.existsByEmail(signupDto.getEmail())) {
-			throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+	public String signup(SignupDto signupDto) {
+		try {
+			if (memberRepository.existsByEmail(signupDto.getEmail())) {
+				throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+			}
+			
+			// 엔티티 변환 및 저장
+			Member member = signupDto.toEntity(passwordEncoder);
+			memberRepository.save(member);
+			return "성공";
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			return e.getMessage();
 		}
-
-		// 엔티티 변환 및 저장
-		Member member = signupDto.toEntity(passwordEncoder);
-		memberRepository.save(member);
-		return true;
 	}
 
 

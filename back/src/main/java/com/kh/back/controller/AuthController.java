@@ -54,8 +54,8 @@
 
 		// 회원 가입
 		@PostMapping("/signup")
-		public ResponseEntity<Boolean> signup(@RequestBody SignupDto signupDto) {
-			boolean isSuccess = authService.signup(signupDto);
+		public ResponseEntity<String> signup(@RequestBody SignupDto signupDto) {
+			String  isSuccess = authService.signup(signupDto);
 			return ResponseEntity.ok(isSuccess);
 		}
 
@@ -74,10 +74,10 @@
 			return ResponseEntity.ok(isValid);
 		}
 
-		@PostMapping("/sendSms")
-		public ResponseEntity<String> sendSms(@RequestBody String phone) {
+		@GetMapping("/sendSms/{phone}")
+		public ResponseEntity<String> sendSms(@PathVariable String phone) {
 			String result = smsService.sendVerificationCode(phone);
-			log.info("SMS 전송 결과: {}", ResponseEntity.ok(result));
+			log.info("SMS 전송 결과: {}", result);
 			return ResponseEntity.ok(result);
 		}
 

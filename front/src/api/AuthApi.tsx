@@ -40,7 +40,8 @@ const AuthApi = {
     );
   },
   sendVerificationCode: async (phone: string) => {
-    return await axios.post<string>(Commons.BASE_URL + "/auth/sendSms", phone);
+    console.log(phone);
+    return await axios.get<string>(Commons.BASE_URL + `/auth/sendSms/${phone}`);
   },
   changePassword: async (pwd: string) => {
     return await axios.post<boolean>(
@@ -49,7 +50,7 @@ const AuthApi = {
     );
   },
   sendPw: async (email: string) => {
-    return await axios.post<boolean>(Commons.BASE_URL + "/auth/sendPw", email);
+    return await axios.post<boolean>(Commons.BASE_URL + "/auth/sendPw", {email});
   },
   verifyEmailToken: async (request: EmailTokenVerificationDto) => {
     return await axios.post<boolean>(
