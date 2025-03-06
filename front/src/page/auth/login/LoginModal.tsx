@@ -19,7 +19,8 @@ import {
   Line,
   SignupTextButton,
   Slash,
-  SnsLoginText, SnsSignInButton,
+  SnsLoginText,
+  SnsSignInButton,
   SocialButtonsContainer,
   TextButton,
   TextButtonContainer,
@@ -29,9 +30,9 @@ import { loginReqDto, loginResDto } from "../../../api/dto/AuthDto";
 import AuthApi from "../../../api/AuthApi";
 import axios from "axios";
 import { Dialog, DialogTitle, Tooltip } from "@mui/material";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faComment, faN} from "@fortawesome/free-solid-svg-icons";
-import GoogleIcon from '@mui/icons-material/Google';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faComment, faN } from "@fortawesome/free-solid-svg-icons";
+import GoogleIcon from "@mui/icons-material/Google";
 
 const LoginModal = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -45,11 +46,10 @@ const LoginModal = () => {
     window.location.href = SNS_SIGN_IN_URL(type);
   };
 
-  const onClickOpenModal = (type : "signup" | "findPw" | "findId") => {
-    dispatch(closeModal("login"))
-    dispatch(openModal(type))
-  }
-
+  const onClickOpenModal = (type: "signup" | "findPw" | "findId") => {
+    dispatch(closeModal("login"));
+    dispatch(openModal(type));
+  };
 
   const onClickLogin = async () => {
     try {
@@ -59,7 +59,12 @@ const LoginModal = () => {
 
       const loginRes: loginResDto | null = rsp.data;
       if (loginRes !== null && loginRes.grantType === "Bearer") {
-        dispatch(setToken({accessToken: loginRes.accessToken, refreshToken: loginRes.refreshToken}));
+        dispatch(
+          setToken({
+            accessToken: loginRes.accessToken,
+            refreshToken: loginRes.refreshToken,
+          })
+        );
         dispatch(closeModal("login"));
       } else {
         console.log("잘못된 아이디 또는 비밀번호 입니다.");
@@ -111,7 +116,11 @@ const LoginModal = () => {
   };
 
   return (
-    <Dialog open={loginModal} onClose={() => dispatch(closeModal("login"))} sx={{padding: "10px"}}>
+    <Dialog
+      open={loginModal}
+      onClose={() => dispatch(closeModal("login"))}
+      sx={{ padding: "10px" }}
+    >
       <DialogTitle>로그인</DialogTitle>
       <Container>
         <form onSubmit={(e) => e.preventDefault()}>
@@ -154,18 +163,30 @@ const LoginModal = () => {
           <SnsLoginText>SNS 계정 간편 로그인</SnsLoginText>
           <SocialButtonsContainer>
             <Tooltip title="네이버 로그인">
-              <SnsSignInButton onClick={() => onSnsSignInButtonClickHandler("naver")} color = "white" bgColor = "#03C75A">
+              <SnsSignInButton
+                onClick={() => onSnsSignInButtonClickHandler("naver")}
+                color="white"
+                bgColor="#03C75A"
+              >
                 <FontAwesomeIcon icon={faN} />
               </SnsSignInButton>
             </Tooltip>
             <Tooltip title="카카오 로그인">
-              <SnsSignInButton onClick={() => onSnsSignInButtonClickHandler("kakao")} color="#3C1E1E" bgColor="#FEE500">
-                <FontAwesomeIcon icon={faComment}/>
+              <SnsSignInButton
+                onClick={() => onSnsSignInButtonClickHandler("kakao")}
+                color="#3C1E1E"
+                bgColor="#FEE500"
+              >
+                <FontAwesomeIcon icon={faComment} />
               </SnsSignInButton>
             </Tooltip>
             <Tooltip title="구글 로그인">
-              <SnsSignInButton onClick={() => onSnsSignInButtonClickHandler("google")} color="white" bgColor="#4285F4">
-                <GoogleIcon/>
+              <SnsSignInButton
+                onClick={() => onSnsSignInButtonClickHandler("google")}
+                color="white"
+                bgColor="#4285F4"
+              >
+                <GoogleIcon />
               </SnsSignInButton>
             </Tooltip>
           </SocialButtonsContainer>

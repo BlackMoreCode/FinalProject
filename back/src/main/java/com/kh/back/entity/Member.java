@@ -35,33 +35,43 @@ public class Member {
 
     @Column
     private String memberImg;
+
     @Column(length = 50)
     private String type; // 가입 방식 (예: "kakao", "naver", "direct")
+
     
     @Column(name = "refresh_token")
     private String refreshToken;
 
     @Column(unique = true, length = 13)
     private String phone;
+
     @Column(name = "member_reg_date")
     private LocalDateTime regDate;
 
     @Enumerated(EnumType.STRING)
     private Authority authority;
-    
+
+    @Column(length = 255)
+    private String introduce; // 자기 소개 필드 추가
+
+    // CustomStyle과 1:1 관계 설정 (Member 삭제 시 CustomStyle도 삭제됨)
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private CustomStyle customStyle;
 
     @Builder
-    public Member(String nickName, String email, String pwd, String name, String phone, LocalDateTime regDate, Authority authority,String memberImg) {
+    public Member(String nickName, String email, String pwd, String name, String phone, LocalDateTime regDate, Authority authority, String memberImg, String introduce) {
         this.nickName = nickName;
         this.email = email;
         this.pwd = pwd;
         this.name = name;
         this.phone = phone;
         this.regDate = regDate;
-        this.authority = authority; // Enum 타입
+        this.authority = authority;
         this.memberImg = memberImg;
-
+        this.introduce = introduce;
     }
+
     public Member(String userId, String email, String type, String phone, String name, String nickName, LocalDateTime regDate) {
 				this.userId = userId;
                 this.phone = phone;
