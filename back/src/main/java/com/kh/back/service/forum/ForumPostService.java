@@ -6,7 +6,7 @@ import com.kh.back.dto.forum.response.ForumPostResponseDto;
 import com.kh.back.dto.forum.response.PaginationDto;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.dto.python.SearchResDto;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ForumEsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

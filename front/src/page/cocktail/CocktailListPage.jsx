@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCocktailList } from "../../api/CocktailApi";
+import { fetchRecipeList } from "../../api/RecipeListApi";
 import placeholder from "./style/placeholder.jpg";
 import placeholder2 from "./style/placeholder2.png";
 
@@ -35,11 +35,12 @@ const CocktailListPage = () => {
         const categoryUsed =
           catParam !== undefined ? catParam : selectedCategory;
 
-        const response = await fetchCocktailList(
+        const response = await fetchRecipeList(
           query,
           "cocktail",
           categoryUsed,
-          pageNumber,
+          "",
+          page,
           20
         );
         console.log("loadCocktails 응답:", response);

@@ -1,17 +1,17 @@
-
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchFoodList } from "../../api/FoodApi";
+import { fetchRecipeList } from "../../api/RecipeListApi";
 import placeholder2 from "./style/placeholder2.png";
 
 /**
- * 음식 레시피 목록 페이지
+ * 음식 레시피 목록 페이지 (작은 카드 버전)
+ * - 칵테일 페이지와 동일한 스타일을 사용하고, 카드 사이즈를 줄임.
  * - 검색어(query)와 필터(카테고리 또는 조리방법)를 적용
  * - Intersection Observer와 React ref를 사용해 무한 스크롤 구현
- * - 필터 클릭 시, 인자로 직접 넘겨 "두 번 클릭" 문제를 방지
+ * - 필터 클릭 시, 인자로 직접 넘겨 "두 번 클릭" 문제 해결
  */
 const FoodListPage = () => {
-  // -------------------- 기존 상태 --------------------
+  // -------------------- 상태 변수 --------------------
   const [foods, setFoods] = useState([]); // 음식 레시피 목록
   const [query, setQuery] = useState(""); // 검색어
   const [selectedFilterType, setSelectedFilterType] = useState("카테고리");
@@ -22,7 +22,7 @@ const FoodListPage = () => {
   const [page, setPage] = useState(1); // 현재 페이지 번호
   const [hasMore, setHasMore] = useState(true); // 추가 데이터 존재 여부
   const observerRef = useRef(null); // IntersectionObserver 저장용 ref
-  const sentinelRef = useRef(null); // 감시 대상 요소(신호 역할)의 ref
+  const sentinelRef = useRef(null); // 감시 대상 요소(ref)
 
   const navigate = useNavigate();
 
@@ -35,7 +35,6 @@ const FoodListPage = () => {
   const loadFoods = useCallback(
     async (pageNumber, catParam, methodParam) => {
       try {
-        // 인자로 받은 값이 있으면 우선 사용, 없으면 상태값 사용
         let finalCategory =
           catParam !== undefined ? catParam : selectedCategory;
         let finalMethod =
@@ -48,8 +47,9 @@ const FoodListPage = () => {
           finalCategory = "";
         }
 
-        const response = await fetchFoodList(
+        const response = await fetchRecipeList(
           query,
+          "food",
           finalCategory,
           finalMethod,
           pageNumber,
@@ -63,11 +63,7 @@ const FoodListPage = () => {
           setFoods((prev) => [...prev, ...response]);
         }
 
-        if (!response || response.length < 20) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        setHasMore(response && response.length === 20);
       } catch (error) {
         console.error("음식 레시피 목록 조회 중 에러:", error);
       }
@@ -107,17 +103,16 @@ const FoodListPage = () => {
     observerRef.current = observer;
   }, [handleObserver]);
 
-  // -------------------- page 변경 시 추가 로딩 --------------------
+  // -------------------- 페이지 변경 시 추가 데이터 로드 --------------------
   useEffect(() => {
     if (page > 1) {
       loadFoods(page);
     }
   }, [page, loadFoods]);
 
-  // -------------------- 컴포넌트 마운트 시 Observer 설정 --------------------
+  // -------------------- 컴포넌트 마운트 시 초기 설정 --------------------
   useEffect(() => {
     resetObserver();
-    // 첫 페이지 데이터 로딩
     loadFoods(1);
     return () => {
       if (observerRef.current) {
@@ -200,7 +195,7 @@ const FoodListPage = () => {
         </div>
       </section>
 
-      {/* 필터 타입 선택 섹션 */}
+      {/* 필터 옵션 섹션 */}
       <section className="mb-8 text-center">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           원하는 필터 유형을 선택하세요
@@ -213,7 +208,7 @@ const FoodListPage = () => {
               setSelectedCategory("");
               setSelectedCookingMethod("");
               setPage(1);
-              loadFoods(1); // 필터 변경 시 첫 페이지 로드
+              loadFoods(1);
               resetObserver();
             }}
             className="p-2 border rounded border-kakiBrown dark:border-darkKaki"
@@ -309,7 +304,7 @@ const FoodListPage = () => {
         </div>
       </section>
 
-      {/* sentinel 요소: ref를 부여하여 Intersection Observer가 감시 */}
+      {/* Sentinel 요소: Intersection Observer 감시 대상 */}
       {hasMore && <div ref={sentinelRef} style={{ height: "50px" }} />}
     </div>
   );

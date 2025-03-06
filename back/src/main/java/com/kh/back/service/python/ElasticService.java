@@ -30,53 +30,32 @@ public class ElasticService {
 	private final ObjectMapper objectMapper;
 
 	/**
-	 * [오버로드 메서드: 기존 칵테일 검색용]
-	 * - 칵테일 로직처럼 '조리방법(cookingMethod)'이 필요 없는 경우를 위해
-	 * - 예전 방식대로 5개 파라미터만 받는 메서드를 추가하여 하위 호환성을 유지
-	 * - 내부적으로는 6개 파라미터를 받는 메서드를 호출하며, cookingMethod=""로 처리
+	 * [통합 검색 메서드: 칵테일/음식]
+	 * - 기존 오버로딩 메서드를 제거하고,
+	 *   하나의 메서드로 통합.
+	 * - 필요한 경우 cookingMethod를 빈 문자열("")로 전달.
 	 *
-	 * @param q        검색어 (빈 문자열이면 전체 검색)
-	 * @param type     검색 타입 (예: "cocktail", "food")
-	 * @param category 카테고리 (빈 문자열이면 필터 없음)
-	 * @param page     페이지 번호
-	 * @param size     페이지 당 항목 수
-	 * @return 검색 결과 목록 (SearchListResDto)
-	 */
-	public List<SearchListResDto> search(String q, String type, String category, Integer page, Integer size) {
-		// cookingMethod를 ""(빈 문자열)로 지정하여 6개짜리 메서드를 호출
-		return search(q, type, category, "", page, size);
-	}
-
-	/**
-	 * [신규 메서드: 음식 검색 포함]
-	 * - 기존 칵테일 검색뿐만 아니라, 음식 검색 시 '조리방법(cookingMethod)' 필터도 가능
-	 * - 호출부에서 cookingMethod가 필요 없는 경우에는 ""로 넘겨주면 됨
-	 *
-	 * @param q             검색어 (빈 문자열일 경우 전체 검색)
-	 * @param type          검색 타입 (예: "cocktail", "food")
-	 * @param category      카테고리 (예: "반찬", 없으면 "")
-	 * @param cookingMethod 조리방법 (예: "찌기", 없으면 "")
+	 * @param q             검색어 (빈 문자열이면 전체 검색)
+	 * @param type          검색 타입 ("cocktail", "food", etc.)
+	 * @param category      카테고리 (빈 문자열이면 필터 없음)
+	 * @param cookingMethod 조리방법 (빈 문자열이면 필터 없음)
 	 * @param page          페이지 번호
-	 * @param size          한 페이지 당 항목 수
+	 * @param size          페이지 당 항목 수
 	 * @return 검색 결과 목록 (SearchListResDto)
 	 */
 	public List<SearchListResDto> search(String q, String type, String category, String cookingMethod, Integer page, Integer size) {
 		try {
-			// UTF-8 인코딩 처리
 			String encodedQuery = URLEncoder.encode(q, StandardCharsets.UTF_8);
 			String encodedType = URLEncoder.encode(type, StandardCharsets.UTF_8);
 
-			// category가 빈 문자열이 아니면 &category=... 파라미터로 추가
 			String categoryParam = (category != null && !category.isEmpty())
 					? "&category=" + URLEncoder.encode(category, StandardCharsets.UTF_8)
 					: "";
 
-			// cookingMethod가 빈 문자열이 아니면 &cookingMethod=... 파라미터로 추가
 			String methodParam = (cookingMethod != null && !cookingMethod.isEmpty())
 					? "&cookingMethod=" + URLEncoder.encode(cookingMethod, StandardCharsets.UTF_8)
 					: "";
 
-			// 최종적으로 호출할 URI 구성
 			URI uri = new URI(flaskBaseUrl + "/search?q=" + encodedQuery
 					+ "&type=" + encodedType
 					+ categoryParam
@@ -84,38 +63,56 @@ public class ElasticService {
 					+ "&page=" + page
 					+ "&size=" + size);
 
-			// 로그 기록
-			log.info("**[DEBUG]** search() about to call Flask with URI: {}", uri);
-			log.info("**[DEBUG]** (q={}, type={}, category={}, cookingMethod={}, page={}, size={})",
-					q, type, category, cookingMethod, page, size);
+			log.info("[search] Calling Flask with URI: {}", uri);
 
-			// Flask 백엔드 호출
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			log.warn("검색의 flask 응답 : {}", response);
+			log.info("[search] Flask response: {}", response);
 
-			// 응답 JSON 문자열을 List<DTO>로 변환
 			return convertResToList(response.getBody(), type);
 
 		} catch (Exception e) {
-			log.error("일반 검색중 에러 {}-{}-{}-{}-{} : {}", q, type, category, page, size, e.getMessage());
+			log.error("검색 중 에러 발생 (q={}, type={}, category={}, cookingMethod={}, page={}, size={}): {}",
+					q, type, category, cookingMethod, page, size, e.getMessage());
 			return null;
 		}
 	}
 
 	/**
 	 * [상세 조회 메서드]
-	 * - 기존과 동일한 로직
+	 * - 칵테일/음식 등 타입에 따라 적절한 DTO로 매핑
 	 */
 	public SearchResDto detail(String id, String type) {
 		try {
 			URI uri = new URI(flaskBaseUrl + "/detail/" + id + "?type=" + type);
-			log.info("**[DEBUG]** detail() about to call Flask with URI: {}", uri);
+			log.info("[detail] Calling Flask with URI: {}", uri);
 
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			log.warn("상세정보의 flask 응답 : {}", response);
+			log.info("[detail] Flask response: {}", response);
+
 			return convertResToDto(response.getBody(), type);
 		} catch (Exception e) {
-			log.error("세부 사항 조회중 에러 {}-{} : {}", id, type, e.getMessage());
+			log.error("상세 조회 중 에러 (id={}, type={}): {}", id, type, e.getMessage());
+			return null;
+		}
+	}
+
+	/**
+	 * [레시피 업로드 메서드]
+	 * - 예: Flask의 /upload/one 엔드포인트 호출
+	 */
+	public String uploadRecipe(String jsonData) {
+		try {
+			URI uri = new URI(flaskBaseUrl + "/upload/one");
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpEntity<String> requestEntity = new HttpEntity<>(jsonData, headers);
+			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
+
+			log.info("레시피 업로드 응답: {}", response.getBody());
+			return response.getBody();
+		} catch (Exception e) {
+			log.error("레시피 업로드 중 에러 발생: {}", e.getMessage());
 			return null;
 		}
 	}
@@ -123,25 +120,25 @@ public class ElasticService {
 	/**
 	 * [검색 결과 변환 메서드]
 	 * - JSON 응답 문자열을 List 형태로 변환
-	 * - type이 "cocktail"이면 칵테일 전용 DTO,
-	 *   type이 "food"이면 음식 전용 DTO로 매핑,
-	 *   (forum 관련 코드는 제거됨)
 	 */
 	public List<SearchListResDto> convertResToList(String response, String type) throws IOException {
 		switch (type) {
 			case "cocktail":
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailListResDto.class));
+				return objectMapper.readValue(
+						response,
+						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailListResDto.class)
+				);
 			case "food":
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, FoodListResDto.class));
+				return objectMapper.readValue(
+						response,
+						objectMapper.getTypeFactory().constructCollectionType(List.class, FoodListResDto.class)
+				);
 			case "cocktail_ingredient":
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailIngListResDto.class));
-			case "food_ingredient":
-				// 필요 시 FoodIngredient DTO 생성 후 사용 가능
-				return null;
-			// Removed forum and feed cases.
+				return objectMapper.readValue(
+						response,
+						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailIngListResDto.class)
+				);
+			// 다른 타입은 필요 시 추가
 			default:
 				return null;
 		}
@@ -157,7 +154,7 @@ public class ElasticService {
 				return objectMapper.readValue(response, CocktailResDto.class);
 			case "food":
 				return objectMapper.readValue(response, FoodResDto.class);
-			// Removed forum and feed cases.
+			// 다른 타입은 필요 시 추가
 			default:
 				return null;
 		}
