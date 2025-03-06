@@ -3,7 +3,7 @@ package com.kh.back.controller.forum;
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
 import com.kh.back.service.forum.ForumPostCommentService;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

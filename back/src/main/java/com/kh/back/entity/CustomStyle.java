@@ -1,5 +1,6 @@
 package com.kh.back.entity;
 
+import com.kh.back.entity.member.Member;
 import lombok.*;
 
 import javax.persistence.*;

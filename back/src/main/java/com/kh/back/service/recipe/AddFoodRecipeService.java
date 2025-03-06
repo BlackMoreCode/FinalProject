@@ -3,7 +3,7 @@ package com.kh.back.service.recipe;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.back.dto.recipe.request.AddFoodRecipeDto;
 import com.kh.back.service.FirebaseService;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ElasticService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

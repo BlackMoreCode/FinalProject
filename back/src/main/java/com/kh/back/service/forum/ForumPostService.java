@@ -82,6 +82,8 @@ public class ForumPostService {
 
     /**
      * [카테고리별 게시글 조회 + 페이지네이션]
+     * KR: 기존에는 JPA의 PageRequest를 사용했으나, ES에서는 from/size 파라미터를 사용.
+     *     ElasticService.search(...)를 통해 type="forum"으로 검색 + 카테고리 필터를 적용.
      */
     public PaginationDto<ForumPostResponseDto> getPostsByCategory(Integer categoryId, int page, int size) {
         log.info("Fetching posts for category ID: {}, page: {}, size: {}", categoryId, page, size);
@@ -106,8 +108,11 @@ public class ForumPostService {
         return new PaginationDto<>(postList, page, totalPages, totalElements);
     }
 
+
     /**
      * [게시글 상세 조회]
+     * KR: 기존 JPA -> findById => now we do ES calls or "detail" endpoint.
+     *  ElasticService의 detail 메서드를 호출하여 게시글 상세 정보를 가져옵니다.
      */
     public Optional<ForumPostResponseDto> getPostDetails(Integer postId) {
         log.info("Fetching details for post ID: {}", postId);

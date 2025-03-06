@@ -1,6 +1,6 @@
 package com.kh.back.entity.chat;
 
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

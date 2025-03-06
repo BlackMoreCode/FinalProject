@@ -1,7 +1,7 @@
 package com.kh.back.repository.auth;
 
 
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.entity.auth.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -49,7 +49,7 @@ public class TestController {
 			@RequestParam(defaultValue = "10") int size
 	) {
 		return ResponseEntity.ok(
-				elasticService.search(q, type, category, page, size)
+				elasticService.search(q, type, category, null, page, size)
 		);
 	}
 

@@ -1,7 +1,8 @@
-package com.kh.back.entity;
+package com.kh.back.entity.member;
 
 
 import com.kh.back.constant.Authority;
+import com.kh.back.entity.CustomStyle;
 import lombok.*;
 
 import javax.persistence.*;

@@ -62,17 +62,21 @@ public class ElasticService {
 	 */
 	public List<SearchListResDto> search(String q, String type, String category, String cookingMethod, Integer page, Integer size) {
 		try {
+			// UTF-8 인코딩 처리
 			String encodedQuery = URLEncoder.encode(q, StandardCharsets.UTF_8);
 			String encodedType = URLEncoder.encode(type, StandardCharsets.UTF_8);
 
+			// category가 빈 문자열이 아니면 &category=... 파라미터로 추가
 			String categoryParam = (category != null && !category.isEmpty())
 					? "&category=" + URLEncoder.encode(category, StandardCharsets.UTF_8)
 					: "";
 
+			// cookingMethod가 빈 문자열이 아니면 &cookingMethod=... 파라미터로 추가
 			String methodParam = (cookingMethod != null && !cookingMethod.isEmpty())
 					? "&cookingMethod=" + URLEncoder.encode(cookingMethod, StandardCharsets.UTF_8)
 					: "";
 
+			// 최종적으로 호출할 URI 구성
 			URI uri = new URI(flaskBaseUrl + "/search?q=" + encodedQuery
 					+ "&type=" + encodedType
 					+ categoryParam
@@ -80,13 +84,16 @@ public class ElasticService {
 					+ "&page=" + page
 					+ "&size=" + size);
 
+			// 로그 기록
 			log.info("**[DEBUG]** search() about to call Flask with URI: {}", uri);
 			log.info("**[DEBUG]** (q={}, type={}, category={}, cookingMethod={}, page={}, size={})",
 					q, type, category, cookingMethod, page, size);
 
+			// Flask 백엔드 호출
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
 			log.warn("검색의 flask 응답 : {}", response);
 
+			// 응답 JSON 문자열을 List<DTO>로 변환
 			return convertResToList(response.getBody(), type);
 
 		} catch (Exception e) {
@@ -143,7 +150,6 @@ public class ElasticService {
 	/**
 	 * [상세 정보 변환 메서드]
 	 * - JSON 응답 문자열을 DTO 형태로 변환
-	 *   (forum 관련 코드는 제거됨)
 	 */
 	public SearchResDto convertResToDto(String response, String type) throws IOException {
 		switch (type) {

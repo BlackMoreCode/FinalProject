@@ -1,6 +1,6 @@
 package com.kh.back.repository.chat;
 
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.entity.chat.ChatMember;
 import com.kh.back.entity.chat.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
