@@ -24,12 +24,8 @@ public class CommentService {
 
 
     @Transactional
-    public boolean addComment(String token, CommentReqDto commentReqDto) {
+    public boolean addComment(Long memberId, CommentReqDto commentReqDto) {
         try {
-            // 멤버 ID 가져오기
-            Long memberId = memberService.getMemberId(token);
-
-            // 멤버 존재 여부 확인
             Member member = memberRepository.findById(memberId)
                     .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 

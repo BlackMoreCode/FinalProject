@@ -234,7 +234,7 @@ def detail(doc_id):
 
     try:
         # Elasticsearch 에서 해당 ID 문서 검색
-        response = es.get(index=index_name, id=id)
+        response = es.get(index=index_name, id=doc_id)
         return jsonify(response["_source"])  # 문서 데이터 반환
     except Exception as e:
         return jsonify({"error": str(e)}), 404  # 문서를 찾을 수 없을 경우 404 응답

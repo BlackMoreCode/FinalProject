@@ -6,22 +6,45 @@ import com.google.firebase.cloud.StorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
 @Service
 public class FirebaseService {
 
-    public String uploadImage(MultipartFile file) throws IOException {
+    // 이미지 리사이징, 압축 후 레시피 이름 폴더로 업로드
+    public String uploadImage(MultipartFile file, String recipeName) throws IOException {
         if (file == null || file.isEmpty()) {
-            System.out.println("파일이 없거나 비어 있음");
             throw new IllegalArgumentException("파일이 없습니다.");
         }
-        System.out.println("파일 이름: " + file.getOriginalFilename());
 
+        // 레시피 이름을 폴더명으로 사용 (공백 제거)
+        String folderName = "recipes/" + recipeName.replaceAll("\\s+", "_");
+
+        // 파일을 BufferedImage로 변환
+        BufferedImage originalImage = ImageIO.read(file.getInputStream());
+
+        // 400x400으로 리사이징
+        BufferedImage resizedImage = new BufferedImage(400, 400, originalImage.getType());
+        Graphics2D g = resizedImage.createGraphics();
+        g.drawImage(originalImage, 0, 0, 400, 400, null);
+        g.dispose();
+
+        // 이미지 압축 (화질 70%)
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ImageIO.write(resizedImage, "jpg", outputStream);
+        byte[] imageBytes = outputStream.toByteArray();
+
+        // Firebase Storage에 업로드
         Bucket bucket = StorageClient.getInstance().bucket();
-        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Blob blob = bucket.create(fileName, file.getBytes(), file.getContentType());
+        String fileName = folderName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename(); // 폴더 경로 추가
+        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
+
         return blob.getMediaLink();
     }
 }

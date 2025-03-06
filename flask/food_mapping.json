@@ -10,11 +10,7 @@
       "RCP_PAT2": {
         "type": "keyword"
       },
-
       "ATT_FILE_NO_MAIN": {
-        "type": "keyword"
-      },
-      "ATT_FILE_NO_MK": {
         "type": "keyword"
       },
       "ingredients": {

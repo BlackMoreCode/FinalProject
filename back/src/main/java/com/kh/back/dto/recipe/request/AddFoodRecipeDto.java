@@ -6,14 +6,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Data
-public class RecipeDetailDto {
+public class AddFoodRecipeDto {
     private String type;
     private String name;
     private String rcpWay2;
     private String rcpPat2;
     private String infoWgt;
-    private MultipartFile attFileNoMain; // 대표 이미지 파일 (소)
-    private MultipartFile attFileNoMk; // 대표 이미지 파일 (대)
+    private MultipartFile attFileNoMain;
+
     private String rcpNaTip;
     private List<Ingredients> rcpPartsDtls;
     private List<Manual> manuals;

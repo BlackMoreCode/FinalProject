@@ -1,13 +1,12 @@
 package com.kh.back.service.recipe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kh.back.dto.recipe.request.RecipeDetailDto;
+import com.kh.back.dto.recipe.request.AddFoodRecipeDto;
 import com.kh.back.service.FirebaseService;
 import com.kh.back.service.MemberService;
 import com.kh.back.service.python.ElasticService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -16,28 +15,24 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class RecipeService {
+public class AddFoodRecipeService {
     @Autowired
     private ElasticService elasticService;
     @Autowired
     private FirebaseService firebaseService;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private MemberService memberService;
+
 
     // 레시피 저장
-    public String saveRecipe(String token, RecipeDetailDto recipeRequest) {
+    public String saveRecipe(Long memberId, AddFoodRecipeDto recipeRequest) {
         try {
             // 이미지 업로드 및 URL 획득
-            String mainImageUrl = firebaseService.uploadImage(recipeRequest.getAttFileNoMain());
-            String largeImageUrl = firebaseService.uploadImage(recipeRequest.getAttFileNoMk());
-            Long memberId = memberService.getMemberId(token);
-
+            String mainImageUrl = firebaseService.uploadImage(recipeRequest.getAttFileNoMain(),recipeRequest.getName());
             List<Map<String, String>> manualsWithUrls = recipeRequest.getManuals().stream()
                     .map(manual -> {
                         try {
-                            String imageUrl = firebaseService.uploadImage(manual.getImageUrl());
+                            String imageUrl = firebaseService.uploadImage(manual.getImageUrl(),recipeRequest.getName());
                             Map<String, String> manualMap = new HashMap<>();
                             manualMap.put("text", manual.getText());
                             manualMap.put("imageUrl", imageUrl);
@@ -56,7 +51,6 @@ public class RecipeService {
             recipeData.put("RCP_PAT2", recipeRequest.getRcpPat2());
             recipeData.put("INFO_WGT", recipeRequest.getInfoWgt());
             recipeData.put("ATT_FILE_NO_MAIN", mainImageUrl);
-            recipeData.put("ATT_FILE_NO_MK", largeImageUrl);
             recipeData.put("RCP_NA_TIP", recipeRequest.getRcpNaTip());
             recipeData.put("RCP_PARTS_DTLS", recipeRequest.getRcpPartsDtls());
             recipeData.put("MANUALS", manualsWithUrls);
