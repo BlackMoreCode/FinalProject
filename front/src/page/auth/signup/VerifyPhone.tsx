@@ -22,7 +22,7 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
         setVerify((prev) => ({ ...prev, timer: prev.timer - 1 }));
       }, 1000);
       return () => clearInterval(timer);
-    } else if (verify.timer <= 0) {
+    } else if (verify.timer == 0) {
       setVerify((prev) => ({ ...prev, active: false }));
       dispatch(
         setRejectModal({
