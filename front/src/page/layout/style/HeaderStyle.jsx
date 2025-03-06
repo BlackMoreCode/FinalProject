@@ -24,12 +24,11 @@ export const PC = styled.div`
 
 export const Mobile = styled.div`
   display: none;
-  
+
   @media (max-width: 768px) {
     display: flex;
   }
 `;
-
 
 // 네비게이션 전체 래퍼
 export const Navbar = styled.nav`
@@ -83,7 +82,6 @@ export const BottomSection = styled.div`
   justify-content: flex-start;
   align-items: center;
   position: relative;
-  
 `;
 
 // PC 뷰용 메뉴 리스트 (ul)
@@ -111,16 +109,16 @@ export const NavLink = styled(RouterNavLink)`
   position: relative;
   display: flex;
   justify-content: center;
-  
+
   &:hover {
     color: #d1b6a3;
   }
-  
+
   &.active::after {
     content: "";
     position: absolute;
     left: 0;
-    bottom: -20px; /* 네비 바 하단 보더와 겹치도록 조정 */
+    bottom: -17px; /* 네비 바 하단 보더와 겹치도록 조정 */
     width: 100%;
     height: 3px;
     background-color: #6a4e23;
@@ -134,11 +132,11 @@ export const NavLink = styled(RouterNavLink)`
     position: relative;
     padding-bottom: 5px;
     width: 100%;
-    
+
     &:hover {
       color: #d1b6a3;
     }
-    
+
     &.active::after,
     &.active::before {
       content: "";
@@ -170,16 +168,16 @@ export const NavLink = styled(RouterNavLink)`
 `;
 
 export const DropDownSection = styled.div`
-    text-decoration: none;
-    color: #9f8473;
-    font-weight: bold;
-    position: relative;
-    display: flex;
-    align-items: center;
-    height: 150px;
-    justify-content: space-evenly;
-    flex-direction: column;
-  
+  text-decoration: none;
+  color: #9f8473;
+  font-weight: bold;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 150px;
+  justify-content: space-evenly;
+  flex-direction: column;
+
   &.active::after,
   &.active::before {
     content: "";
@@ -193,44 +191,43 @@ export const DropDownSection = styled.div`
     transition: opacity 0.3s ease, transform 0.3s ease; /* 애니메이션을 부드럽게 */
     z-index: 1; /* 두 선이 겹치지 않도록 z-index 추가 */
   }
-  
+
   &.active::after {
     bottom: 0; /* 아래쪽 선 */
   }
-  
+
   &.active::before {
-    top:  0; /* 위쪽 선 */
+    top: 0; /* 위쪽 선 */
   }
-  
+
   &.active::after,
   &.active::before {
     opacity: 1; /* 활성화되면 선이 나타남 */
     transform: scaleX(1); /* 애니메이션으로 확장 */
   }
-`
+`;
 
 export const DropDownButton = styled.button`
-    text-decoration: none;
-    color: #9f8473;
-    font-weight: bold;
-    cursor: pointer;
-    position: relative;
+  text-decoration: none;
+  color: #9f8473;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
 
+  &:hover {
+    color: #d1b6a3;
+  }
 
-    &:hover {
-        color: #d1b6a3;
-    }
-
-    &.active::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        bottom: -20px; /* 네비 바 하단 보더와 겹치도록 조정 */
-        width: 100%;
-        height: 3px;
-        background-color: #6a4e23;
-        transition: left 0.3s ease, width 0.3s ease; /* 밑줄 이동 애니메이션 */
-    }
+  &.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -20px; /* 네비 바 하단 보더와 겹치도록 조정 */
+    width: 100%;
+    height: 3px;
+    background-color: #6a4e23;
+    transition: left 0.3s ease, width 0.3s ease; /* 밑줄 이동 애니메이션 */
+  }
   @media (max-width: 768px) {
     color: #6a4e23;
     font-weight: bold;
@@ -238,7 +235,8 @@ export const DropDownButton = styled.button`
     position: relative;
     padding-bottom: 5px;
     width: 100%;
-`
+  }
+`;
 
 // 로그인 버튼
 export const LoginButton = styled.button`
@@ -269,7 +267,6 @@ export const HamburgerIcon = styled.div`
   }
 `;
 
-
 // 모바일 메뉴용 로그인 버튼
 export const MobileLoginButton = styled.button`
   background: none;
@@ -292,8 +289,6 @@ export const MobileLoginButton = styled.button`
 export const MenuItem = styled.div`
   width: 100%;
   text-align: center;
-  
-  
 `;
 
 /* ---------------------------------------

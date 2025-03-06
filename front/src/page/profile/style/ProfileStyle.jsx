@@ -5,11 +5,11 @@ export const ProfileHeaderContainer = styled.section`
   align-items: flex-start;
   gap: 2rem;
   margin-bottom: 2rem;
+  min-width: 600px;
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
     gap: 1rem;
+    min-width: 200px;
   }
 `;
 
@@ -20,8 +20,8 @@ export const ProfileImageWrapper = styled.div`
   overflow: hidden;
 
   @media (max-width: 768px) {
-    width: 100px;
-    height: 100px;
+    width: 60px;
+    height: 60px;
   }
 `;
 
