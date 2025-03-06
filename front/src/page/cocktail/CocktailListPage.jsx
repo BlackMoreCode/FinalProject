@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchCocktailList } from "../../api/CocktailApi";
 import placeholder from "./style/placeholder.jpg";
@@ -6,72 +6,121 @@ import placeholder2 from "./style/placeholder2.png";
 
 /**
  * 칵테일 목록 페이지
- * <p>
- *   - 검색어와 카테고리 필터를 함께 적용할 수 있는 UI 구성
- *   - 카테고리를 클릭하면 선택된 카테고리를 state로 저장하고, 검색어와 함께 API를 호출
- *   - "전체" 카테고리를 선택하면 빈 문자열("")로 처리하여 필터 해제
- * </p>
+ * - 검색어와 카테고리 필터를 적용
+ * - Intersection Observer와 React ref를 사용해 무한 스크롤 구현
+ * - 카테고리 클릭 시 인자로 직접 전달해 "두 번 클릭" 문제 해결
  */
 const CocktailListPage = () => {
-  /**
-   * @변경_사항_설명:
-   *  - 기존에는 selectedCategory가 변경될 때마다 무조건 "베르무트"라는
-   *    하드코딩된 검색어를 사용했음 -> 불필요한 AND 조건 발생
-   *  - 수정 후: 초기 로딩 시에는 별도의 useEffect를 두지 않고,
-   *    유저가 직접 "Search" 버튼을 누르거나, 카테고리를 선택할 때만
-   *    fetchCocktails()가 호출되도록 변경 가능
-   */
-  const [cocktails, setCocktails] = useState([]); // 칵테일 목록 (Our Recipes)
-  const [query, setQuery] = useState(""); // 검색어 상태
-  const [selectedCategory, setSelectedCategory] = useState(""); // 카테고리 상태
+  // -------------------- 상태 변수 --------------------
+  const [cocktails, setCocktails] = useState([]); // 칵테일 목록
+  const [query, setQuery] = useState(""); // 검색어
+  const [selectedCategory, setSelectedCategory] = useState(""); // 카테고리
+
+  // 무한 스크롤 관련
+  const [page, setPage] = useState(1); // 현재 페이지 번호
+  const [hasMore, setHasMore] = useState(true); // 추가 데이터 여부
+  const observerRef = useRef(null); // IntersectionObserver 저장용 ref
+  const sentinelRef = useRef(null); // 감시 대상 요소(ref)
 
   const navigate = useNavigate();
 
+  // -------------------- 데이터 로딩 함수 --------------------
   /**
-   * @함수_설명: 백엔드(Flask)에 검색어와 카테고리를 전달하여 칵테일 목록 조회
-   * @param {string} searchQuery - 검색어 (빈 문자열이면 전체)
-   * @param {string} category - 카테고리 필터 (빈 문자열이면 필터 해제)
+   * @param {number} pageNumber - 불러올 페이지 번호
+   * @param {string} catParam - 새 카테고리 (있다면), 없으면 selectedCategory 사용
    */
-  const fetchCocktails = async (searchQuery, category) => {
-    try {
-      // API 호출: query, type="cocktail", category, page=1, size=20
-      const response = await fetchCocktailList(
-        searchQuery,
-        "cocktail",
-        category,
-        1,
-        20
-      );
-      console.log("fetchCocktails 응답:", response);
+  const loadCocktails = useCallback(
+    async (pageNumber, catParam) => {
+      try {
+        const categoryUsed =
+          catParam !== undefined ? catParam : selectedCategory;
 
-      if (response !== null) {
-        setCocktails(response);
+        const response = await fetchCocktailList(
+          query,
+          "cocktail",
+          categoryUsed,
+          pageNumber,
+          20
+        );
+        console.log("loadCocktails 응답:", response);
+
+        if (pageNumber === 1) {
+          setCocktails(response);
+        } else {
+          setCocktails((prev) => [...prev, ...response]);
+        }
+
+        if (!response || response.length < 20) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+      } catch (error) {
+        console.error("칵테일 목록 조회 중 에러:", error);
       }
-    } catch (error) {
-      console.error("칵테일 목록 조회 중 에러:", error);
-    }
-  };
+    },
+    [query, selectedCategory]
+  );
 
-  /**
-   * @함수_설명: 칵테일 카드를 클릭 시 상세 페이지로 이동
-   * @param {string} id - 칵테일의 고유 ID
-   */
+  // -------------------- 검색/필터 시 첫 페이지 로드 --------------------
+  const fetchCocktailsData = useCallback(async () => {
+    setPage(1);
+    await loadCocktails(1, selectedCategory);
+    resetObserver();
+  }, [loadCocktails, selectedCategory]);
+
+  // -------------------- Intersection Observer 콜백 --------------------
+  const handleObserver = useCallback(
+    (entries) => {
+      const target = entries[0];
+      if (target.isIntersecting && hasMore) {
+        setPage((prev) => prev + 1);
+      }
+    },
+    [hasMore]
+  );
+
+  // -------------------- Observer 재설정 (React ref 사용) --------------------
+  const resetObserver = useCallback(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    const observer = new IntersectionObserver(handleObserver, {
+      threshold: 0.1,
+    });
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+    observerRef.current = observer;
+  }, [handleObserver]);
+
+  // -------------------- page 변경 시 추가 데이터 로드 --------------------
+  useEffect(() => {
+    if (page > 1) {
+      loadCocktails(page, selectedCategory);
+    }
+  }, [page, loadCocktails, selectedCategory]);
+
+  // -------------------- 컴포넌트 마운트 시 Observer 초기화 --------------------
+  useEffect(() => {
+    resetObserver();
+    loadCocktails(1, selectedCategory);
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [resetObserver, loadCocktails]);
+
+  // -------------------- 상세 페이지 이동 --------------------
   const handleSelectCocktail = (id) => {
     navigate(`/cocktails/${id}`);
   };
 
-  // 임시 추천 레시피
+  // -------------------- 임시 추천 레시피 --------------------
   const recommendedRecipes = [
-    {
-      id: "rec_1",
-      name: "마가리타",
-      image: placeholder2,
-    },
-    {
-      id: "rec_2",
-      name: "다이키리",
-      image: placeholder2,
-    },
+    { id: "rec_1", name: "마가리타", image: placeholder2 },
+    { id: "rec_2", name: "다이키리", image: placeholder2 },
     {
       id: "rec_3",
       name: "모히또",
@@ -79,7 +128,7 @@ const CocktailListPage = () => {
     },
   ];
 
-  // 예시 카테고리 목록 (실제 DB/ES 데이터에 맞춰 조정)
+  // -------------------- 예시 카테고리 목록 --------------------
   const categories = [
     "전체",
     "식전 칵테일",
@@ -90,14 +139,6 @@ const CocktailListPage = () => {
     "식후 칵테일",
     "핫 드링크",
   ];
-
-  /**
-   * @주의_사항:
-   *  - 기존에는 useEffect(() => fetchCocktails("베르무트", selectedCategory), [selectedCategory]) 형태였음.
-   *    -> 검색어를 강제로 "베르무트"로 고정하여 AND 조건이 계속 걸림
-   *  - 아래 로직으로 변경 시, 초기에는 자동 호출 없음 (원한다면 useEffect로 빈 검색어 & 빈 카테고리 불러올 수도 있음)
-   *  - 사용자가 "Search" 버튼을 누르거나, 카테고리를 클릭하면 API가 호출됨
-   */
 
   return (
     <div className="px-4 py-8">
@@ -123,8 +164,9 @@ const CocktailListPage = () => {
           />
           <button
             onClick={() => {
-              // 사용자가 직접 검색 버튼 클릭 시, 검색어 & 카테고리로 API 호출
-              fetchCocktails(query, selectedCategory);
+              setPage(1);
+              loadCocktails(1, selectedCategory);
+              resetObserver();
             }}
             className="p-2 bg-warmOrange dark:bg-deepOrange text-white rounded md:rounded-l-none hover:bg-orange-600 dark:hover:bg-deepOrange/90"
           >
@@ -133,7 +175,7 @@ const CocktailListPage = () => {
         </div>
       </section>
 
-      {/* Recipes For You (추천 레시피) */}
+      {/* 추천 레시피 섹션 */}
       <section className="mb-16">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           Recipes For You
@@ -165,61 +207,66 @@ const CocktailListPage = () => {
           원하는 카테고리를 선택하세요
         </h2>
         <div className="flex flex-wrap justify-center gap-3">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                // "전체"면 카테고리를 ""로 설정 (필터 해제)
-                const newCat = cat === "전체" ? "" : cat;
-                setSelectedCategory(newCat);
-                // 선택 시점에 검색 API 호출 (query는 현재 상태값 그대로)
-                fetchCocktails(query, newCat);
-              }}
-              className={`px-4 py-2 border rounded transition-colors ${
-                selectedCategory === cat ||
-                (cat === "전체" && selectedCategory === "")
-                  ? "bg-warmOrange dark:bg-deepOrange text-white"
-                  : "bg-white dark:bg-transparent text-kakiBrown dark:text-softBeige border-kakiBrown dark:border-darkKaki hover:bg-warmOrange dark:hover:bg-deepOrange"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const newCat = cat === "전체" ? "" : cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => {
+                  setSelectedCategory(newCat);
+                  setPage(1);
+                  loadCocktails(1, newCat, undefined);
+                  resetObserver();
+                }}
+                className={`px-4 py-2 border rounded transition-colors ${
+                  selectedCategory === cat ||
+                  (cat === "전체" && selectedCategory === "")
+                    ? "bg-warmOrange dark:bg-deepOrange text-white"
+                    : "bg-white dark:bg-transparent text-kakiBrown dark:text-softBeige border-kakiBrown dark:border-darkKaki hover:bg-warmOrange dark:hover:bg-deepOrange"
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {/* Our Recipes (실제 칵테일 목록) */}
+      {/* 레시피 목록 섹션 */}
       <section className="mb-16">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           Our Recipes
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {cocktails.map((cocktail) => (
+          {cocktails.map((food) => (
             <div
-              key={cocktail.id}
+              key={food.id}
               className="border border-kakiBrown dark:border-darkKaki rounded-lg overflow-hidden shadow hover:shadow-lg cursor-pointer transition-transform transform hover:scale-105"
-              onClick={() => handleSelectCocktail(cocktail.id)}
+              onClick={() => navigate(`/cocktails/${food.id}`)}
             >
               <img
-                src={cocktail.image || placeholder2}
-                alt={cocktail.name}
+                src={food.image || placeholder2}
+                alt={food.name}
                 className="w-full h-48 object-cover"
               />
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-kakiBrown dark:text-softBeige">
-                  {cocktail.name}
+                  {food.name}
                 </h3>
                 <p className="text-kakiBrown dark:text-softBeige">
-                  Category: {cocktail.category}
+                  Category: {food.category}
                 </p>
                 <p className="text-kakiBrown dark:text-softBeige">
-                  Likes: {cocktail.like || 0}
+                  Likes: {food.like || 0}
                 </p>
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* sentinel 요소: React ref를 사용 */}
+      {hasMore && <div ref={sentinelRef} style={{ height: "50px" }} />}
     </div>
   );
 };

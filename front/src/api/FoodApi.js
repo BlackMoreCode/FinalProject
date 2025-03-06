@@ -6,10 +6,11 @@ const BASE_URL = "http://localhost:8111";
 
 /**
  * 음식 레시피 리스트 조회 API 호출 함수
- * (카테고리 및 페이징 포함)
+ * (카테고리 및 조리방법 필터와 페이징 포함)
  *
  * @param {string} query - 검색어 (없으면 빈 문자열로 전달)
  * @param {string} [category=""] - 카테고리 필터 (예: "반찬", "국&찌개" 등)
+ * @param {string} [cookingMethod=""] - 조리방법 필터 (예: "찌기", "끓이기" 등)
  * @param {number} [page=1] - 페이지 번호
  * @param {number} [size=10] - 한 페이지 당 항목 수
  * @returns {Promise} - API 응답 데이터 (JSON 배열)
@@ -19,6 +20,7 @@ const BASE_URL = "http://localhost:8111";
 export const fetchFoodList = async (
   query,
   category = "",
+  cookingMethod = "",
   page = 1,
   size = 10
 ) => {
@@ -26,9 +28,10 @@ export const fetchFoodList = async (
     const response = await axios.get(`${BASE_URL}/api/foodrecipes/search`, {
       params: {
         q: query,
-        category,
-        page,
-        size,
+        category: category,
+        cookingMethod: cookingMethod, // 조리방법 필터 파라미터 추가
+        page: page,
+        size: size,
       },
     });
     return response.data;
@@ -55,3 +58,4 @@ export const fetchFoodDetail = async (foodId) => {
     throw error;
   }
 };
+

@@ -10,6 +10,8 @@ import { Outlet } from "react-router-dom";
 import React from "react";
 import PCHeader from "./PCHeader";
 import ModalComponents from "./ModalComponents";
+import MobileHeader from "./MobileHeader";
+import MainContainer from "../../component/MainContainer";
 
 
 const Layout = () => {
@@ -21,12 +23,16 @@ const Layout = () => {
       try {
         if (accessToken) {
           const rsp = await ReduxApi.getMyInfo();
+          console.log(rsp);
           if (rsp.data) {
             dispatch(setUserInfo(rsp.data));
           } else {
             dispatch(logout());
           }
-        } dispatch(setGuest())
+        }
+        else {
+          dispatch(setGuest())
+        }
       } catch (error) {
         console.log(error);
         dispatch(logout());
@@ -42,11 +48,13 @@ const Layout = () => {
           <PCHeader/>
         </PC>
         <Mobile>
-          {/*<MobileHeader/>*/}
+          <MobileHeader/>
         </Mobile>
       </Header>
       <ChatModal/>
-      <Outlet/>
+      <MainContainer>
+        <Outlet/>
+      </MainContainer>
       {/*<Footer/>*/}
       <ModalComponents/>
     </Background>

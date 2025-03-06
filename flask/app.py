@@ -103,6 +103,7 @@ def search():
         q = request.args.get("q", "")
         type_filter = request.args.get("type", "")
         category = request.args.get("category", "")
+        cooking_method = request.args.get("cookingMethod", "")
         page = request.args.get("page", 1, type=int)
         size = request.args.get("size", 20, type=int)
 
@@ -110,21 +111,88 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
-        query = {"match_all": {}}  # 기본적으로 모든 문서를 반환
+        # type_filter에 따라 필드명을 설정 (음식과 칵테일을 구분)
+        if type_filter == "food":
+            category_field = "RCP_PAT2"   # 음식은 ES 매핑에서 RCP_PAT2로 저장됨
+            cooking_field = "RCP_WAY2"    # 음식의 조리방법 필드
+            multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
+        else:
+            category_field = "category"   # 칵테일은 기존 필드 사용
+            cooking_field = "cookingMethod"  # 칵테일은 조리방법 필터가 없을 수 있으므로 기본값
+            multi_match_fields = ["name", "ingredients.ingredient", "category"]
 
-        if q and category:
+        # 조건에 따라 쿼리를 구성합니다.
+        if q and category and cooking_method:
             query = {
                 "bool": {
                     "must": [
                         {
                             "multi_match": {
                                 "query": q,
-                                "fields": ["name", "ingredients.ingredient", "category"]
+                                "fields": multi_match_fields
                             }
                         },
                         {
                             "term": {
-                                "category": {"value": category}
+                                category_field: {"value": category}
+                            }
+                        },
+                        {
+                            "term": {
+                                cooking_field: {"value": cooking_method}
+                            }
+                        }
+                    ]
+                }
+            }
+        elif q and category:
+            query = {
+                "bool": {
+                    "must": [
+                        {
+                            "multi_match": {
+                                "query": q,
+                                "fields": multi_match_fields
+                            }
+                        },
+                        {
+                            "term": {
+                                category_field: {"value": category}
+                            }
+                        }
+                    ]
+                }
+            }
+        elif q and cooking_method:
+            query = {
+                "bool": {
+                    "must": [
+                        {
+                            "multi_match": {
+                                "query": q,
+                                "fields": multi_match_fields
+                            }
+                        },
+                        {
+                            "term": {
+                                cooking_field: {"value": cooking_method}
+                            }
+                        }
+                    ]
+                }
+            }
+        elif category and cooking_method:
+            query = {
+                "bool": {
+                    "must": [
+                        {
+                            "term": {
+                                category_field: {"value": category}
+                            }
+                        },
+                        {
+                            "term": {
+                                cooking_field: {"value": cooking_method}
                             }
                         }
                     ]
@@ -134,58 +202,39 @@ def search():
             query = {
                 "multi_match": {
                     "query": q,
-                    "fields": ["name", "ingredients", "category"]
+                    "fields": multi_match_fields
                 }
             }
         elif category:
             query = {
                 "term": {
-                    "category": {"value": category}
+                    category_field: {"value": category}
                 }
             }
+        elif cooking_method:
+            query = {
+                "term": {
+                    cooking_field: {"value": cooking_method}
+                }
+            }
+        else:
+            query = {"match_all": {}}
+
+        # _source 필드 설정 (음식이면 조리방법 필드를 포함)
+        if type_filter == "food":
+            source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv"]
+        else:
+            source_fields = ["name", "category", "like", "abv"]
 
         body = {
             "from": (page - 1) * size,
             "size": size,
-            "_source": ["name", "category", "like", "abv"],
+            "_source": source_fields,
             "query": query
         }
 
         res = es.search(index=index_name, body=body)
 
-        results = [
-            {**hit["_source"], "id": hit["_id"]}
-            for hit in res["hits"]["hits"]
-        ]
-
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/search/ingredient", methods=["GET"])
-def search_ingredient():
-    try:
-        ingredient = request.args.get("ingredient", "")
-        type_filter = request.args.get("type", "")
-        page = request.args.get("page", 1, type=int)
-        size = request.args.get("size", 20, type=int)
-
-        if not ingredient:
-            return jsonify({"error": "Ingredient is required"}), 400
-
-        if not type_filter:
-            return jsonify({"error": "'type' filter is required, use 'cocktail' or 'food'"}), 400
-
-        index_name = f"{type_filter}_ingredient"
-
-        res = es.search(index=index_name, body={
-            "from": (page - 1) * size,
-            "size": size,
-            "_source": ["name", "category", "like"],
-            "query": {
-                "match": {"name": ingredient}
-            }
-        })
         results = [
             {**hit["_source"], "id": hit["_id"]}
             for hit in res["hits"]["hits"]

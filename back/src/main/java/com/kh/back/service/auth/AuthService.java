@@ -73,6 +73,7 @@ public class AuthService {
 
 	public TokenDto login(LoginDto loginDto) {
 		try {
+			log.warn("받아온 데이터{}", loginDto);
 			Member member = memberRepository.findByEmail(loginDto.getEmail())
 					.orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
 

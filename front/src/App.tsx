@@ -11,6 +11,7 @@ import CocktailDetailPage from "./page/cocktail/CocktailDetailPage";
 import FoodListPage from "./page/food/FoodListPage";
 import ProfileCustomization from "./page/profile/cardcustom/ProfileCustomization";
 import Layout from "./page/layout/Layout";
+import GlobalStyle from "./page/layout/style/GlobalStyle";
 
 import RecipeDetail from "./page/RecipeDetail";
 import RecipeUploader from "./page/AddRecipeDetail";
@@ -19,6 +20,7 @@ function App() {
   return (
     // 라이트 모드: bg-white, 다크 모드: bg-[#2B1D0E], 전체 화면 높이
     <div className="bg-white dark:bg-[#2B1D0E] min-h-screen transition-colors">
+      <GlobalStyle/>
       <Router>
           <Routes>
             <Route path="/" element={<Layout/>}>

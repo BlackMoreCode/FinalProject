@@ -20,19 +20,21 @@ public class FoodService {
 
     /**
      * 음식 레시피 검색
-     * @param q        검색어 (빈 문자열이면 전체 검색)
-     * @param category 카테고리
-     * @param page     페이지 번호
-     * @param size     페이지 당 항목 수
+     *
+     * @param q             검색어 (빈 문자열이면 전체 검색)
+     * @param category      카테고리 필터 (빈 문자열이면 필터 해제)
+     * @param cookingMethod 조리방법 필터 (빈 문자열이면 필터 해제)
+     * @param page          페이지 번호
+     * @param size          페이지 당 항목 수
      * @return FoodListResDto 목록
      */
-    public List<FoodListResDto> searchFoodRecipes(String q, String category, int page, int size) {
-        // Flask 쪽에 type="food"로 요청
-        List<SearchListResDto> rawList = elasticService.search(q, "food", category, page, size);
+    public List<FoodListResDto> searchFoodRecipes(String q, String category, String cookingMethod, int page, int size) {
+        // Flask(Elasticsearch) 쪽에 type="food"와 함께 category, cookingMethod 필터를 전달
+        List<SearchListResDto> rawList = elasticService.search(q, "food", category, cookingMethod, page, size);
         if (rawList == null) {
             return Collections.emptyList();
         }
-        // rawList에 들어있는 SearchListResDto를 FoodListResDto로 캐스팅
+        // SearchListResDto를 FoodListResDto로 캐스팅하여 반환
         return rawList.stream()
                 .map(item -> (FoodListResDto) item)
                 .collect(Collectors.toList());
@@ -40,6 +42,7 @@ public class FoodService {
 
     /**
      * 음식 레시피 상세 조회
+     *
      * @param id 음식 레시피 문서의 ID
      * @return FoodResDto
      */
