@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { fetchFoodList } from "../../api/FoodApi";
+import { fetchFoodList } from "../../api/FoodApi";
 import placeholder from "./style/placeholder.jpg";
 import placeholder2 from "./style/placeholder2.png";
 
@@ -25,18 +25,18 @@ const FoodListPage = () => {
    * @param {string} searchQuery - 검색어 (빈 문자열이면 전체)
    * @param {string} category - 카테고리 필터 (빈 문자열이면 필터 해제)
    */
-  // const fetchFoods = async (searchQuery, category) => {
-  //   try {
-  //     API 호출: query, category, page=1, size=20
-  //     const response = await fetchFoodList(searchQuery, category, 1, 20);
-  //     console.log("fetchFoods 응답:", response);
-  //     if (response !== null) {
-  //       setFoods(response);
-  //     }
-  //   } catch (error) {
-  //     console.error("음식 레시피 목록 조회 중 에러:", error);
-  //   }
-  // };
+  const fetchFoods = async (searchQuery, category) => {
+    try {
+      // API 호출: query, category, page=1, size=20
+      const response = await fetchFoodList(searchQuery, category, 1, 20);
+      console.log("fetchFoods 응답:", response);
+      if (response !== null) {
+        setFoods(response);
+      }
+    } catch (error) {
+      console.error("음식 레시피 목록 조회 중 에러:", error);
+    }
+  };
 
   /**
    * 레시피 카드를 클릭 시 상세 페이지로 이동
@@ -91,7 +91,7 @@ const FoodListPage = () => {
             className="flex-1 p-2 border border-kakiBrown dark:border-darkKaki rounded md:rounded-r-none focus:outline-none"
           />
           <button
-            // onClick={() => fetchFoods(query, selectedCategory)}
+            onClick={() => fetchFoods(query, selectedCategory)}
             className="p-2 bg-warmOrange dark:bg-deepOrange text-white rounded md:rounded-l-none hover:bg-orange-600 dark:hover:bg-deepOrange/90"
           >
             Search
@@ -137,7 +137,7 @@ const FoodListPage = () => {
               onClick={() => {
                 const newCat = cat === "전체" ? "" : cat;
                 setSelectedCategory(newCat);
-                // fetchFoods(query, newCat);
+                fetchFoods(query, newCat);
               }}
               className={`px-4 py-2 border rounded transition-colors ${
                 selectedCategory === cat ||
