@@ -315,3 +315,4 @@ const FoodListPage = () => {
 };
 
 export default FoodListPage;
+

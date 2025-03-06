@@ -1,6 +1,8 @@
 import React from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import ProfilePage from "./page/profile/ProfilePage";
+import Header from "./component/header/Header";
+import MainContainer from "./component/MainContainer";
+// import ProfilePage from "./page/profile/ProfilePage";
 import { CheckoutPage } from "./component/payments/Checkout";
 import { SuccessPage } from "./component/payments/Succeess";
 import { FailPage } from "./component/payments/Fail";
@@ -11,6 +13,9 @@ import ProfileCustomization from "./page/profile/cardcustom/ProfileCustomization
 import Layout from "./page/layout/Layout";
 import GlobalStyle from "./page/layout/style/GlobalStyle";
 
+import RecipeDetail from "./page/RecipeDetail";
+import RecipeUploader from "./page/AddRecipeDetail";
+
 function App() {
   return (
     // 라이트 모드: bg-white, 다크 모드: bg-[#2B1D0E], 전체 화면 높이
@@ -20,18 +25,22 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout/>}>
               {/*프로필 페이지*/}
-              <Route path="profile/:id?" element={<ProfilePage />} />
+              {/* <Route path="profile/:id?" element={<ProfilePage />} /> */}
               {/*프로필 페이지에서 id가 있으면 다른 사람의 프로필을 볼 수 있게*/}
+
+              <Route path="detail/:index/:id" element={<CocktailDetailPage />} />
+              <Route path="recipe/detail/:id/:type" element={<RecipeDetail />} />
               <Route
                 path="profile/cardcustom"
                 element={<ProfileCustomization />}
               />
               {/* 레시피 페이지 (라우트 경로 수정됨) */}
               <Route path="recipe/:index" element={<CocktailListPage />} />
+
               {/*컴포넌트를 같은 컴포넌트를 쓰되 index를 다르게 해서 관리하기*/}
               <Route path="detail/:index/:id" element={<CocktailDetailPage />}/>
               <Route path="recipe/food" element={<FoodListPage />} />
-
+              <Route path="recipe/upload" element={<RecipeUploader />} /> {/* 새로운 경로 추가 */}
             </Route>
             {/* 결제 페이지 */}
             <Route path="/pay" element={<CheckoutPage />} />

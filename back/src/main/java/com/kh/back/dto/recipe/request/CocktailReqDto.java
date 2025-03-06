@@ -1,6 +1,7 @@
 package com.kh.back.dto.recipe.request;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 칵테일 생성/수정 요청 DTO
@@ -14,7 +15,7 @@ public class CocktailReqDto {
     private float abv;
     private String category;
     private String description;
-    private String image;
     private Long like;
     private Long report;
+    private MultipartFile image;
 }

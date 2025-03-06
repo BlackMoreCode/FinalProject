@@ -58,3 +58,4 @@ export const fetchFoodDetail = async (foodId) => {
     throw error;
   }
 };
+
