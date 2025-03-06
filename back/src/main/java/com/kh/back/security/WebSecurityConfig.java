@@ -60,7 +60,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		.authorizeRequests()
 		.antMatchers(
 			"/", "/static/**", "/auth/**", "/ws/**", "/oauth2/**",
-			"/api/v1/auth/**", "/api/v1/payments/**", "/chat/**", "/flask/**", "/review/**",
+			"/api/v1/auth/**", "/api/v1/payments/**", "/chat/**", "/flask/**", "/review/**", "/api/forums/**", "/redux/**",
 			"/**/public/**", "/pay/**", "/test/**", "/api/foodrecipes/**",
 			"/favicon.ico", "/manifest.json", "/logo192.png", "/logo512.png"
 		).permitAll()

@@ -22,6 +22,7 @@ const menuList = [
   { path: "/", name: "Home" },
   { path: "/about", name: "About" },
   { path: "/contact", name: "Contact" },
+  { path: "/forum", name: "Forum" },
 ];
 
 export default function Header() {

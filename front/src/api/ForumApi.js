@@ -12,7 +12,7 @@ const ForumApi = {
    */
   fetchCategories: async () => {
     try {
-      const response = await AxiosInstance.get("/forum/category");
+      const response = await AxiosInstance.get("/api/forums/categories/proxy");
       console.log("Fetched Categories:", response.data);
       return response.data;
     } catch (error) {

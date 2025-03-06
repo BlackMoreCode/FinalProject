@@ -37,13 +37,16 @@ public class ForumCategoryService {
                 new ForumCategoryDto(null, "레시피 리뷰/토론 게시판", "올라온 레시피들을 리뷰 및 토론하는 공간입니다.", 0, 0, null, null, null, null)
         );
 
+        // KR: 각 카테고리에 대해 Elasticsearch에 존재하는지 확인 후 생성
         for (ForumCategoryDto categoryDto : predefinedCategories) {
+            log.info("Checking existence of category: {}", categoryDto.getTitle());
             ForumCategoryDto existing = elasticService.getCategoryByTitle(categoryDto.getTitle());
             if (existing == null) {
-                log.info("Creating category: {}", categoryDto.getTitle());
-                elasticService.createCategory(categoryDto);
+                log.info("Category '{}' not found. Creating category...", categoryDto.getTitle());
+                ForumCategoryDto created = elasticService.createCategory(categoryDto);
+                log.info("Created category: {}", created);
             } else {
-                log.info("Category already exists: {}", categoryDto.getTitle());
+                log.info("Category '{}' already exists: {}", categoryDto.getTitle(), existing);
             }
         }
     }

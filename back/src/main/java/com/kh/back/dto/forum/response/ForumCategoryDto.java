@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class ForumCategoryDto {
-    private Integer id; // 카테고리 ID
+    private String id; // 카테고리 ID (변경: Integer -> String)
     private String title; // 카테고리 제목
     private String description; // 카테고리 설명
     private int postCount; // 카테고리의 게시글 수

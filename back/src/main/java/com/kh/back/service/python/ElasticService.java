@@ -16,9 +16,7 @@ import com.kh.back.dto.recipe.res.FoodListResDto;
 import com.kh.back.dto.recipe.res.FoodResDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -551,12 +549,21 @@ public class ElasticService {
 		try {
 			URI uri = new URI(flaskBaseUrl + "/forum/category");
 			String jsonBody = objectMapper.writeValueAsString(categoryDto);
-			HttpEntity<String> entity = new HttpEntity<>(jsonBody);
+
+			// KR: HttpHeaders를 생성하여 Content-Type을 application/json으로 설정합니다.
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+			log.info("Sending request to create category '{}' with URI: {} and body: {}",
+					categoryDto.getTitle(), uri, jsonBody);
+
 			ResponseEntity<String> response = restTemplate.postForEntity(uri, entity, String.class);
-			log.info("createCategory 응답: {}", response);
+
+			log.info("Received createCategory response: {}", response.getBody());
 			return objectMapper.readValue(response.getBody(), ForumCategoryDto.class);
 		} catch (Exception e) {
-			log.error("카테고리 생성 중 오류 발생: {}", e.getMessage());
+			log.error("카테고리 생성 중 오류 발생 for '{}': {}", categoryDto.getTitle(), e.getMessage());
 			return null;
 		}
 	}
@@ -571,11 +578,12 @@ public class ElasticService {
 	public ForumCategoryDto getCategoryByTitle(String title) {
 		try {
 			URI uri = new URI(flaskBaseUrl + "/forum/category/search?title=" + URLEncoder.encode(title, StandardCharsets.UTF_8));
+			log.info("Sending request to get category by title '{}' with URI: {}", title, uri); // KR: 요청 로깅
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			log.info("getCategoryByTitle 응답: {}", response);
+			log.info("Received getCategoryByTitle response for '{}': {}", title, response.getBody()); // KR: 응답 로깅
 			return objectMapper.readValue(response.getBody(), ForumCategoryDto.class);
 		} catch (Exception e) {
-			log.error("카테고리 제목으로 조회 중 오류 발생: {}", e.getMessage());
+			log.error("카테고리 제목으로 조회 중 오류 발생 for '{}': {}", title, e.getMessage());
 			return null;
 		}
 	}
@@ -592,8 +600,9 @@ public class ElasticService {
 	public List<ForumCategoryDto> getAllCategoriesFromElastic() {
 		try {
 			URI uri = new URI(flaskBaseUrl + "/forum/category");
+			log.info("Sending request to get all categories with URI: {}", uri); // KR: 요청 로깅
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			log.info("getAllCategoriesFromElastic 응답: {}", response);
+			log.info("Received getAllCategoriesFromElastic response: {}", response.getBody()); // KR: 응답 로깅
 			return objectMapper.readValue(response.getBody(),
 					objectMapper.getTypeFactory().constructCollectionType(List.class, ForumCategoryDto.class));
 		} catch (Exception e) {
@@ -614,11 +623,12 @@ public class ElasticService {
 	public ForumCategoryDto getCategoryById(Integer categoryId) {
 		try {
 			URI uri = new URI(flaskBaseUrl + "/forum/category/" + categoryId);
+			log.info("Sending request to get category by ID '{}' with URI: {}", categoryId, uri); // KR: 요청 로깅
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			log.info("getCategoryById 응답: {}", response);
+			log.info("Received getCategoryById response for ID '{}': {}", categoryId, response.getBody()); // KR: 응답 로깅
 			return objectMapper.readValue(response.getBody(), ForumCategoryDto.class);
 		} catch (Exception e) {
-			log.error("ElasticSearch에서 카테고리 ID 조회 중 오류 발생: {}", e.getMessage());
+			log.error("ElasticSearch에서 카테고리 ID 조회 중 오류 발생 for ID '{}': {}", categoryId, e.getMessage());
 			return null;
 		}
 	}
