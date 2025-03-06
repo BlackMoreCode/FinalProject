@@ -177,7 +177,6 @@ public class ElasticService {
 				return null;
 		}
 	}
-
 	/**
 	 * [게시글 생성 메서드]
 	 * KR: Flask의 /forum/post 엔드포인트를 호출하여 새로운 포럼 게시글을 생성합니다.
@@ -632,7 +631,6 @@ public class ElasticService {
 			return null;
 		}
 	}
-
 	/**
 	 * [게시글 좋아요 토글 메서드]
 	 * KR: Flask의 /forum/post/{postId}/like 엔드포인트를 호출하여 게시글 좋아요를 토글합니다.

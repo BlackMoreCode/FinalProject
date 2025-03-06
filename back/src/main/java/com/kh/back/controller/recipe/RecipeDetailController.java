@@ -1,0 +1,40 @@
+package com.kh.back.controller.recipe;
+
+import com.kh.back.dto.recipe.request.AddCocktailRecipeDto;
+import com.kh.back.dto.recipe.request.AddFoodRecipeDto;
+import com.kh.back.service.recipe.AddCocktailRecipeService;
+import com.kh.back.service.recipe.AddFoodRecipeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
+@RestController
+@RequestMapping("/recipe")
+public class RecipeDetailController {
+
+    @Autowired
+    private AddFoodRecipeService recipeService;
+    @Autowired
+    private AddCocktailRecipeService cocktailRecipeService;
+
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @PostMapping("/save-recipe")
+    public ResponseEntity<String> saveRecipe(Authentication authentication, @ModelAttribute AddFoodRecipeDto recipeRequest) {
+        Long memberId = Long.parseLong(authentication.getName());
+        String jsonData = recipeService.saveRecipe(memberId, recipeRequest);
+        return ResponseEntity.ok(jsonData);
+    }
+
+    @PostMapping("/save-cocktail-recipe")
+    public ResponseEntity<String> saveCocktailRecipe(Authentication authentication, @ModelAttribute AddCocktailRecipeDto recipeRequest) {
+        Long memberId = Long.parseLong(authentication.getName());
+        String jsonData = cocktailRecipeService.saveCocktailRecipe(memberId, recipeRequest);
+        return ResponseEntity.ok(jsonData);
+    }
+
+}
