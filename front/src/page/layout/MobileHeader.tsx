@@ -2,7 +2,6 @@ import {
   DropDownButton, DropDownSection,
   HamburgerIcon,
   MenuItem,
-  MobileLoginButton,
   Navbar,
   NavContainer,
   NavLink,
@@ -105,7 +104,7 @@ export const MobileMenu = styled.div<{isMenuOpen : boolean}>`
   position: fixed;
   top: 72px;
   right: 0;
-  z-index: 1000;
+  z-index: 50;
   padding: 2rem 0;
   box-shadow: -2px 4px 8px rgba(0, 0, 0, 0.2);
   gap: 2rem;

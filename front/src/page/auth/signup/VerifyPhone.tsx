@@ -18,7 +18,7 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
 
   useEffect(() => {
     if (phone) {
-      setVerify((prev) => ({ ...prev, timer: 300, active: true }));
+      setVerify((prev) => ({ ...prev, timer: 300, active: false }));
     }
   }, [phone]);
 

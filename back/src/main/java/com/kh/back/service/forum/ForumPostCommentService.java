@@ -2,7 +2,7 @@ package com.kh.back.service.forum;
 
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ElasticService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

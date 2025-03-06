@@ -34,25 +34,7 @@ public class ElasticService {
 	private final RestTemplate restTemplate;
 	private final String flaskBaseUrl = "http://localhost:5001";
 	private final ObjectMapper objectMapper;
-
-	/**
-	 * [오버로드 메서드: 기존 칵테일 검색용]
-	 * - 칵테일 로직처럼 '조리방법(cookingMethod)'이 필요 없는 경우를 위해
-	 * - 예전 방식대로 5개 파라미터만 받는 메서드를 추가하여 하위 호환성을 유지
-	 * - 내부적으로는 6개 파라미터를 받는 메서드를 호출하며, cookingMethod=""로 처리
-	 *
-	 * @param q        검색어 (빈 문자열이면 전체 검색)
-	 * @param type     검색 타입 (예: "cocktail", "food")
-	 * @param category 카테고리 (빈 문자열이면 필터 없음)
-	 * @param page     페이지 번호
-	 * @param size     페이지 당 항목 수
-	 * @return 검색 결과 목록 (SearchListResDto)
-	 */
-	public List<SearchListResDto> search(String q, String type, String category, Integer page, Integer size) {
-		// cookingMethod를 ""(빈 문자열)로 지정하여 6개짜리 메서드를 호출
-		return search(q, type, category, "", page, size);
-	}
-
+	
 	/**
 	 * [신규 메서드: 음식 검색 포함]
 	 * - 기존 칵테일 검색뿐만 아니라, 음식 검색 시 '조리방법(cookingMethod)' 필터도 가능
@@ -125,6 +107,31 @@ public class ElasticService {
 			return null;
 		}
 	}
+	
+	public String uploadRecipe(String jsonData) {
+		try {
+			// Flask 서버의 엔드포인트 URL
+			URI uri = new URI(flaskBaseUrl + "/upload/one");
+			
+			// HTTP 요청 헤더 설정
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			
+			// HTTP 요청 본문 설정
+			HttpEntity<String> requestEntity = new HttpEntity<>(jsonData, headers);
+			
+			// Flask 서버로 POST 요청 전송
+			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
+			
+			// 응답 로그 기록
+			log.info("Flask 서버 응답: {}", response.getBody());
+			
+			return response.getBody();
+		} catch (Exception e) {
+			log.error("레시피 업로드 중 에러 발생: {}", e.getMessage());
+			return null;
+		}
+	}
 
 	/**
 	 * [검색 결과 변환 메서드]
@@ -134,28 +141,23 @@ public class ElasticService {
 	 *   그리고 신규로 "forum" 타입에 대해 ForumPostResponseDto로 매핑합니다.
 	 */
 	public List<SearchListResDto> convertResToList(String response, String type) throws IOException {
-		switch (type) {
-			case "cocktail":
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailListResDto.class));
-			case "food":
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, FoodListResDto.class));
-			case "cocktail_ingredient":
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailIngListResDto.class));
-			case "food_ingredient":
+		return switch (type) {
+			case "cocktail" -> objectMapper.readValue(response,
+				objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailListResDto.class));
+			case "food" -> objectMapper.readValue(response,
+				objectMapper.getTypeFactory().constructCollectionType(List.class, FoodListResDto.class));
+			case "cocktail_ingredient" -> objectMapper.readValue(response,
+				objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailIngListResDto.class));
+			case "food_ingredient" ->
 				// 필요 시 FoodIngredient DTO 생성 후 사용 가능
-				return null;
-			case "forum":
+				null;
+			case "forum" ->
 				// 신규: 포럼 검색 결과는 ForumPostResponseDto로 변환
-				return objectMapper.readValue(response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, ForumPostResponseDto.class));
-			case "feed":
-				return null;
-			default:
-				return null;
-		}
+				objectMapper.readValue(response,
+					objectMapper.getTypeFactory().constructCollectionType(List.class, ForumPostResponseDto.class));
+			case "feed" -> null;
+			default -> null;
+		};
 	}
 
 	/**
@@ -163,19 +165,15 @@ public class ElasticService {
 	 * - JSON 응답 문자열을 DTO 형태로 변환
 	 */
 	public SearchResDto convertResToDto(String response, String type) throws IOException {
-		switch (type) {
-			case "cocktail":
-				return objectMapper.readValue(response, CocktailResDto.class);
-			case "food":
-				return objectMapper.readValue(response, FoodResDto.class);
-			case "forum":
+		return switch (type) {
+			case "cocktail" -> objectMapper.readValue(response, CocktailResDto.class);
+			case "food" -> objectMapper.readValue(response, FoodResDto.class);
+			case "forum" ->
 				// 신규: 포럼 상세 정보는 ForumPostResponseDto로 변환
-				return objectMapper.readValue(response, ForumPostResponseDto.class);
-			case "feed":
-				return null;
-			default:
-				return null;
-		}
+				objectMapper.readValue(response, ForumPostResponseDto.class);
+			case "feed" -> null;
+			default -> null;
+		};
 	}
 	/**
 	 * [게시글 생성 메서드]
@@ -311,6 +309,7 @@ public class ElasticService {
 	}
 
 	/**
+	 * ===================================================확인하기====================================================
 	 * [게시글 숨김 처리 메서드]
 	 * KR: Flask의 /forum/post/{postId}/hide 엔드포인트를 호출하여 게시글을 숨김 처리합니다.
 	 *

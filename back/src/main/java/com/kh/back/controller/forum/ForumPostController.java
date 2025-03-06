@@ -5,7 +5,7 @@ import com.kh.back.dto.forum.response.ForumPostResponseDto;
 import com.kh.back.dto.forum.response.PaginationDto;
 import com.kh.back.service.forum.FileService;
 import com.kh.back.service.forum.ForumPostService;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

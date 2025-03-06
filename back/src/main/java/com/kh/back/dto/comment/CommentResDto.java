@@ -2,7 +2,6 @@ package com.kh.back.dto.comment;
 
 
 import com.kh.back.entity.Comment;
-import com.kh.back.entity.Member;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class CommentResDto {
-
     private String nickName;
     private String content;
 

@@ -6,7 +6,7 @@ import com.kh.back.dto.forum.response.ForumPostResponseDto;
 import com.kh.back.dto.forum.response.PaginationDto;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.dto.python.SearchResDto;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ElasticService; // hypothetical service that calls ES or Flask
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +88,7 @@ public class ForumPostService {
     public PaginationDto<ForumPostResponseDto> getPostsByCategory(Integer categoryId, int page, int size) {
         log.info("Fetching posts for category ID: {}, page: {}, size: {}", categoryId, page, size);
         String categoryStr = categoryId != null ? categoryId.toString() : "";
-        List<SearchListResDto> rawResults = elasticService.search("", "forum", categoryStr, page, size);
+        List<SearchListResDto> rawResults = elasticService.search("", "forum", categoryStr, null, page, size);
 
         if (rawResults == null) {
             return new PaginationDto<>(List.of(), page, 0, 0L);

@@ -1,10 +1,10 @@
-package com.kh.back.service;
+package com.kh.back.service.member;
 
 
 import com.kh.back.constant.Authority;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.jwt.TokenProvider;
-import com.kh.back.repository.MemberRepository;
+import com.kh.back.repository.member.MemberRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,39 +25,10 @@ public class MemberService {
 	private TokenProvider tokenProvider;
 	private PasswordEncoder passwordEncoder;
 	private final HttpServletRequest request;
+	
 
-
-//	// 전체 회원 조회
-//	public List<MemberPublicResDto> allMember() {
-//		try {
-//			List<Member> members = memberRepository.findAll();
-//			// 프론트 엔드에 정보를 전달하기 위해 DTO List 를 생성
-//			List<MemberPublicResDto> memberResDtoList = new ArrayList<>();
-//			for (Member member : members) {
-//				memberResDtoList.add(convertEntityToDto(member));
-//			}
-//			return memberResDtoList;
-//		} catch (Exception e) {
-//			log.error("전체 조회 실패 : {}", e.getMessage());
-//			return null;
-//		}
-//	}
-
-//	// 특정 회원 조회
-//	public MemberPublicResDto findMemberByEmail(String email) {
-//		Member member = memberRepository.findByEmail(email)
-//				.orElseThrow(() -> new RuntimeException("해당 회원이 존재하지 않습니다."));
-//		return convertEntityToDto(member);
-//	}
-
-//	public MemberPublicResDto findEmailByPhone(String phone) {
-//		Member member = memberRepository.findEmailByPhone(phone)
-//				.orElseThrow(() -> new RuntimeException("해당 회원이 존재하지 않습니다."));
-//		return convertEntityToDto(member);
-//	}
-
-	public boolean checkPassword(String token, String password) {
-		Long memberId = getMemberId(token);
+	public boolean checkPassword(Authentication auth, String password) {
+		Long memberId = getMemberId(auth);
 		System.out.println(password);
 		System.out.println(memberId);
 		request.getSession().setAttribute("memberId", memberId);
@@ -96,42 +65,23 @@ public class MemberService {
 		}
 	}
 
-	public String getRole(String token) {
-		return convertTokenToEntity(token).getAuthority().toString();
+	public String getRole(Authentication auth) {
+		return convertAuthToEntity(auth).getAuthority().toString();
 	}
 	
-	public long getMemberId(String token) {
-		try {
-			Member member = convertTokenToEntity(token);
-			return member.getMemberId(); // memberId 반환
-		} catch (Exception e) {
-			// 예외 로깅
-			e.printStackTrace();
-			throw new RuntimeException("수익금 가져오기 실패", e);
-		}
+	public Long getMemberId(Authentication auth) {
+		return Long.parseLong(auth.getName());
 	}
 	
 	// 토큰에서 Member 객체를 받아오는 메서드( 클래스 외부에서도 불러올 수 있게 public )
-	public Member convertTokenToEntity(String token) {
+	public Member convertAuthToEntity(Authentication authentication) {
 		try{
-			// 토큰 앞에 있는 "Bearer " 제거
-			token = token.replace("Bearer ", "");
-			// token 을 통해 memberId를 담고 있는 객체 Authentication 을 불러옴
-			Authentication authentication = tokenProvider.getAuthentication(token);
 			log.warn("Authentication 의 형태 : {}", authentication);
 			// Name 은 String 으로 되어 있기 때문에 Long으로 바꿔주는 과정이 있어야 타입이 일치
 			Long id = Long.parseLong(authentication.getName());
 			Member member = memberRepository.findById(id)
 				.orElseThrow(()-> new RuntimeException("존재 하지 않는 memberId 입니다."));
-
-			// 이메일을 반환하여 클라이언트에서 처리하도록 함
-			String email = member.getEmail();
-			String nickName = member.getNickName();
-			Long memberId = member.getMemberId();
-			log.warn("토큰으로부터 얻은 이메일: {}", email);
-			log.warn("토큰으로부터 얻은 닉네임: {}", nickName);
-			log.warn("토큰으로부터 얻은 멤버아이디: {}", memberId);
-			log.warn("토큰으로부터 얻은 Member: {}", member);
+			log.warn("{} - {}",authentication, member);
 			return member;
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -153,12 +103,16 @@ public class MemberService {
 		memberRepository.save(member);
 		request.getSession().removeAttribute("memberId"); // 세션에서 이메일 제거
 	}
+	
+	public Member getMemberById( Long memberId ) {
+		return memberRepository.findById(memberId).orElse(null);
+	}
 
 
 
-	public boolean changeNickName(String token, String nickname) {
+	public boolean changeNickName(Authentication auth, String nickname) {
 
-		Long memberId =getMemberId(token);
+		Long memberId =getMemberId(auth);
 		Member member = memberRepository.findById(memberId)
 				.orElseThrow(() -> new RuntimeException("해당 이메일의 회원을 찾을 수 없습니다."));
 
@@ -210,21 +164,4 @@ public class MemberService {
 				.orElseThrow(() -> new IllegalArgumentException("유효하지 않은 회원 ID입니다: " + memberId));
 		return member.getAuthority() == Authority.ROLE_ADMIN;
 	}
-
-	// Optionally, if you want an overload that accepts a token:
-	/**
-	 * isAdmin 메서드 (토큰 사용)
-	 * KR: 토큰에서 회원을 추출한 후, 해당 회원의 authority를 검사하여 관리자 여부를 반환합니다.
-	 *
-	 * @param token 인증 토큰 (Bearer 토큰 포함 가능)
-	 * @return true if the extracted member is an admin, false otherwise.
-	 */
-	public boolean isAdmin(String token) {
-		Member member = convertTokenToEntity(token);
-		if (member == null) {
-			throw new IllegalArgumentException("토큰에서 회원 정보를 가져올 수 없습니다.");
-		}
-		return member.getAuthority() == Authority.ROLE_ADMIN;
-	}
-
 }

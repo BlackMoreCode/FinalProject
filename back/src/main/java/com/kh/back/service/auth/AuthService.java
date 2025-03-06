@@ -6,12 +6,12 @@ import com.kh.back.dto.auth.AccessTokenDto;
 import com.kh.back.dto.auth.LoginDto;
 import com.kh.back.dto.auth.SignupDto;
 import com.kh.back.dto.auth.TokenDto;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.entity.auth.RefreshToken;
 import com.kh.back.jwt.TokenProvider;
-import com.kh.back.repository.MemberRepository;
+import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.repository.auth.RefreshTokenRepository;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,9 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 // 스프링게 조금 더 낫다
 
 
