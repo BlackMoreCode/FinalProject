@@ -7,7 +7,7 @@ import com.kh.back.dto.forum.response.PaginationDto;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.dto.python.SearchResDto;
 import com.kh.back.service.member.MemberService;
-import com.kh.back.service.python.ElasticService; // hypothetical service that calls ES or Flask
+import com.kh.back.service.python.ForumEsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -35,7 +35,7 @@ public class ForumPostService {
     // 기존: private final ForumPostRepository postRepository;  // 삭제
     // ...
     // 대체: ElasticService, MemberService 등
-    private final ElasticService elasticService;  // hypothetical service that calls /forum endpoints
+    private final ForumEsService forumEsService;  // hypothetical service that calls /forum endpoints
     private final MemberService memberService;
 
     private static final int REPORT_THRESHOLD = 10; // 신고 누적 기준값
@@ -75,7 +75,7 @@ public class ForumPostService {
         requestDto.setContent(sanitizedContent);
 
         // 3) ElasticService를 호출하여 ES에 게시글 생성 (Flask의 /forum/post 엔드포인트)
-        ForumPostResponseDto createdDto = elasticService.createPost(requestDto);
+        ForumPostResponseDto createdDto = forumEsService.createPost(requestDto);
         log.info("Post created in ES. ID: {}", createdDto.getId());
         return createdDto;
     }
@@ -87,21 +87,23 @@ public class ForumPostService {
      */
     public PaginationDto<ForumPostResponseDto> getPostsByCategory(Integer categoryId, int page, int size) {
         log.info("Fetching posts for category ID: {}, page: {}, size: {}", categoryId, page, size);
-        String categoryStr = categoryId != null ? categoryId.toString() : "";
-        List<SearchListResDto> rawResults = elasticService.search("", "forum", categoryStr, null, page, size);
+
+        // categoryId를 문자열로 변환하여 ForumEsService의 search(...) 두 번째 파라미터로 사용
+        String categoryStr = (categoryId != null) ? categoryId.toString() : "";
+
+        // ★ forumEsService.search(...) 호출 시 "forum" 파라미터 제거
+        List<ForumPostResponseDto> rawResults = forumEsService.search("", categoryStr, page, size);
 
         if (rawResults == null) {
             return new PaginationDto<>(List.of(), page, 0, 0L);
         }
 
-        List<ForumPostResponseDto> postList = new ArrayList<>();
-        for (SearchListResDto item : rawResults) {
-            if (item instanceof ForumPostResponseDto) {
-                postList.add((ForumPostResponseDto) item);
-            }
-        }
-        int totalPages = 1;        // dummy 값; ES totalHits를 활용하도록 개선 필요
-        long totalElements = postList.size(); // dummy 값
+        // 기존 로직과 동일하게 postList 구성
+        List<ForumPostResponseDto> postList = new ArrayList<>(rawResults);
+
+        // TODO: totalPages, totalElements 계산 로직 필요 (아직 dummy)
+        int totalPages = 1;
+        long totalElements = postList.size();
 
         return new PaginationDto<>(postList, page, totalPages, totalElements);
     }
@@ -114,9 +116,14 @@ public class ForumPostService {
      */
     public Optional<ForumPostResponseDto> getPostDetails(Integer postId) {
         log.info("Fetching details for post ID: {}", postId);
-        SearchResDto rawDto = elasticService.detail(String.valueOf(postId), "forum");
-        if (rawDto == null || !(rawDto instanceof ForumPostResponseDto)) return Optional.empty();
-        return Optional.of((ForumPostResponseDto) rawDto);
+
+        // ★ forumEsService.detail(...) 호출 시 "forum" 파라미터 제거
+        ForumPostResponseDto rawDto = forumEsService.detail(postId);
+
+        if (rawDto == null) {
+            return Optional.empty();
+        }
+        return Optional.of(rawDto);
     }
 
     /**
@@ -133,7 +140,7 @@ public class ForumPostService {
         if (!isAdmin && !existing.getMemberId().equals(loggedInMemberId)) {
             throw new SecurityException("이 게시글의 제목을 수정할 권한이 없습니다.");
         }
-        ForumPostResponseDto updated = elasticService.updatePostTitle(postId, title, isAdmin ? "ADMIN" : existing.getAuthorName());
+        ForumPostResponseDto updated = forumEsService.updatePostTitle(postId, title, isAdmin ? "ADMIN" : existing.getAuthorName());
         return updated;
     }
 
@@ -154,7 +161,7 @@ public class ForumPostService {
         if (contentJSON == null || contentJSON.trim().isEmpty()) {
             throw new IllegalArgumentException("콘텐츠 JSON은 비어있을 수 없습니다.");
         }
-        ForumPostResponseDto updated = elasticService.updatePostContent(postId, contentJSON, isAdmin ? "ADMIN" : existing.getAuthorName(), isAdmin);
+        ForumPostResponseDto updated = forumEsService.updatePostContent(postId, contentJSON, isAdmin ? "ADMIN" : existing.getAuthorName(), isAdmin);
         return updated;
     }
 
@@ -173,7 +180,7 @@ public class ForumPostService {
         if (!existing.getMemberId().equals(loggedInMemberId) && !isAdmin) {
             throw new AccessDeniedException("You are not allowed to delete this post.");
         }
-        elasticService.deletePost(postId, removedBy);
+        forumEsService.deletePost(postId, removedBy);
         log.info("Post ID: {} marked as deleted in ES.", postId);
     }
 
@@ -184,7 +191,7 @@ public class ForumPostService {
     @Transactional
     public void hardDeletePost(Integer postId) {
         log.info("Hard deleting post ID: {}", postId);
-        elasticService.hardDeletePost(postId);  // hypothetical method
+        forumEsService.hardDeletePost(postId);  // hypothetical method
         log.info("Post ID: {} has been hard deleted in ES.", postId);
     }
 
@@ -200,7 +207,7 @@ public class ForumPostService {
         if (existing.getMemberId().equals(reporterId)) {
             throw new IllegalArgumentException("You cannot report your own post.");
         }
-        ForumPostResponseDto updated = elasticService.reportPost(postId, reporterId.intValue(), reason);
+        ForumPostResponseDto updated = forumEsService.reportPost(postId, reporterId.intValue(), reason);
         return updated;
     }
 
@@ -211,7 +218,7 @@ public class ForumPostService {
     public void hidePost(Integer postId) {
         log.info("Hiding post ID: {}", postId);
         // e.g. elasticService.hidePost(postId)
-        elasticService.hidePost(postId);
+        forumEsService.hidePost(postId);
     }
 
     /**
@@ -222,7 +229,7 @@ public class ForumPostService {
     public void restorePost(Integer postId) {
         log.info("Restoring post ID: {}", postId);
         // e.g. elasticService.restorePost(postId)
-        elasticService.restorePost(postId);
+        forumEsService.restorePost(postId);
     }
 
     /**
@@ -232,7 +239,7 @@ public class ForumPostService {
     public void incrementViewCount(Integer postId) {
         log.info("Incrementing view count for post ID: {}", postId);
         // e.g. elasticService.incrementViewCount(postId)
-        elasticService.incrementViewCount(postId);
+        forumEsService.incrementViewCount(postId);
     }
 
     /**

@@ -23,6 +23,7 @@ const PCHeader = () => {
     { path: "/main", name: "Main" },
     { path: "/about", name: "About" },
     { path: "/contact", name: "Contact" },
+    { path: "/forum", name: "Forum" },
   ];
 
   const recipeList = [

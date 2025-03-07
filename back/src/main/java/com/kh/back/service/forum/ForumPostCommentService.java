@@ -3,7 +3,7 @@ package com.kh.back.service.forum;
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
 import com.kh.back.service.member.MemberService;
-import com.kh.back.service.python.ElasticService;
+import com.kh.back.service.python.ForumEsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import java.util.List;
 @Slf4j
 public class ForumPostCommentService {
 
-    private final ElasticService elasticService; // ElasticSearch (Flask) 호출
+    private final ForumEsService forumEsService; // ElasticSearch (Flask) 호출
     private final MemberService memberService;
 
     /**
@@ -25,7 +25,7 @@ public class ForumPostCommentService {
      */
     public List<ForumPostCommentResponseDto> getCommentsForPost(Integer postId) {
         log.info("게시글 ID: {} 의 댓글 조회 요청", postId);
-        return elasticService.searchCommentsForPost(postId);
+        return forumEsService.searchCommentsForPost(postId);
     }
 
     /**
@@ -38,7 +38,7 @@ public class ForumPostCommentService {
         // 필요 시 HTML sanitize 처리 (여기서는 단순 통과)
         String sanitizedContent = requestDto.getContent();
         requestDto.setContent(sanitizedContent);
-        return elasticService.createComment(requestDto);
+        return forumEsService.createComment(requestDto);
     }
 
     /**
@@ -50,7 +50,7 @@ public class ForumPostCommentService {
         log.info("댓글 ID: {} 수정 요청, 사용자 ID: {}", commentId, loggedInMemberId);
         // 관리자인 경우 "ADMIN", 그렇지 않으면 사용자 ID를 문자열로 전달
         String editedBy = isAdmin ? "ADMIN" : loggedInMemberId.toString();
-        return elasticService.updateComment(commentId, requestDto, editedBy, isAdmin);
+        return forumEsService.updateComment(commentId, requestDto, editedBy, isAdmin);
     }
 
     /**
@@ -61,7 +61,7 @@ public class ForumPostCommentService {
     public ForumPostCommentResponseDto replyToComment(Integer parentCommentId, ForumPostCommentRequestDto requestDto) {
         log.info("부모 댓글 ID: {} 에 대한 답글 생성 요청", parentCommentId);
         requestDto.setParentCommentId(parentCommentId);
-        return elasticService.createComment(requestDto);
+        return forumEsService.createComment(requestDto);
     }
 
     /**
@@ -73,7 +73,7 @@ public class ForumPostCommentService {
         log.info("게시글 ID: {} 에 대한 답글 생성 요청", postId);
         requestDto.setPostId(postId);
         requestDto.setParentCommentId(null);
-        return elasticService.createComment(requestDto);
+        return forumEsService.createComment(requestDto);
     }
 
     /**
@@ -83,7 +83,7 @@ public class ForumPostCommentService {
     @Transactional
     public void deleteComment(Integer commentId, Long loggedInMemberId) {
         log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}", commentId, loggedInMemberId);
-        elasticService.deleteComment(commentId, loggedInMemberId);
+        forumEsService.deleteComment(commentId, loggedInMemberId);
     }
 
     /**
@@ -93,7 +93,7 @@ public class ForumPostCommentService {
     @Transactional
     public void hardDeleteComment(Integer commentId) {
         log.info("댓글 ID: {} 하드 삭제 요청", commentId);
-        elasticService.hardDeleteComment(commentId);
+        forumEsService.hardDeleteComment(commentId);
     }
 
     /**
@@ -103,7 +103,7 @@ public class ForumPostCommentService {
     @Transactional
     public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason) {
         log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reporterId);
-        return elasticService.reportComment(commentId, reporterId, reason);
+        return forumEsService.reportComment(commentId, reporterId, reason);
     }
 
     /**
@@ -113,7 +113,7 @@ public class ForumPostCommentService {
     @Transactional
     public void hideComment(Integer commentId) {
         log.info("댓글 ID: {} 숨김 처리 요청", commentId);
-        elasticService.hideComment(commentId);
+        forumEsService.hideComment(commentId);
     }
 
     /**
@@ -123,7 +123,7 @@ public class ForumPostCommentService {
     @Transactional
     public ForumPostCommentResponseDto restoreComment(Integer commentId) {
         log.info("댓글 ID: {} 복원 요청", commentId);
-        return elasticService.restoreComment(commentId);
+        return forumEsService.restoreComment(commentId);
     }
 
     /**
@@ -133,6 +133,6 @@ public class ForumPostCommentService {
     @Transactional
     public void incrementCommentLikes(Integer commentId) {
         log.info("댓글 ID: {} 좋아요 증가 요청", commentId);
-        elasticService.incrementCommentLikes(commentId);
+        forumEsService.incrementCommentLikes(commentId);
     }
 }

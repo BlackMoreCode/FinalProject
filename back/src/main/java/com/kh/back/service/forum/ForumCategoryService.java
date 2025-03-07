@@ -1,7 +1,7 @@
 package com.kh.back.service.forum;
 
 import com.kh.back.dto.forum.response.ForumCategoryDto;
-import com.kh.back.service.python.ElasticService;
+import com.kh.back.service.python.ForumEsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @Slf4j
 public class ForumCategoryService {
 
-    private final ElasticService elasticService;
+    private final ForumEsService forumEsService;
 
     /**
      * [사전 정의된 카테고리 초기화 메서드]
@@ -40,10 +40,10 @@ public class ForumCategoryService {
         // KR: 각 카테고리에 대해 Elasticsearch에 존재하는지 확인 후 생성
         for (ForumCategoryDto categoryDto : predefinedCategories) {
             log.info("Checking existence of category: {}", categoryDto.getTitle());
-            ForumCategoryDto existing = elasticService.getCategoryByTitle(categoryDto.getTitle());
+            ForumCategoryDto existing = forumEsService.getCategoryByTitle(categoryDto.getTitle());
             if (existing == null) {
                 log.info("Category '{}' not found. Creating category...", categoryDto.getTitle());
-                ForumCategoryDto created = elasticService.createCategory(categoryDto);
+                ForumCategoryDto created = forumEsService.createCategory(categoryDto);
                 log.info("Created category: {}", created);
             } else {
                 log.info("Category '{}' already exists: {}", categoryDto.getTitle(), existing);
@@ -60,7 +60,7 @@ public class ForumCategoryService {
      */
     public List<ForumCategoryDto> getAllCategories() {
         log.info("ElasticSearch에서 모든 포럼 카테고리를 조회합니다.");
-        return elasticService.getAllCategoriesFromElastic();
+        return forumEsService.getAllCategoriesFromElastic();
     }
 
     /**
@@ -72,7 +72,7 @@ public class ForumCategoryService {
      */
     public Optional<ForumCategoryDto> getCategoryWithLatestPost(Integer categoryId) {
         log.info("ElasticSearch에서 카테고리 ID {} 를 조회합니다.", categoryId);
-        ForumCategoryDto categoryDto = elasticService.getCategoryById(categoryId);
+        ForumCategoryDto categoryDto = forumEsService.getCategoryById(categoryId);
 
         // categoryDto가 null일 수 있으므로 Optional로 감싸서 반환
         return Optional.ofNullable(categoryDto);
