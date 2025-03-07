@@ -1,7 +1,7 @@
 package com.kh.back.dto.auth;
 
 import com.kh.back.constant.Authority;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import lombok.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;

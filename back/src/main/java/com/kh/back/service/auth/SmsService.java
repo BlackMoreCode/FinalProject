@@ -59,13 +59,13 @@ public class SmsService {
                 logger.info("인증번호 발송 성공: {}", verificationCode);
                 requestCountMap.put(phone, requestCountMap.getOrDefault(phone, 0) + 1);
                 resetRequestCountAfterDelay(phone);
-                return "true"; // 성공 시 반환
+                return "success"; // 성공 시 반환
             } else {
                 logger.error("인증번호 저장 실패");
-                return "false"; // 저장 실패 시 반환
+                return "fail"; // 저장 실패 시 반환
             }
         } catch (Exception e) {
-            logger.error("SMS 발송 실패: {}", e.getMessage());
+            logger.error("SMS 발송 실패: {}-{}",phone, e.getMessage());
             return "error"; // 예외 발생 시 반환
         }
     }

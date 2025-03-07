@@ -1,7 +1,7 @@
 package com.kh.back.service.auth;
 
-import com.kh.back.entity.Member;
-import com.kh.back.repository.MemberRepository;
+import com.kh.back.entity.member.Member;
+import com.kh.back.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;

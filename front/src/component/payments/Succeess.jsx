@@ -36,6 +36,10 @@ export function SuccessPage() {
     confirm();
   }, []);
 
+  const handleGoToMain = () => {
+    navigate("/main");
+  };
+
   return (
     <div className="result wrapper">
       <div className="box_section">
@@ -45,6 +49,8 @@ export function SuccessPage() {
           searchParams.get("amount")
         ).toLocaleString()}원`}</p>
         <p>{`paymentKey: ${searchParams.get("paymentKey")}`}</p>
+
+        <button onClick={handleGoToMain}>메인으로 가기</button>
       </div>
     </div>
   );

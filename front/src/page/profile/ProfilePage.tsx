@@ -1,179 +1,146 @@
-// import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import Profile from "./Profile";
-// import ProfileTabs from "./ProfileTaps";
-// import {
-//   ProfilePageContainer,
-//   ProfilePageHeader,
-//   ProfileButtonContainer,
-//   ProfileButton,
-//   EditIcon,
-//   UserStats,
-//   HeaderUp,
-//   HeaderDown,
-// } from "./style/ProfilePageStyle";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axiosInstance from "../../api/AxiosInstance";
+import Profile from "./Profile";
+import ProfileTabs from "./ProfileTaps";
+import {
+  ProfilePageContainer,
+  ProfilePageHeader,
+  ProfileButtonContainer,
+  ProfileButton,
+  EditIcon,
+  UserStats,
+  HeaderUp,
+  HeaderDown,
+} from "./style/ProfilePageStyle";
+// 리덕스를 추가로 임포트 할 예정
 
-// const ProfilePage = () => {
-//   const navigate = useNavigate();
-//   // 실제로는 백엔드에서 fetch하거나 props로 받을 수 있게
-//   const [user, setUser] = useState({
-//     name: "홍길동",
-//     introduce: "동에 번쩍 서에 번쩍",
-//     profileImg: "",
-//     postsCount: 12,
-//     likesCount: 25,
-//   });
+const ProfilePage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams(); // URL에서 id 가져오기
+  const [loggedInUserId, setLoggedInUserId] = useState(null); // 로그인한 유저의 ID
+  const [isOwnProfile, setIsOwnProfile] = useState(false); // 본인 프로필 여부 체크
 
-//   const [customStyle, setCustomStyle] = useState({
-//     bgColor: "#ffffff",
-//     nicknameFont: "Arial, sans-serif",
-//     nicknameSize: "1.5rem",
-//     introduceFont: "Georgia, serif",
-//     introduceSize: "1rem",
-//   });
-//   const handleStyleChange = (e) => {
-//     const { name, value } = e.target;
-//     setCustomStyle((prev) => ({ ...prev, [name]: value }));
-//   };
+  const [user, setUser] = useState({
+    name: "홍길동",
+    introduce: "동에 번쩍 서에 번쩍",
+    profileImg: "",
+    postsCount: 12,
+    likesCount: 25,
+  });
 
-//   useEffect(() => {
-//     // 예: 페이지 로딩 시 유저 정보 불러오기
-//     // fetch('/api/user/profile')
-//     //   .then((res) => res.json())
-//     //   .then((data) => setUser(data))
-//     //   .catch((err) => console.error(err));
-//   }, []);
+  // 실제로는 백엔드에서 fetch하거나 props로 받을 수 있게
 
-//   const handlePaymentClick = () => {
-//     navigate("/sandbox"); // 결제 페이지로 이동
-//   };
+  const [customStyle, setCustomStyle] = useState({
+    bgColor: "#ffffff",
+    nicknameFont: "Arial, sans-serif",
+    nicknameSize: "1.5rem",
+    introduceFont: "Georgia, serif",
+    introduceSize: "1rem",
+    nicknameColor: "#000000", // 기본값
+    introduceColor: "#000000", // 기본값
+  });
 
-//   return (
-//     <ProfilePageContainer>
-//       <ProfilePageHeader>
-//         <HeaderUp>
-//           <Profile user={user} customStyle={customStyle} />
-//           <ProfileButtonContainer>
-//             <ProfileButton>
-//               <EditIcon />
-//               <span>프로필 편집</span>
-//             </ProfileButton>
-//             <ProfileButton onClick={handlePaymentClick}>
-//               <span>결제하기</span>
-//             </ProfileButton>
-//           </ProfileButtonContainer>
-//         </HeaderUp>
-//         <HeaderDown>
-//           <UserStats>
-//             <span>
-//               게시글: <strong>{user.postsCount}</strong>
-//             </span>
-//             <span>
-//               받은 추천: <strong>{user.likesCount}</strong>
-//             </span>
-//           </UserStats>
-//         </HeaderDown>
-//       </ProfilePageHeader>
-//       {/* 유저가 스타일 변경할 수 있는 UI */}
-//       <div>
-//         <label>
-//           배경색:
-//           <input
-//             type="color"
-//             name="bgColor"
-//             value={customStyle.bgColor}
-//             onChange={handleStyleChange}
-//           />
-//         </label>
-//         <br />
-//         <label>
-//           닉네임 폰트:
-//           <select
-//             name="nicknameFont"
-//             value={customStyle.nicknameFont}
-//             onChange={handleStyleChange}
-//           >
-//             <option value="Arial, sans-serif">Arial</option>
-//             <option value="Courier New, monospace">Courier New</option>
-//             <option value="Georgia, serif">Georgia</option>
-//             <option value="Tahoma, sans-serif">Tahoma</option>
-//           </select>
-//         </label>
-//         <label>
-//           닉네임 폰트 크기:
-//           <input
-//             type="range"
-//             name="nicknameSize" // 수정된 부분
-//             min="1.0"
-//             max="2.9"
-//             step="0.1"
-//             value={parseFloat(customStyle.nicknameSize)}
-//             onChange={(e) =>
-//               setCustomStyle((prev) => ({
-//                 ...prev,
-//                 nicknameSize: `${e.target.value}rem`, // 수정된 부분
-//               }))
-//             }
-//           />
-//           <input
-//             type="number"
-//             value={parseFloat(customStyle.nicknameSize)}
-//             readOnly
-//             style={{
-//               width: "50px",
-//               marginLeft: "10px",
-//               textAlign: "center",
-//               border: "none",
-//               background: "transparent",
-//             }}
-//           />
-//         </label>
-//         <br />
-//         <label>
-//           소개 폰트:
-//           <select
-//             name="introduceFont"
-//             value={customStyle.introduceFont}
-//             onChange={handleStyleChange}
-//           >
-//             <option value="Arial, sans-serif">Arial</option>
-//             <option value="Courier New, monospace">Courier New</option>
-//             <option value="Georgia, serif">Georgia</option>
-//             <option value="Tahoma, sans-serif">Tahoma</option>
-//           </select>
-//         </label>
-//         <label>
-//           소개 폰트 크기:
-//           <input
-//             type="range"
-//             name="introduceSize" // 수정된 부분
-//             min="0.8"
-//             max="1.5"
-//             step="0.1"
-//             value={parseFloat(customStyle.introduceSize)}
-//             onChange={(e) =>
-//               setCustomStyle((prev) => ({
-//                 ...prev,
-//                 introduceSize: `${e.target.value}rem`, // 수정된 부분
-//               }))
-//             }
-//           />
-//           <input
-//             type="number"
-//             value={parseFloat(customStyle.introduceSize)}
-//             readOnly
-//             style={{
-//               width: "50px",
-//               marginLeft: "10px",
-//               textAlign: "center",
-//               border: "none",
-//               background: "transparent",
-//             }}
-//           />
-//         </label>
-//       </div>
-//       <ProfileTabs />
-//     </ProfilePageContainer>
-//   );
-// };
-// export default ProfilePage;
+  useEffect(() => {
+    axiosInstance
+      .get("/api/profile/getId")
+      .then((response) => {
+        setLoggedInUserId(response.data); // 로그인한 유저의 ID 설정
+        console.log("Response data:", response.data); // 로그인한 유저 ID
+      })
+      .catch((err) => console.error(err));
+  }, []); // 이 useEffect는 로그인된 ID를 가져오는 역할만 합니다.
+
+  useEffect(() => {
+    if (id) {
+      // URL의 id 값이 있는 경우
+      if (id === String(loggedInUserId)) {
+        setIsOwnProfile(true); // id와 로그인한 유저 ID가 일치하면 본인 프로필
+      } else {
+        setIsOwnProfile(false); // id와 로그인한 유저 ID가 일치하지 않으면 다른 유저 프로필
+      }
+    } else {
+      // URL id 값이 없는 경우
+      if (loggedInUserId) {
+        setIsOwnProfile(true); // loggedInUserId 값이 있다면 본인 프로필
+      } else {
+        setIsOwnProfile(false); // 로그인된 유저가 없으면 프로필을 못 찾음
+      }
+    }
+  }, [loggedInUserId, id]); // loggedInUserId와 id가 변경될 때마다 실행
+
+  // useEffect(() => {
+  //   if (isOwnProfile && loggedInUserId) {
+  //     // 본인 프로필이면 사용자 정보 및 스타일을 백엔드에서 가져오기
+  //     axiosInstance
+  //       .get(`/api/profile/${loggedInUserId}`)
+  //       .then((response) => {
+  //         setUser({
+  //           name: response.data.nickName,
+  //           introduce: response.data.introduce,
+  //           profileImg: response.data.memberImg,
+  //           postsCount: 12, // 예시 값
+  //           likesCount: 25, // 예시 값
+  //         });
+  //         setCustomStyle({
+  //           bgColor: response.data.bgColor,
+  //           nicknameFont: response.data.nicknameFont,
+  //           nicknameSize: response.data.nicknameSize,
+  //           nicknameColor: response.data.textColorNickname,
+  //           introduceFont: response.data.introduceFont,
+  //           introduceSize: response.data.introduceSize,
+  //           introduceColor: response.data.textColorIntroduce,
+  //         });
+  //       })
+  //       .catch((err) => console.error(err));
+  //   }
+  // }, [isOwnProfile, loggedInUserId]);
+
+  const handlePaymentClick = () => {
+    navigate("/pay"); // 결제 페이지로 이동
+  };
+
+  const handleCustomClick = () => {
+    navigate("/profile/cardcustom");
+  };
+
+  return (
+    <ProfilePageContainer>
+      <ProfilePageHeader>
+        <HeaderUp>
+          <Profile userId={id || loggedInUserId} customStyle={customStyle} />
+          <ProfileButtonContainer>
+            {isOwnProfile && (
+              <ProfileButton onClick={handleCustomClick}>
+                <EditIcon />
+                <span>프로필 수정</span>
+              </ProfileButton>
+            )}
+            {isOwnProfile && (
+              <ProfileButton onClick={handlePaymentClick}>
+                <span>결제하기</span>
+              </ProfileButton>
+            )}
+            {isOwnProfile && (
+              <ProfileButton onClick={handleCustomClick}>
+                <span>프로필 디자인</span>
+              </ProfileButton>
+            )}
+          </ProfileButtonContainer>
+        </HeaderUp>
+        <HeaderDown>
+          <UserStats>
+            <span>
+              게시글 작성수: <strong>{user.postsCount}</strong>
+            </span>
+            <span>
+              받은 추천: <strong>{user.likesCount}</strong>
+            </span>
+          </UserStats>
+        </HeaderDown>
+      </ProfilePageHeader>
+      <ProfileTabs />
+    </ProfilePageContainer>
+  );
+};
+export default ProfilePage;

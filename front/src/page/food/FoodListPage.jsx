@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchFoodList } from "../../api/FoodApi";
@@ -143,7 +144,7 @@ const FoodListPage = () => {
   const cookingMethods = ["전체", "찌기", "끓이기", "굽기", "기타"];
 
   return (
-    <div className="px-4 py-8">
+    <div className="max-w-[1200px] mx-auto px-4 py-8">
       {/* 상단 영역 */}
       <header className="mb-8">
         <h1 className="text-2xl md:text-4xl font-bold mb-2 text-kakiBrown dark:text-softBeige">
@@ -315,4 +316,3 @@ const FoodListPage = () => {
 };
 
 export default FoodListPage;
-

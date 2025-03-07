@@ -1,7 +1,7 @@
 package com.kh.back.entity.chat;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import lombok.Getter;
 import lombok.Setter;
 

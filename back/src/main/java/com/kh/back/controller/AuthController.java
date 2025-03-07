@@ -6,9 +6,8 @@
 	import com.kh.back.dto.auth.TokenDto;
 	import com.kh.back.dto.auth.requset.EmailTokenVerificationDto;
 	import com.kh.back.dto.auth.requset.SmsTokenVerificationDto;
-	import com.kh.back.entity.Member;
 	import com.kh.back.jwt.TokenProvider;
-	import com.kh.back.service.MemberService;
+	import com.kh.back.service.member.MemberService;
 	import com.kh.back.service.auth.AuthService;
 	import com.kh.back.service.auth.EmailService;
 	import com.kh.back.service.auth.SmsService;
@@ -29,8 +28,6 @@
 		private final SmsService smsService;
 		private final EmailService emailService;
 		private final PasswordEncoder passwordEncoder;
-		private  final TokenProvider tokenProvider;
-		private final MemberService memberService;
 		
 		// 회원가입 여부 확인 , 이메일 중복 확인
 		@GetMapping("/email/{email}")
@@ -57,8 +54,8 @@
 
 		// 회원 가입
 		@PostMapping("/signup")
-		public ResponseEntity<Boolean> signup(@RequestBody SignupDto signupDto) {
-			boolean isSuccess = authService.signup(signupDto);
+		public ResponseEntity<String> signup(@RequestBody SignupDto signupDto) {
+			String  isSuccess = authService.signup(signupDto);
 			return ResponseEntity.ok(isSuccess);
 		}
 
@@ -77,10 +74,10 @@
 			return ResponseEntity.ok(isValid);
 		}
 
-		@PostMapping("/sendSms")
-		public ResponseEntity<String> sendSms(@RequestBody String phone) {
+		@GetMapping("/sendSms/{phone}")
+		public ResponseEntity<String> sendSms(@PathVariable String phone) {
 			String result = smsService.sendVerificationCode(phone);
-			log.info("SMS 전송 결과: {}", ResponseEntity.ok(result));
+			log.info("SMS 전송 결과: {}", result);
 			return ResponseEntity.ok(result);
 		}
 

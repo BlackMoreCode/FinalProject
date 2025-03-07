@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "title": { "type": "text", "analyzer": "standard" },
+      "contentJSON": { "type": "text" },
+      "viewsCount": { "type": "integer" },
+      "likesCount": { "type": "integer" },
+      "likedBy": { "type": "keyword" },
+      "reportCount": { "type": "integer" },
+      "comments": {
+        "type": "nested",
+        "properties": {
+          "id": { "type": "integer" },
+          "content": { "type": "text" },
+          "member": {
+            "properties": {
+              "memberId": { "type": "long" },
+              "nickName": { "type": "text" }
+            }
+          },
+          "createdAt": { "type": "date" },
+          "updatedAt": { "type": "date" }
+        }
+      },
+      "createdAt": { "type": "date" },
+      "updatedAt": { "type": "date" },
+      "memberId": { "type": "long" },
+      "authorName": { "type": "text" }
+    }
+  }
+}

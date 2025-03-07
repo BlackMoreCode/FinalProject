@@ -7,33 +7,28 @@ import {
   NavContainer,
   NavLink,
   NavLinks,
-  TopSection
+  TopSection,
 } from "./style/HeaderStyle";
-import React, {useState} from "react";
+import React, { useState } from "react";
 import DropdownComponent from "../../component/DropdownComponent";
-import {useLocation, useNavigate} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ProfileButton from "./ProfileButton";
 
-
-
-
-
 const PCHeader = () => {
-  const [open, setOpen] = useState<boolean>(false)
+  const [open, setOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuList = [
-    { path: "/", name: "Home"},
+    { path: "/main", name: "Main" },
     { path: "/about", name: "About" },
     { path: "/contact", name: "Contact" },
   ];
 
-
   const recipeList = [
-    { name: "cocktail", fn: () =>  navigate("/recipe/cocktail")},
-    { name: "food", fn: () =>  navigate("/recipe/food")},
-  ]
+    { name: "cocktail", fn: () => navigate("/recipe/cocktail") },
+    { name: "food", fn: () => navigate("/recipe/food") },
+  ];
 
   return (
     <Navbar>
@@ -49,18 +44,29 @@ const PCHeader = () => {
               </NavLink>
             ))}
             <DropdownContainer>
-              <DropDownButton className={location.pathname.includes("recipe") ? "active" : "no-underline"} onClick={() => setOpen(!open)}>
+              <DropDownButton
+                className={
+                  location.pathname.includes("recipe")
+                    ? "active"
+                    : "no-underline"
+                }
+                onClick={() => setOpen(!open)}
+              >
                 Recipe
               </DropDownButton>
-              <DropdownComponent open={open} onClose={() => setOpen(false)} list={recipeList} />
+              <DropdownComponent
+                open={open}
+                onClose={() => setOpen(false)}
+                list={recipeList}
+              />
             </DropdownContainer>
           </NavLinks>
         </BottomSection>
         <TopSection>
-          <ProfileButton/>
+          <ProfileButton />
         </TopSection>
       </NavContainer>
     </Navbar>
   );
-}
-export default PCHeader
+};
+export default PCHeader;

@@ -2,6 +2,7 @@ package com.kh.back.entity;
 
 
 
+import com.kh.back.entity.member.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

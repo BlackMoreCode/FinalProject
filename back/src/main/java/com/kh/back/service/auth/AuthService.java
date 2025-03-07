@@ -6,12 +6,12 @@ import com.kh.back.dto.auth.AccessTokenDto;
 import com.kh.back.dto.auth.LoginDto;
 import com.kh.back.dto.auth.SignupDto;
 import com.kh.back.dto.auth.TokenDto;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.entity.auth.RefreshToken;
 import com.kh.back.jwt.TokenProvider;
-import com.kh.back.repository.MemberRepository;
+import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.repository.auth.RefreshTokenRepository;
-import com.kh.back.service.MemberService;
+import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,9 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 // 스프링게 조금 더 낫다
 
 
@@ -56,16 +53,20 @@ public class AuthService {
 
 	// 회원가입
 	
-	public boolean signup(SignupDto signupDto) {
-
-		if (memberRepository.existsByEmail(signupDto.getEmail())) {
-			throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+	public String signup(SignupDto signupDto) {
+		try {
+			if (memberRepository.existsByEmail(signupDto.getEmail())) {
+				throw new RuntimeException("이미 가입되어 있는 유저입니다.");
+			}
+			
+			// 엔티티 변환 및 저장
+			Member member = signupDto.toEntity(passwordEncoder);
+			memberRepository.save(member);
+			return "성공";
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			return e.getMessage();
 		}
-
-		// 엔티티 변환 및 저장
-		Member member = signupDto.toEntity(passwordEncoder);
-		memberRepository.save(member);
-		return true;
 	}
 
 

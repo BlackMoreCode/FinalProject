@@ -31,7 +31,7 @@ public class CocktailService {
      * @return 칵테일 리스트 DTO 목록
      */
     public List<CocktailListResDto> searchCocktails(String q, String category, int page, int size) {
-        List<SearchListResDto> rawList = elasticService.search(q, "cocktail", category, page, size);
+        List<SearchListResDto> rawList = elasticService.search(q, "cocktail", category, null ,page, size);
         if (rawList == null) return Collections.emptyList();
         return rawList.stream()
                 .map(item -> (CocktailListResDto) item)

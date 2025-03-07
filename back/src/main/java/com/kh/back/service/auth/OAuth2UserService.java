@@ -1,9 +1,9 @@
 package com.kh.back.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.entity.auth.CustomOAuth2User;
-import com.kh.back.repository.MemberRepository;
+import com.kh.back.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;

@@ -1,8 +1,8 @@
-package com.kh.back.repository;
+package com.kh.back.repository.member;
 
 
 import com.kh.back.constant.Authority;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

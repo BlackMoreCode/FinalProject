@@ -1,10 +1,10 @@
 package com.kh.back.config;
 
 import com.kh.back.dto.auth.TokenDto;
-import com.kh.back.entity.Member;
+import com.kh.back.entity.member.Member;
 import com.kh.back.entity.auth.RefreshToken;
 import com.kh.back.jwt.TokenProvider;
-import com.kh.back.repository.MemberRepository;
+import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.repository.auth.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { FaEdit } from "react-icons/fa";
 
 export const ProfilePageContainer = styled.div`
-  width: 80%;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem 0;
 `;

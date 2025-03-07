@@ -17,18 +17,12 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
   const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 
   useEffect(() => {
-    if (phone) {
-      setVerify((prev) => ({ ...prev, timer: 300, active: true }));
-    }
-  }, [phone]);
-
-  useEffect(() => {
     if (verify.active && verify.timer > 0) {
       const timer = setInterval(() => {
         setVerify((prev) => ({ ...prev, timer: prev.timer - 1 }));
       }, 1000);
       return () => clearInterval(timer);
-    } else if (verify.timer <= 0) {
+    } else if (verify.timer == 0) {
       setVerify((prev) => ({ ...prev, active: false }));
       dispatch(
         setRejectModal({
@@ -42,7 +36,6 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
   const onClickPhoneVerify = async () => {
     if (isRequestInProgress) return;
     setIsRequestInProgress(true);
-
     if (!phone) {
       setIsRequestInProgress(false);
       return;
@@ -50,9 +43,8 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
 
     try {
       const rsp = await AuthApi.sendVerificationCode(phone);
-      console.log("서버 응답:", rsp);
-
-      if (rsp.data === "true") {
+      console.log("서버 응답:", rsp , rsp.data);
+      if (rsp.data === "success") {
         setVerify((prev) => ({ ...prev, active: true, timer: 300 }));
         dispatch(
           setRejectModal({
@@ -103,6 +95,7 @@ const VerifyPhone = ({ phone, setter }: { phone: string, setter: (value: boolean
           setRejectModal({ message: "인증번호가 유효합니다.", onCancel: () => {} })
         );
         setter(true, "verifyPhone");
+        setVerify({...verify, active: false});
       } else {
         setVerify((prev) => ({ ...prev, verified: false }));
         dispatch(
