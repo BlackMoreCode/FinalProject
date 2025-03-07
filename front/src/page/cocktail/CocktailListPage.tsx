@@ -3,59 +3,71 @@ import { useNavigate } from "react-router-dom";
 import { fetchRecipeList } from "../../api/RecipeListApi";
 import placeholder from "./style/placeholder.jpg";
 import placeholder2 from "./style/placeholder2.png";
+import { CocktailListResDto } from "../../api/dto/CotailListResDto";
 
 /**
  * 칵테일 목록 페이지
- * - 검색어와 카테고리 필터를 적용
- * - Intersection Observer와 React ref를 사용해 무한 스크롤 구현
- * - 카테고리 클릭 시 인자로 직접 전달해 "두 번 클릭" 문제 해결
+ * - 검색어와 카테고리 필터를 적용합니다.
+ * - Intersection Observer와 React ref를 사용해 무한 스크롤을 구현합니다.
+ * - 카테고리 버튼 클릭 시 인자를 직접 전달하여 "두 번 클릭" 문제를 해결합니다.
+ *
+ * @returns {JSX.Element} CocktailListPage 컴포넌트
  */
-const CocktailListPage = () => {
+const CocktailListPage: React.FC = () => {
   // -------------------- 상태 변수 --------------------
-  const [cocktails, setCocktails] = useState([]); // 칵테일 목록
-  const [query, setQuery] = useState(""); // 검색어
-  const [selectedCategory, setSelectedCategory] = useState(""); // 카테고리
+  // 칵테일 목록 상태 (CocktailListResDto 배열)
+  const [cocktails, setCocktails] = useState<CocktailListResDto[]>([]);
+  // 검색어 상태
+  const [query, setQuery] = useState<string>("");
+  // 선택된 카테고리 상태
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  // 무한 스크롤 관련
-  const [page, setPage] = useState(1); // 현재 페이지 번호
-  const [hasMore, setHasMore] = useState(true); // 추가 데이터 여부
-  const observerRef = useRef(null); // IntersectionObserver 저장용 ref
-  const sentinelRef = useRef(null); // 감시 대상 요소(ref)
+  // -------------------- 무한 스크롤 상태 --------------------
+  // 현재 페이지 번호
+  const [page, setPage] = useState<number>(1);
+  // 추가 데이터가 존재하는지 여부
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  // IntersectionObserver를 저장할 ref
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  // 관찰 대상 요소(ref)
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  // 페이지 이동을 위한 navigate hook
   const navigate = useNavigate();
 
-  // -------------------- 데이터 로딩 함수 --------------------
   /**
+   * 칵테일 목록을 API로부터 불러오는 함수
+   *
    * @param {number} pageNumber - 불러올 페이지 번호
-   * @param {string} catParam - 새 카테고리 (있다면), 없으면 selectedCategory 사용
+   * @param {string} catParam - 새로운 카테고리 값 (선택 사항). 값이 없으면 현재 상태(selectedCategory)를 사용합니다.
    */
   const loadCocktails = useCallback(
-    async (pageNumber, catParam) => {
+    async (pageNumber: number, catParam?: string) => {
       try {
+        // 전달된 카테고리 값이 있다면 사용하고, 그렇지 않으면 selectedCategory 사용
         const categoryUsed =
           catParam !== undefined ? catParam : selectedCategory;
 
+        // API 호출: "cocktail" 타입을 지정하고, 조리방법 필터는 빈 문자열로 전달합니다.
         const response = await fetchRecipeList(
           query,
           "cocktail",
           categoryUsed,
           "",
-          page,
+          pageNumber,
           20
         );
         console.log("loadCocktails 응답:", response);
 
+        // 첫 페이지이면 새로운 목록으로 설정, 아니면 기존 목록에 추가
         if (pageNumber === 1) {
           setCocktails(response);
         } else {
           setCocktails((prev) => [...prev, ...response]);
         }
 
-        if (!response || response.length < 20) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        // 응답 데이터의 길이가 20보다 작으면 더 불러올 데이터가 없다고 판단합니다.
+        setHasMore(response && response.length === 20);
       } catch (error) {
         console.error("칵테일 목록 조회 중 에러:", error);
       }
@@ -63,16 +75,23 @@ const CocktailListPage = () => {
     [query, selectedCategory]
   );
 
-  // -------------------- 검색/필터 시 첫 페이지 로드 --------------------
+  /**
+   * 검색 또는 필터를 적용할 때 첫 페이지 데이터를 불러오는 함수
+   */
   const fetchCocktailsData = useCallback(async () => {
     setPage(1);
     await loadCocktails(1, selectedCategory);
     resetObserver();
   }, [loadCocktails, selectedCategory]);
 
-  // -------------------- Intersection Observer 콜백 --------------------
+  /**
+   * IntersectionObserver의 콜백 함수
+   * - 감시 대상이 화면에 나타나면 다음 페이지를 불러옵니다.
+   *
+   * @param {IntersectionObserverEntry[]} entries - 관찰 대상 항목 배열
+   */
   const handleObserver = useCallback(
-    (entries) => {
+    (entries: IntersectionObserverEntry[]) => {
       const target = entries[0];
       if (target.isIntersecting && hasMore) {
         setPage((prev) => prev + 1);
@@ -81,7 +100,9 @@ const CocktailListPage = () => {
     [hasMore]
   );
 
-  // -------------------- Observer 재설정 (React ref 사용) --------------------
+  /**
+   * IntersectionObserver를 초기화 및 재설정하는 함수
+   */
   const resetObserver = useCallback(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -95,14 +116,14 @@ const CocktailListPage = () => {
     observerRef.current = observer;
   }, [handleObserver]);
 
-  // -------------------- page 변경 시 추가 데이터 로드 --------------------
+  // 페이지 번호가 변경될 때 추가 데이터를 불러옵니다.
   useEffect(() => {
     if (page > 1) {
       loadCocktails(page, selectedCategory);
     }
   }, [page, loadCocktails, selectedCategory]);
 
-  // -------------------- 컴포넌트 마운트 시 Observer 초기화 --------------------
+  // 컴포넌트 마운트 시 Observer를 초기화하고, 첫 페이지 데이터를 불러옵니다.
   useEffect(() => {
     resetObserver();
     loadCocktails(1, selectedCategory);
@@ -111,14 +132,19 @@ const CocktailListPage = () => {
         observerRef.current.disconnect();
       }
     };
-  }, [resetObserver, loadCocktails]);
+  }, [resetObserver, loadCocktails, selectedCategory]);
 
-  // -------------------- 상세 페이지 이동 --------------------
-  const handleSelectCocktail = (id) => {
+  /**
+   * 상세 페이지로 이동하는 함수
+   *
+   * @param {string} id - 선택된 칵테일의 ID
+   */
+  const handleSelectCocktail = (id: string) => {
+    // 상세 페이지의 라우트는 /cocktails/:id 로 구성되어 있습니다.
     navigate(`/cocktails/${id}`);
   };
 
-  // -------------------- 임시 추천 레시피 --------------------
+  // -------------------- 임시 추천 레시피 데이터 (테스트용) --------------------
   const recommendedRecipes = [
     { id: "rec_1", name: "마가리타", image: placeholder2 },
     { id: "rec_2", name: "다이키리", image: placeholder2 },
@@ -209,6 +235,7 @@ const CocktailListPage = () => {
         </h2>
         <div className="flex flex-wrap justify-center gap-3">
           {categories.map((cat) => {
+            // "전체"는 빈 문자열로 처리합니다.
             const newCat = cat === "전체" ? "" : cat;
             return (
               <button
@@ -216,7 +243,7 @@ const CocktailListPage = () => {
                 onClick={() => {
                   setSelectedCategory(newCat);
                   setPage(1);
-                  loadCocktails(1, newCat, undefined);
+                  loadCocktails(1, newCat);
                   resetObserver();
                 }}
                 className={`px-4 py-2 border rounded transition-colors ${
@@ -233,32 +260,32 @@ const CocktailListPage = () => {
         </div>
       </section>
 
-      {/* 레시피 목록 섹션 */}
+      {/* 칵테일 목록 섹션 */}
       <section className="mb-16">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           Our Recipes
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {cocktails.map((food) => (
+          {cocktails.map((cocktail) => (
             <div
-              key={food.id}
+              key={cocktail.id}
               className="border border-kakiBrown dark:border-darkKaki rounded-lg overflow-hidden shadow hover:shadow-lg cursor-pointer transition-transform transform hover:scale-105"
-              onClick={() => navigate(`/cocktails/${food.id}`)}
+              onClick={() => handleSelectCocktail(cocktail.id)}
             >
               <img
-                src={food.image || placeholder2}
-                alt={food.name}
+                src={cocktail.image || placeholder2}
+                alt={cocktail.name}
                 className="w-full h-48 object-cover"
               />
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-kakiBrown dark:text-softBeige">
-                  {food.name}
+                  {cocktail.name}
                 </h3>
                 <p className="text-kakiBrown dark:text-softBeige">
-                  Category: {food.category}
+                  Category: {cocktail.category}
                 </p>
                 <p className="text-kakiBrown dark:text-softBeige">
-                  Likes: {food.like || 0}
+                  Likes: {cocktail.like || 0}
                 </p>
               </div>
             </div>
@@ -266,7 +293,7 @@ const CocktailListPage = () => {
         </div>
       </section>
 
-      {/* sentinel 요소: React ref를 사용 */}
+      {/* Intersection Observer 감시 대상 요소 */}
       {hasMore && <div ref={sentinelRef} style={{ height: "50px" }} />}
     </div>
   );
