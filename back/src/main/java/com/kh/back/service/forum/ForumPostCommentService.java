@@ -23,7 +23,7 @@ public class ForumPostCommentService {
      * 특정 게시글에 대한 댓글 리스트 조회
      * KR: ES의 /forum/post/{postId}/comments 엔드포인트를 호출하여 댓글 목록을 가져옵니다.
      */
-    public List<ForumPostCommentResponseDto> getCommentsForPost(Integer postId) {
+    public List<ForumPostCommentResponseDto> getCommentsForPost(String postId) {
         log.info("게시글 ID: {} 의 댓글 조회 요청", postId);
         return forumEsService.searchCommentsForPost(postId);
     }

@@ -5,6 +5,7 @@
   },
   "mappings": {
     "properties": {
+      "id": { "type": "integer" },
       "title": { "type": "text", "analyzer": "standard" },
       "description": { "type": "text", "analyzer": "standard" },
       "postCount": { "type": "integer" },

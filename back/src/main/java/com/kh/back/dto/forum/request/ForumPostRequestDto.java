@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor // 기본 생성자
 @AllArgsConstructor // 모든 필드를 포함한 생성자
 public class ForumPostRequestDto {
-    private Integer categoryId; // 카테고리 ID
+    private String categoryId; // 카테고리 ID
     private Long memberId; // 작성자 ID
     private String title; // 게시글 제목
     private String content; // 게시글 내용 (HTML)

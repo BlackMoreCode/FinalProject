@@ -31,7 +31,7 @@ public class ForumPostController {
     /**
      * 특정 카테고리의 게시글 가져오기 (페이지네이션)
      *
-     * @param categoryId 카테고리 ID
+     * @param categoryId 카테고리 ID (여기서는 기존에 Integer로 처리됨)
      * @param page       페이지 번호 (1부터 시작)
      * @param size       페이지 크기
      * @return 게시글 목록 (페이지네이션 포함)
@@ -45,7 +45,7 @@ public class ForumPostController {
         // 페이지 파라미터 보정 (1-based -> 0-based)
         int zeroBasedPage = page > 0 ? page - 1 : 0;
 
-        // ES 기반으로 검색하여 PaginationDto 반환 (totalHits 관련 개선 필요)
+        // ES 기반으로 검색하여 PaginationDto 반환
         PaginationDto<ForumPostResponseDto> pagination =
                 postService.getPostsByCategory(categoryId, zeroBasedPage, size);
 
@@ -90,66 +90,56 @@ public class ForumPostController {
     /**
      * 게시글 제목 수정
      *
-     * @param postId           수정할 게시글 ID
+     * @param postId           수정할 게시글 ID (문자열로 변경)
      * @param body             새로운 제목을 포함한 JSON
      * @param loggedInMemberId 요청 사용자 ID (Long 타입)
      * @return 수정된 게시글 정보
      */
     @PutMapping("/{postId}/title")
     public ResponseEntity<ForumPostResponseDto> updatePostTitle(
-            @PathVariable Integer postId,
+            @PathVariable String postId,
             @RequestBody Map<String, String> body,
             @RequestParam Long loggedInMemberId
     ) {
         log.info("게시글 제목 수정 요청, 게시글 ID: {} / 사용자 ID: {}", postId, loggedInMemberId);
-
-        // 관리자 여부 판단
         boolean isAdmin = memberService.isAdmin(loggedInMemberId);
         String newTitle = body.get("title");
-
-        // 서비스 호출
-        ForumPostResponseDto updatedPost = postService.updatePostTitle(
-                postId, newTitle, loggedInMemberId, isAdmin
-        );
+        ForumPostResponseDto updatedPost = postService.updatePostTitle(postId, newTitle, loggedInMemberId, isAdmin);
         return ResponseEntity.ok(updatedPost);
     }
 
     /**
      * 게시글 내용 수정 (TipTap JSON)
      *
-     * @param postId           수정할 게시글 ID
+     * @param postId           수정할 게시글 ID (문자열로 변경)
      * @param body             { "contentJSON": "..." } 형태의 JSON
      * @param loggedInMemberId 요청 사용자 ID (Long 타입)
      * @return 수정된 게시글 정보
      */
     @PutMapping("/{postId}/content")
     public ResponseEntity<ForumPostResponseDto> updatePostContent(
-            @PathVariable Integer postId,
+            @PathVariable String postId,
             @RequestBody Map<String, String> body,
             @RequestParam Long loggedInMemberId
     ) {
         log.info("게시글 내용 수정 요청, 게시글 ID: {} / 사용자 ID: {}", postId, loggedInMemberId);
-
         boolean isAdmin = memberService.isAdmin(loggedInMemberId);
         String contentJSON = body.get("contentJSON");
-
-        ForumPostResponseDto updatedPost = postService.updatePostContent(
-                postId, contentJSON, loggedInMemberId, isAdmin
-        );
+        ForumPostResponseDto updatedPost = postService.updatePostContent(postId, contentJSON, loggedInMemberId, isAdmin);
         return ResponseEntity.ok(updatedPost);
     }
 
     /**
      * 게시글 삭제 (소프트 삭제)
      *
-     * @param id               삭제할 게시글 ID
+     * @param id               삭제할 게시글 ID (문자열로 변경)
      * @param loggedInMemberId 요청 사용자 ID (Long 타입)
      * @param removedBy        삭제를 수행한 사용자 정보 (ADMIN 또는 작성자 이름)
      * @return 성공 상태 (200 OK)
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @RequestParam Long loggedInMemberId,
             @RequestParam String removedBy
     ) {
@@ -160,13 +150,13 @@ public class ForumPostController {
     /**
      * 게시글 하드 삭제 (관리자 전용)
      *
-     * @param id               삭제할 게시글 ID
+     * @param id               삭제할 게시글 ID (문자열로 변경)
      * @param loggedInMemberId 요청 사용자 ID (Long 타입, 관리자여야 함)
      * @return 성공 상태 (200 OK)
      */
     @DeleteMapping("/{id}/hard-delete")
     public ResponseEntity<Void> hardDeletePost(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @RequestParam Long loggedInMemberId
     ) {
         boolean isAdmin = memberService.isAdmin(loggedInMemberId);
@@ -180,11 +170,11 @@ public class ForumPostController {
     /**
      * 게시글 숨김 처리
      *
-     * @param postId 숨길 게시글 ID
+     * @param postId 숨길 게시글 ID (문자열로 변경)
      * @return 성공 상태 (200 OK)
      */
     @PostMapping("/{postId}/hide")
-    public ResponseEntity<Void> hidePost(@PathVariable Integer postId) {
+    public ResponseEntity<Void> hidePost(@PathVariable String postId) {
         postService.hidePost(postId);
         return ResponseEntity.ok().build();
     }
@@ -192,11 +182,11 @@ public class ForumPostController {
     /**
      * 숨겨진 게시글 복구
      *
-     * @param postId 복구할 게시글 ID
+     * @param postId 복구할 게시글 ID (문자열로 변경)
      * @return 성공 상태 (200 OK)
      */
     @PostMapping("/{postId}/restore")
-    public ResponseEntity<Void> restorePost(@PathVariable Integer postId) {
+    public ResponseEntity<Void> restorePost(@PathVariable String postId) {
         postService.restorePost(postId);
         return ResponseEntity.ok().build();
     }
@@ -204,13 +194,13 @@ public class ForumPostController {
     /**
      * 게시글 수정 권한 확인
      *
-     * @param id               게시글 ID
+     * @param id               게시글 ID (문자열로 변경)
      * @param loggedInMemberId 요청 사용자 ID (Long 타입)
      * @return 게시글 수정 권한 여부
      */
     @GetMapping("/{id}/can-edit")
     public ResponseEntity<Boolean> canEditPost(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @RequestParam Long loggedInMemberId
     ) {
         boolean canEdit = postService.canEditPost(id, loggedInMemberId);
@@ -220,13 +210,13 @@ public class ForumPostController {
     /**
      * 게시글 삭제 권한 확인
      *
-     * @param id               게시글 ID
+     * @param id               게시글 ID (문자열로 변경)
      * @param loggedInMemberId 요청 사용자 ID (Long 타입)
      * @return 게시글 삭제 권한 여부
      */
     @GetMapping("/{id}/can-delete")
     public ResponseEntity<Boolean> canDeletePost(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @RequestParam Long loggedInMemberId
     ) {
         boolean canDelete = postService.canDeletePost(id, loggedInMemberId);
@@ -236,11 +226,11 @@ public class ForumPostController {
     /**
      * 특정 게시글 상세 조회
      *
-     * @param id 게시글 ID
+     * @param id 게시글 ID (문자열로 변경)
      * @return 게시글 상세 정보 (없으면 404)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ForumPostResponseDto> getPostDetails(@PathVariable Integer id) {
+    public ResponseEntity<ForumPostResponseDto> getPostDetails(@PathVariable String id) {
         return postService.getPostDetails(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -249,11 +239,11 @@ public class ForumPostController {
     /**
      * 게시글 조회수 증가
      *
-     * @param id 게시글 ID
+     * @param id 게시글 ID (문자열로 변경)
      * @return 성공 상태 (200 OK)
      */
     @PostMapping("/{id}/increment-view")
-    public ResponseEntity<Void> incrementViewCount(@PathVariable Integer id) {
+    public ResponseEntity<Void> incrementViewCount(@PathVariable String id) {
         postService.incrementViewCount(id);
         return ResponseEntity.ok().build();
     }
@@ -261,15 +251,15 @@ public class ForumPostController {
     /**
      * 게시글 인용
      *
-     * @param quotingMemberId 인용하는 회원 ID (정수형으로 처리)
-     * @param quotedPostId    인용 대상 게시글 ID
+     * @param quotingMemberId 인용하는 회원 ID (정수형)
+     * @param quotedPostId    인용 대상 게시글 ID (문자열로 변경)
      * @param commentContent  추가 댓글 내용
      * @return 인용된 게시글 정보
      */
     @PostMapping("/{id}/quote")
     public ResponseEntity<ForumPostResponseDto> quotePost(
             @RequestParam Integer quotingMemberId,
-            @PathVariable("id") Integer quotedPostId,
+            @PathVariable("id") String quotedPostId,
             @RequestBody String commentContent
     ) {
         ForumPostResponseDto quoted = postService.quotePost(quotingMemberId, quotedPostId, commentContent);
@@ -279,14 +269,14 @@ public class ForumPostController {
     /**
      * 게시글 신고 처리
      *
-     * @param postId     신고할 게시글 ID
+     * @param postId     신고할 게시글 ID (문자열로 변경)
      * @param reporterId 신고자 ID (정수형)
      * @param reason     신고 사유 (본문)
      * @return 신고 결과 (업데이트된 게시글 정보 포함)
      */
     @PostMapping("/{postId}/report")
     public ResponseEntity<ForumPostResponseDto> reportPost(
-            @PathVariable Integer postId,
+            @PathVariable String postId,
             @RequestParam Integer reporterId,
             @RequestBody String reason
     ) {

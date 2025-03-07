@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ForumPostResponseDto implements SearchResDto {
     // 기존 필드
-    private Integer id; // 게시글 ID
+    private String id; // 게시글 ID
     private String title; // 게시글 제목
     private String content; // 게시글 내용 (HTML)
     private String authorName; // 작성자 이름
