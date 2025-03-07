@@ -61,7 +61,7 @@ public class ProfileService {
     // 2. Authentication과 스타일 값을 받아 스타일 정보 갱신
     public void updateCustomStyle(Authentication authentication, CustomStyleDto customStyleDto) {
         // Authentication을 통해 현재 로그인된 유저의 ID 가져오기
-        Long userId = ((Member) authentication.getPrincipal()).getMemberId();
+        Long userId = Long.valueOf(authentication.getName());
         log.info("스타일 정보 갱신시 맴버 아이디 값 : {}", userId);
 
         // 유저의 스타일 정보 조회 및 업데이트
@@ -81,6 +81,7 @@ public class ProfileService {
         customStyle.setIntroduceSize(customStyleDto.getIntroduceSize());
         customStyle.setTextColorNickname(customStyleDto.getTextColorNickname());
         customStyle.setTextColorIntroduce(customStyleDto.getTextColorIntroduce());
+        customStyle.setMember(member);
 
         // 스타일 정보 저장
         memberRepository.save(member);
