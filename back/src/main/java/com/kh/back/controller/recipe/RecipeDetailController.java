@@ -49,7 +49,7 @@ public class RecipeDetailController {
                                                      @RequestParam String type,
                                                      @RequestParam boolean increase) {
 
-        boolean isUpdated = redisService.updateRecipeCount(action, postId, type, increase);
+        boolean isUpdated = redisService.updateRecipeCount(authentication,action, postId, type, increase);
         return ResponseEntity.ok(isUpdated);  // 성공 여부 (true/false) 반환
     }
 

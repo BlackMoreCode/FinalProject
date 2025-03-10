@@ -168,7 +168,7 @@ public class ElasticService {
 	/**
 	 * Redis에서 좋아요 및 신고 데이터를 가져와 Flask로 전송하는 메서드
 	 */
-	@Scheduled(fixedRate = 60000) // 60초마다 실행
+	@Scheduled(fixedRate = 60000*5) // 60초마다 실행
 	public void updateLikesAndReports() {
 		try {
 			List<Map<String, Object>> likeReportData = redisService.getAllLikesAndReports();

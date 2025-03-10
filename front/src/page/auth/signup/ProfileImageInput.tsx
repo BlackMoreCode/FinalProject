@@ -36,7 +36,11 @@ const FileInput = styled.input`
   display: none;
 `;
 
-const ProfileImageInput = () => {
+interface ProfileImageInputProps {
+  onFileChange: (file: File | null) => void;
+}
+
+const ProfileImageInput: React.FC<ProfileImageInputProps> = ({ onFileChange }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +51,9 @@ const ProfileImageInput = () => {
         setSelectedImage(reader.result as string); // 파일을 읽어서 미리보기
       };
       reader.readAsDataURL(file);
+      onFileChange(file); // 부모 컴포넌트로 파일 전달
+    } else {
+      onFileChange(null); // 파일 선택이 취소된 경우 null 전달
     }
   };
 
