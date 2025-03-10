@@ -15,7 +15,7 @@ public class AddFoodRecipeDto {
     private MultipartFile attFileNoMain;
 
     private String rcpNaTip;
-    private List<Ingredients> rcpPartsDtls;
+    private List<Ingredients> Ingredients;
     private List<Manual> manuals;
     private Long authory;
 

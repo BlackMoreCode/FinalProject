@@ -101,3 +101,30 @@ export interface InputProps {
   value: string;
   onChange: Change; // input, textarea 등에서 사용할 onChange 이벤트
 }
+
+
+export interface Ingredient {
+  name: string;
+  quantity: string;
+}
+
+export interface Step {
+  text: string;
+  imageFile: File | null;
+}
+
+export interface RecipeData {
+  type: string;
+  RCP_NM: string;
+  RCP_WAY2: string;
+  RCP_PAT2: string;
+  INFO_WGT: string;
+  ATT_FILE_NO_MAIN: File;
+  ATT_FILE_NO_MK: File;
+  RCP_PARTS_DTLS: Ingredient[];
+  RCP_NA_TIP: string;
+  MANUALS: Step[];
+  like: number;
+  report: number;
+  author: number;
+}

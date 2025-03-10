@@ -8,9 +8,11 @@ import com.kh.back.dto.recipe.res.CocktailListResDto;
 import com.kh.back.dto.recipe.res.CocktailResDto;
 import com.kh.back.dto.recipe.res.FoodListResDto;
 import com.kh.back.dto.recipe.res.FoodResDto;
+import com.kh.back.service.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -18,7 +20,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class ElasticService {
 	private final RestTemplate restTemplate;
 	private final String flaskBaseUrl = "http://localhost:5001";
 	private final ObjectMapper objectMapper;
+	private final RedisService redisService;
 
 	/**
 	 * [통합 검색 메서드: 칵테일/음식]
@@ -159,4 +164,35 @@ public class ElasticService {
 				return null;
 		}
 	}
+
+	/**
+	 * Redis에서 좋아요 및 신고 데이터를 가져와 Flask로 전송하는 메서드
+	 */
+	@Scheduled(fixedRate = 60000) // 60초마다 실행
+	public void updateLikesAndReports() {
+		try {
+			List<Map<String, Object>> likeReportData = redisService.getAllLikesAndReports();
+			if (likeReportData.isEmpty()) {
+				log.info("[updateLikesAndReports] No like or report data found in Redis.");
+				return;
+			}
+
+			Map<String, Object> requestBody = new HashMap<>();
+			requestBody.put("like_report_data", likeReportData);
+
+			String jsonData = objectMapper.writeValueAsString(requestBody);
+			URI uri = new URI(flaskBaseUrl + "/update/likes-reports");
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			HttpEntity<String> requestEntity = new HttpEntity<>(jsonData, headers);
+
+			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
+			log.info("[updateLikesAndReports] Response from Flask: {}", response.getBody());
+		} catch (Exception e) {
+			log.error("[updateLikesAndReports] Error sending like/report data to Flask: {}", e.getMessage());
+		}
+	}
+
+
 }

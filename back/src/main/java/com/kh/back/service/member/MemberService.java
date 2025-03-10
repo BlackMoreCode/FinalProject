@@ -122,6 +122,7 @@ public class MemberService {
 		return true;
 	}
 
+
 //	// 회원 정보 수정
 //	public boolean updateMember(MemberReqDto memberReqDto) {
 //		try {

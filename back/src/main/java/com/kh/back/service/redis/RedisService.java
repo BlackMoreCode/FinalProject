@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service @RequiredArgsConstructor
 @Slf4j
@@ -32,6 +35,8 @@ public class RedisService {
 		String key = "likes:" + postId;
 		return redisTemplate.opsForValue().increment(key, 1); // 1씩 증가
 	}
+
+
 	
 	// 좋아요 수 감소
 	public Long decrementLikes(String postId) {
@@ -49,6 +54,88 @@ public class RedisService {
 		}
 		return 0L;  // 기본값
 	}
-	
+
+	public Long getReports(String postId) {
+		String key = "reports:" + postId;
+		String value = (String) redisTemplate.opsForValue().get(key);
+		if (value != null) {
+			return Long.parseLong(value);
+		}
+		return 0L; // 기본값
+	}
+
+
+	public boolean updateRecipeCount(String action, String postId, String type, boolean increase) {
+		try {
+			String key = action + ":" + postId + ":" + type; // ex) likes:123:recipe 또는 reports:123:recipe
+			if (increase) {
+				redisTemplate.opsForValue().increment(key, 1); // +1 증가
+			} else {
+				// 값이 null일 경우 0으로 설정하고, 그 후 -1을 수행
+				String value = Optional.ofNullable((String) redisTemplate.opsForValue().get(key)).orElse("0");
+				redisTemplate.opsForValue().set(key, value); // null일 경우 0으로 설정
+				redisTemplate.opsForValue().decrement(key, 1); // -1 감소
+			}
+			return true;  // 성공
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false; // 실패
+		}
+	}
+
+
+
+	public List<Map<String, Object>> getAllLikesAndReports() {
+		List<Map<String, Object>> result = new ArrayList<>();
+
+		// Redis에서 "likes:*" 패턴에 맞는 모든 키를 찾기
+		Set<String> likeKeys = redisTemplate.keys("likes:*");
+		if (likeKeys != null) {
+			for (String key : likeKeys) {
+				// 키에서 postId와 type 추출
+				String[] parts = key.split(":");
+				String postId = parts[1]; // Elasticsearch의 _id
+				String type = parts[2];   // type (cocktail 또는 food)
+
+				// Redis에서 해당 키의 값을 가져오기
+				String value = (String) redisTemplate.opsForValue().get(key);
+				if (value != null) {
+					Map<String, Object> entry = new HashMap<>();
+					entry.put("postId", postId); // Elasticsearch의 _id
+					entry.put("type", type);     // type
+					entry.put("value", Long.parseLong(value)); // 값
+					entry.put("keyType", "like"); // 좋아요인지 신고인지 구분
+					result.add(entry);
+				}
+			}
+		}
+		// Redis에서 "reports:*" 패턴에 맞는 모든 키를 찾기
+		Set<String> reportKeys = redisTemplate.keys("reports:*");
+		if (reportKeys != null) {
+			for (String key : reportKeys) {
+				// 키에서 postId와 type 추출
+				String[] parts = key.split(":");
+				String postId = parts[1]; // Elasticsearch의 _id
+				String type = parts[2];   // type (cocktail 또는 food)
+
+				// Redis에서 해당 키의 값을 가져오기
+				String value = (String) redisTemplate.opsForValue().get(key);
+				if (value != null) {
+					Map<String, Object> entry = new HashMap<>();
+					entry.put("postId", postId); // Elasticsearch의 _id
+					entry.put("type", type);     // type
+					entry.put("value", Long.parseLong(value)); // 값
+					entry.put("keyType", "report"); // 좋아요인지 신고인지 구분
+					result.add(entry);
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+
+
 }
 

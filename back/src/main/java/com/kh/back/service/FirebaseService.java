@@ -35,7 +35,7 @@ public class FirebaseService {
         g.drawImage(originalImage, 0, 0, 400, 400, null);
         g.dispose();
 
-        // 이미지 압축 (화질 70%)
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(resizedImage, "jpg", outputStream);
         byte[] imageBytes = outputStream.toByteArray();
@@ -43,6 +43,35 @@ public class FirebaseService {
         // Firebase Storage에 업로드
         Bucket bucket = StorageClient.getInstance().bucket();
         String fileName = folderName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename(); // 폴더 경로 추가
+        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
+
+        return blob.getMediaLink();
+    }
+
+    public String uploadProfileImage(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 없습니다.");
+        }
+
+        // 프로필 이미지 저장 경로 설정
+        String folderName = "profile/" ;
+
+        // 파일을 BufferedImage로 변환
+        BufferedImage originalImage = ImageIO.read(file.getInputStream());
+
+        // 400x400으로 리사이징
+        BufferedImage resizedImage = new BufferedImage(400, 400, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = resizedImage.createGraphics();
+        g.drawImage(originalImage, 0, 0, 400, 400, null);
+        g.dispose();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ImageIO.write(resizedImage, "jpg", outputStream);
+        byte[] imageBytes = outputStream.toByteArray();
+
+        // Firebase Storage에 업로드
+        Bucket bucket = StorageClient.getInstance().bucket();
+        String fileName = folderName + "/" + UUID.randomUUID() + "_profile.jpg"; // 파일명 고유값 추가
         Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
 
         return blob.getMediaLink();
