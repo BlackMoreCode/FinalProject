@@ -23,6 +23,7 @@ const SignupModal = () => {
     serviceTerm : false,
     privacyTerm : false,
   });
+
   // 이메일, 비밀번호, 닉네임, 전화번호 상태 업데이트
   const setter = useCallback((value: string, type: string) => {
     setCheck((prev) => ({
