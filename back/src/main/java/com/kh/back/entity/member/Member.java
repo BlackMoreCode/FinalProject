@@ -1,6 +1,7 @@
 package com.kh.back.entity.member;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.kh.back.constant.Authority;
 import com.kh.back.entity.CustomStyle;
 import lombok.*;
@@ -56,12 +57,9 @@ public class Member {
     @Column(length = 255)
     private String introduce; // 자기 소개 필드 추가
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus paymentStatus = PaymentStatus.NOT_PAID; // 기본값 설정
-
     // CustomStyle과 1:1 관계 설정 (Member 삭제 시 CustomStyle도 삭제됨)
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonBackReference
     private CustomStyle customStyle;
 
     @Builder
@@ -88,6 +86,7 @@ public class Member {
         this.type = type;
         this.regDate = regDate;
         this.authority = Authority.valueOf("ROLE_USER");
-        this.paymentStatus = PaymentStatus.NOT_PAID; // 기본값 설정
     }
+
+
 }

@@ -33,9 +33,6 @@ public class PurchaseService {
         Member member = memberRepository.findByMemberId(userId)
                 .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
 
-        // 결제 상태 업데이트
-        member.setPaymentStatus(PaymentStatus.PAID);  // 결제 완료 상태로 설정
-        memberRepository.save(member);  // 변경된 상태 저장
 
         // PurchaseRecord 엔티티 생성
         PurchaseRecord purchaseRecord = PurchaseRecord.builder()
@@ -50,5 +47,17 @@ public class PurchaseService {
 
         // 데이터베이스에 저장 후 반환
         return purchaseRecordRepository.save(purchaseRecord);
+    }
+
+    public boolean isMemberPurchase (Authentication authentication) {
+        // 로그인한 사용자 정보 얻기
+        Long userId = Long.valueOf(authentication.getName());
+
+        // 회원정보 가져오기
+        Member member = memberRepository.findByMemberId(userId)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+
+        // 해당 멤버의 구매 기록이 존재하는지 확인
+        return purchaseRecordRepository.existsByMember(member);
     }
 }
