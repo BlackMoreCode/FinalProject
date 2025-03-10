@@ -40,6 +40,7 @@ const LoginModal = () => {
   const [inputEmail, setInputEmail] = useState<string>("");
   const [inputPw, setInputPw] = useState<string>("");
 
+
   const SNS_SIGN_IN_URL = (type: SNSLoginType) =>
     `${Commons.BASE_URL}/api/v1/auth/oauth2/${type}`;
   const onSnsSignInButtonClickHandler = (type: SNSLoginType) => {
@@ -157,7 +158,6 @@ const LoginModal = () => {
               회원가입
             </SignupTextButton>
           </TextButtonContainer>
-
           {/* 라인 및 SNS 로그인 섹션 */}
           <Line />
           <SnsLoginText>SNS 계정 간편 로그인</SnsLoginText>

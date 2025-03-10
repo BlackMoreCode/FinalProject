@@ -55,7 +55,7 @@ export default function RecipeUploader() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const newSteps = [...steps];
-        newSteps[index].image = reader.result as string;
+        newSteps[index].image = reader.result as string; // base64 문자열로 변환
         setSteps(newSteps);
       };
       reader.readAsDataURL(file);
@@ -66,7 +66,7 @@ export default function RecipeUploader() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setImage(reader.result as string);
+      reader.onloadend = () => setImage(reader.result as string); // base64 문자열로 변환
       reader.readAsDataURL(file);
     }
   };

@@ -6,6 +6,8 @@ import lombok.*;
 @AllArgsConstructor @NoArgsConstructor
 public class TopRatedResDto {
 	String recipeId;
+	String Img;
+	String Title;
 	Long count;
 	int rate;
 }

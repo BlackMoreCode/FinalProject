@@ -37,6 +37,7 @@ const Profile = ({ userId, customStyle }) => {
       axiosInstance
         .get(`/api/profile/${userId}`)
         .then((response) => {
+          console.log(response.data);
           const {
             nickName,
             memberImg,
@@ -58,22 +59,27 @@ const Profile = ({ userId, customStyle }) => {
           });
 
           // 스타일 설정 (없으면 기본값 사용)
-          setUserStyle({
-            bgColor: bgColor || "#ffffff", // 기본 배경색
-            nicknameFont: nicknameFont || "Arial, sans-serif",
-            nicknameSize: nicknameSize || "1.5rem",
-            introduceFont: introduceFont || "Georgia, serif",
-            introduceSize: introduceSize || "1rem",
-            textColorNickname: textColorNickname || "#000000", // 기본값
-            textColorIntroduce: textColorIntroduce || "#000000", // 기본값
-          });
+          setUserStyle((prevStyle) => ({
+            ...prevStyle,
+            bgColor: bgColor || prevStyle.bgColor,
+            nicknameFont: nicknameFont || prevStyle.nicknameFont,
+            nicknameSize: nicknameSize || prevStyle.nicknameSize,
+            introduceFont: introduceFont || prevStyle.introduceFont,
+            introduceSize: introduceSize || prevStyle.introduceSize,
+            textColorNickname: textColorNickname || prevStyle.textColorNickname,
+            textColorIntroduce:
+              textColorIntroduce || prevStyle.textColorIntroduce,
+          }));
         })
         .catch((err) => console.error(err));
     }
   }, [userId]);
 
+  // customStyle이 존재하면 우선 적용
+  const finalStyle = { ...userStyle, ...customStyle };
+
   return (
-    <ProfileCard style={{ backgroundColor: userStyle.bgColor }}>
+    <ProfileCard style={{ backgroundColor: finalStyle.bgColor }}>
       <ProfileHeaderContainer>
         <ProfileImageWrapper>
           {user.profileImg ? (
@@ -88,18 +94,18 @@ const Profile = ({ userId, customStyle }) => {
         <ProfileInfo>
           <Nickname
             style={{
-              fontFamily: userStyle.nicknameFont,
-              fontSize: userStyle.nicknameSize,
-              color: userStyle.textColorNickname, // 닉네임 글자색 적용
+              fontFamily: finalStyle.nicknameFont,
+              fontSize: finalStyle.nicknameSize,
+              color: finalStyle.textColorNickname,
             }}
           >
             {user.name}
           </Nickname>
           <Introduce
             style={{
-              fontFamily: userStyle.introduceFont,
-              fontSize: userStyle.introduceSize,
-              color: userStyle.textColorIntroduce,
+              fontFamily: finalStyle.introduceFont,
+              fontSize: finalStyle.introduceSize,
+              color: finalStyle.textColorIntroduce,
             }}
           >
             {user.introduce}

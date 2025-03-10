@@ -52,7 +52,7 @@ public class AddFoodRecipeService {
             recipeData.put("INFO_WGT", recipeRequest.getInfoWgt());
             recipeData.put("ATT_FILE_NO_MAIN", mainImageUrl);
             recipeData.put("RCP_NA_TIP", recipeRequest.getRcpNaTip());
-            recipeData.put("RCP_PARTS_DTLS", recipeRequest.getRcpPartsDtls());
+            recipeData.put("Ingredients", recipeRequest.getIngredients());
             recipeData.put("MANUALS", manualsWithUrls);
             recipeData.put("author", memberId);
 

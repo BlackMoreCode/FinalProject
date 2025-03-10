@@ -34,6 +34,8 @@ export const ProfileButton = styled.button`
   color: #5a3d36;
   border: none;
   border-radius: 5px;
+  width: 100%;
+  justify-content: center;
 
   /* 기본 상태: 아이콘 + 텍스트 */
   span {
