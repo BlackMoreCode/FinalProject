@@ -1297,7 +1297,7 @@
   },
   {
     "name": "바라쿠다",
-    "glass": "마르가리타",
+    "glass": "마가리타",
     "category": "스파클링 칵테일",
     "ingredients": [
       {
@@ -1718,7 +1718,7 @@
     "author": 0
   },
   {
-    "name": "토미의 마르가리타",
+    "name": "토미의 마가리타",
     "glass": "마티니 글래스",
     "category": "올 데이 칵테일",
     "ingredients": [
