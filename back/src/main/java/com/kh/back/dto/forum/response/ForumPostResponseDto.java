@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -29,8 +30,8 @@ public class ForumPostResponseDto implements SearchResDto {
     private String editedByTitle; // 제목 수정자 정보
     private String editedByContent; // 내용 수정자 정보
     private Boolean locked; // 수정 불가능 여부
-    private LocalDateTime createdAt; // 생성 시간
-    private LocalDateTime updatedAt; // 수정 시간
+    private OffsetDateTime createdAt; // 생성시간 플라스크에 맞춰서 수정
+    private OffsetDateTime updatedAt; // 수정시간 플라스크에 맞춰서 수정
 
     // 최신 댓글 객체
     private ForumPostCommentResponseDto latestComment;

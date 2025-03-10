@@ -207,27 +207,37 @@ public class ForumEsService {
     // === 검색 및 상세조회 관련 메서드 ===
 
     /**
-     * 포럼 게시글 검색
-     * - /search?q=...&type=forum&category=...&page=...&size=... 호출
+     * 포럼 게시글 검색 메서드
+     * - Flask의 /search 엔드포인트를 호출하며, type=forum_post를 사용합니다.
+     * - 페이지 값이 1보다 작으면 강제로 1로 설정하여 음수 offset이 발생하지 않도록 합니다.
      */
     public List<ForumPostResponseDto> search(String q, String category, int page, int size) {
         try {
+            // 1. 페이지 값이 1보다 작으면 안전하게 1로 설정합니다.
+            int safePage = page < 1 ? 1 : page;
+
+            // 2. 검색어와 타입을 URL 인코딩합니다.
             String encodedQ = URLEncoder.encode(q, StandardCharsets.UTF_8);
-            String encodedType = "forum"; // 고정
+            String encodedType = URLEncoder.encode("forum_post", StandardCharsets.UTF_8); // 타입을 forum_post로 고정
             String categoryParam = (category != null && !category.isEmpty())
                     ? "&category=" + URLEncoder.encode(category, StandardCharsets.UTF_8)
                     : "";
 
+            // 3. Flask 백엔드로 보낼 URI를 생성합니다.
+            //    예: http://localhost:5001/search?q=...&type=forum_post&category=...&page=safePage&size=...
             URI uri = new URI(flaskBaseUrl + "/search?q=" + encodedQ
                     + "&type=" + encodedType
                     + categoryParam
-                    + "&page=" + page
+                    + "&page=" + safePage
                     + "&size=" + size);
+
             log.info("[ForumEsService.search] 호출 URI: {}", uri);
 
+            // 4. Flask에 GET 요청을 보냅니다.
             ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
             log.info("[ForumEsService.search] 응답: {}", response);
 
+            // 5. 응답 JSON을 ForumPostResponseDto 배열로 역직렬화합니다.
             ForumPostResponseDto[] array = objectMapper.readValue(response.getBody(), ForumPostResponseDto[].class);
             List<ForumPostResponseDto> resultList = new ArrayList<>();
             for (ForumPostResponseDto item : array) {
@@ -241,25 +251,36 @@ public class ForumEsService {
         }
     }
 
+
+
     /**
      * 포럼 게시글 상세 조회
-     * - /detail/{postId}?type=forum 호출
+     * - Flask에서 "/forum/post/{postId}" 엔드포인트를 호출하여 상세 게시글 정보를 가져옵니다.
+     * - 만약 날짜 파싱 오류가 발생하면, ForumPostResponseDto의 날짜 필드를 LocalDateTime 대신 OffsetDateTime로 변경하거나,
+     *   ObjectMapper에 JavaTimeModule을 등록하는 방법을 고려하세요.
+     *
+     * @param postId 조회할 게시글의 ID
+     * @return ForumPostResponseDto 객체 (게시글 상세 정보)
      */
     public ForumPostResponseDto detail(String postId) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/detail/" + postId + "?type=forum");
+            // 변경 전: "/detail/" + postId + "?type=forum_post"
+            // 변경 후: Flask에서 정의한 forum post 상세 조회 엔드포인트 "/forum/post/{postId}"
+            URI uri = new URI(flaskBaseUrl + "/forum/post/" + postId);
             log.info("[ForumEsService.detail] 호출 URI: {}", uri);
 
             ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
             log.info("[ForumEsService.detail] 응답: {}", response);
 
+            // 주의: 날짜 형식 문제 (예: "2025-03-10T07:42:10.606373+00:00")가 발생하면
+            // ForumPostResponseDto의 날짜 필드를 OffsetDateTime으로 변경하거나, objectMapper에 JavaTimeModule을 등록합니다.
             return objectMapper.readValue(response.getBody(), ForumPostResponseDto.class);
-
         } catch (Exception e) {
             log.error("포럼 상세조회 중 오류: {}", e.getMessage());
             return null;
         }
     }
+
 
     // === 댓글 관련 메서드 (commentId는 Integer 그대로 사용) ===
 
@@ -282,22 +303,41 @@ public class ForumEsService {
         }
     }
 
+    /**
+     * 댓글 수정 (TipTap JSON 콘텐츠 업데이트)
+     * - Flask 백엔드의 "/forum/comment/{commentId}" 엔드포인트를 호출합니다.
+     * - postId, contentJSON, editedBy, isAdmin 등의 정보를 JSON 페이로드로 전달합니다.
+     *
+     * @param commentId 수정할 댓글의 ID
+     * @param requestDto 수정 요청 데이터 (postId, contentJSON 등 포함)
+     * @param editedBy   수정 요청한 사용자의 ID 또는 "ADMIN"
+     * @param isAdmin    관리자 여부 (true이면 관리자 수정)
+     * @return 수정된 댓글 정보 (Response DTO), 오류 발생 시 null 반환
+     */
     public ForumPostCommentResponseDto updateComment(Integer commentId,
                                                      ForumPostCommentRequestDto requestDto,
                                                      String editedBy,
                                                      boolean isAdmin) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/content");
-            String jsonBody = String.format("{\"contentJSON\": \"%s\", \"editedBy\": \"%s\", \"isAdmin\": %s}",
-                    requestDto.getContentJSON(), editedBy, isAdmin);
+            // Flask의 올바른 댓글 수정 엔드포인트는 "/forum/comment/{commentId}" 입니다.
+            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId);
 
+            // JSON 페이로드 구성: postId, contentJSON, editedBy, isAdmin 값을 포함
+            String jsonBody = String.format(
+                    "{\"postId\": \"%s\", \"contentJSON\": \"%s\", \"editedBy\": \"%s\", \"isAdmin\": %s}",
+                    requestDto.getPostId(), requestDto.getContentJSON(), editedBy, isAdmin
+            );
+
+            // HTTP 헤더에 Content-Type을 JSON으로 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
+            // PUT 메서드를 사용하여 Flask 엔드포인트에 요청 전송
             ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.PUT, entity, String.class);
             log.info("updateComment 응답: {}", response);
 
+            // 응답 본문을 ForumPostCommentResponseDto 객체로 변환 후 반환
             return objectMapper.readValue(response.getBody(), ForumPostCommentResponseDto.class);
         } catch (Exception e) {
             log.error("댓글 수정 중 오류: {}", e.getMessage());
@@ -305,13 +345,16 @@ public class ForumEsService {
         }
     }
 
+
     /**
      * 특정 게시글에 대한 댓글 목록 조회
-     * - postId를 String으로 변경
+     * KR: Flask 백엔드에서 정의한 '/forum/comments' 엔드포인트를 호출합니다.
+     *     이 엔드포인트는 쿼리 파라미터 'postId'를 사용하여 해당 게시글의 댓글 배열을 반환합니다.
      */
     public List<ForumPostCommentResponseDto> searchCommentsForPost(String postId) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/forum/post/" + postId + "/comments");
+            // 올바른 엔드포인트: /forum/comments?postId=...
+            URI uri = new URI(flaskBaseUrl + "/forum/comments?postId=" + postId);
             ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
             log.info("searchCommentsForPost 응답: {}", response);
 
@@ -324,6 +367,7 @@ public class ForumEsService {
             return null;
         }
     }
+
 
     public boolean deleteComment(Integer commentId, Long deletedBy) {
         try {
@@ -461,7 +505,7 @@ public class ForumEsService {
         }
     }
 
-    public ForumCategoryDto getCategoryById(Integer categoryId) {
+    public ForumCategoryDto getCategoryById(String categoryId) {
         try {
             URI uri = new URI(flaskBaseUrl + "/forum/category/" + categoryId);
             log.info("카테고리 ID 조회 요청: '{}' URI: {}", categoryId, uri);

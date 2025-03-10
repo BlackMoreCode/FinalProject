@@ -103,11 +103,13 @@ const PostDetail = () => {
    * ReduxApi를 통해 로그인 사용자 정보를 가져오는 함수
    * 사용자 정보가 없으면 로그인 페이지로 리디렉션합니다.
    */
+  // 수정: getMyInfo() is the correct function
   const fetchMemberData = async () => {
     try {
-      const userInfo = await ReduxApi.getUserInfo();
-      if (userInfo && userInfo.memberId) {
-        setMemberId(userInfo.memberId);
+      const response = await ReduxApi.getMyInfo();
+      const userInfo = response.data; // 예: { id, email, nickname, role }
+      if (userInfo && userInfo.id) {
+        setMemberId(userInfo.id);
         setIsAdmin(userInfo.role === "ADMIN");
       } else {
         toast.error("로그인이 필요합니다.");

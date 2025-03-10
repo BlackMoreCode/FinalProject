@@ -38,7 +38,7 @@ public class ForumPostController {
      */
     @GetMapping
     public ResponseEntity<PaginationDto<ForumPostResponseDto>> getPostsByCategory(
-            @RequestParam Integer categoryId,
+            @RequestParam String categoryId,
             @RequestParam int page,
             @RequestParam int size
     ) {

@@ -22,6 +22,23 @@ const ForumApi = {
     }
   },
 
+  // 카테고리별 게시글 가져오기
+  // 기본 페이지를 1로 변경하여 첫 페이지가 page=1로 호출되도록 함.
+  // 이렇게 하면, Flask 백엔드에서 from 계산이 (page - 1) * size가 되어 0이 됩니다.
+  getPostsByCategoryId: async (categoryId, page = 1, size = 10) => {
+    try {
+      // Ensure that page is at least 1.
+      const safePage = page < 1 ? 1 : page;
+      const response = await AxiosInstance.get("/api/forums/posts", {
+        params: { categoryId, page: safePage, size },
+      });
+      return response.data; // PaginationDto 또는 게시글 배열 반환
+    } catch (error) {
+      console.error("카테고리별 게시글 가져오기 중 오류 발생:", error);
+      throw error;
+    }
+  },
+
   // ------------------ 게시글(Post) 관련 ------------------
   /**
    * 특정 게시글 상세 정보 가져오기
@@ -174,16 +191,12 @@ const ForumApi = {
   },
 
   // ------------------ 댓글(Comment) 관련 ------------------
-  /**
-   * 특정 게시글의 댓글 가져오기
-   * 엔드포인트: GET /api/forums/comments/{postId}
-   * @param {number} postId - 게시글 ID
-   */
+  // 수정된 코드: postId를 쿼리 파라미터로 전송
   getCommentsByPostId: async (postId) => {
     try {
-      const response = await AxiosInstance.get(
-        `/api/forums/comments/${postId}`
-      );
+      const response = await AxiosInstance.get(`/api/forums/comments`, {
+        params: { postId },
+      });
       console.log("Fetched Comments:", response.data);
       return response.data;
     } catch (error) {

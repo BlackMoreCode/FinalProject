@@ -70,7 +70,7 @@ public class ForumPostService {
     /**
      * 카테고리별 게시글 조회 및 페이지네이션
      */
-    public PaginationDto<ForumPostResponseDto> getPostsByCategory(Integer categoryId, int page, int size) {
+    public PaginationDto<ForumPostResponseDto> getPostsByCategory(String categoryId, int page, int size) {
         log.info("카테고리 ID: {} 의 게시글 조회, 페이지: {}, 사이즈: {}", categoryId, page, size);
         String categoryStr = (categoryId != null) ? categoryId.toString() : "";
         List<ForumPostResponseDto> rawResults = forumEsService.search("", categoryStr, page, size);
