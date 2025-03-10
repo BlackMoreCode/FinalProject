@@ -1,9 +1,12 @@
+import React from "react";
+import { Label, ChangeWrapper } from "./CustomStyle";
+
 const ChangeColor = ({ label, name, value, onChange }) => {
   return (
-    <label>
-      {label}:
+    <ChangeWrapper>
+      <Label>{label}</Label>
       <input type="color" name={name} value={value} onChange={onChange} />
-    </label>
+    </ChangeWrapper>
   );
 };
 

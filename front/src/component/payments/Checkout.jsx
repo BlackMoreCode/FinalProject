@@ -11,9 +11,9 @@ export function CheckoutPage() {
 
   // ✅ 한 번에 관리할 결제 정보
   const [paymentDetails, setPaymentDetails] = useState({
-    amount: { currency: "KRW", value: 5_000 },
+    amount: { currency: "KRW", value: 8_900 },
     orderId: generateRandomString(),
-    orderName: "토스 티셔츠 외 2건",
+    orderName: "맴버십 결제",
     customerName: "김토스",
     customerEmail: "customer123@gmail.com",
   });
@@ -123,6 +123,13 @@ export function CheckoutPage() {
     <div className="wrapper w-100">
       <div className="max-w-540 w-100">
         <div id="payment-method" className="w-100" />
+        {paymentDetails && (
+          <div className="payment-summary">
+            <p>구매자: {paymentDetails.customerName}</p>
+            <p>상품명: {paymentDetails.orderName}</p>
+            <p>금액: {paymentDetails.amount.value}원</p>
+          </div>
+        )}
         <div id="agreement" className="w-100" />
         <div className="btn-wrapper w-100">
           <button

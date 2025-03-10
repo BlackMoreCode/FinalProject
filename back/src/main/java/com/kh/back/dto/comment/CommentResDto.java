@@ -1,7 +1,6 @@
 package com.kh.back.dto.comment;
 
 import com.kh.back.entity.Comment;
-import com.kh.back.entity.Member;
 import lombok.*;
 
 import java.time.LocalDateTime;
