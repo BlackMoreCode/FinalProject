@@ -40,6 +40,7 @@ const LoginModal = () => {
   const [inputEmail, setInputEmail] = useState<string>("");
   const [inputPw, setInputPw] = useState<string>("");
 
+
   const SNS_SIGN_IN_URL = (type: SNSLoginType) =>
     `${Commons.BASE_URL}/api/v1/auth/oauth2/${type}`;
   const onSnsSignInButtonClickHandler = (type: SNSLoginType) => {
