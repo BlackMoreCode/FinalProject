@@ -8,12 +8,16 @@ import java.util.List;
 @Getter @Setter @ToString
 @NoArgsConstructor @AllArgsConstructor
 public class CocktailResDto implements SearchResDto {
-	private String id;
-	private String name;
-	private String description;
-	private String image;
-	private String category;
-	private float abv;
-	private String garnish;
-	List<CocktailIngResDto> ingredients;
+	private String id;              // Elasticsearch에서 문서 ID를 받을 필드
+	private String name;            // 이름
+	private String glass;
+	private String preparation;     // 설명 (혹은 preparation, garnishing을 위한 필드로 확장 가능)
+	private String image;           // 이미지 (keyword 필드)
+	private String category;        // 카테고리 (keyword 필드)
+	private float abv;              // 알콜 도수 (float)
+	private String garnish;         // 장식 (text 필드)
+	private long like;              // 좋아요 수 (long 필드)
+	private long report;            // 신고 수 (long 필드)
+	private long author;            // 작성자 ID (long 필드)
+	private List<CocktailIngResDto> ingredients;  // 재료 목록 (nested 필드)
 }
