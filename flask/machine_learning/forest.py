@@ -6,7 +6,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 import re
+import os
 
+es_host = os.getenv("ELASTICSEARCH_HOST", "elasticsearch")
+es = Elasticsearch([f"http://{es_host}:9200"])
 
 def extract_ingredients(source):
     """
@@ -32,7 +35,6 @@ def extract_ingredients(source):
 
 def fetch_data_from_es(index_name, size=1000):
     """ Elasticsearch에서 레시피 데이터를 가져오는 함수 """
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
     query = {"query": {"match_all": {}}, "size": size}
     response = es.search(index=index_name, body=query)
 
@@ -177,9 +179,10 @@ def recommend_recipe(user_likes, df, ingredient_vectorizer, major_vectorizer, mi
     recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)
     return recommendations[:top_n]  # 상위 N개 추천
 
-
-dataframe = fetch_data_from_es("recipe_cocktail")
-train_tfidf_model(dataframe, "cocktail")
-ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models("cocktail")
-recommends = recommend_recipe(['1DonapUBcJinAtT_ZsG8'], dataframe, ing_vec, major_vec, minor_vec, abv_sca)
-print(recommends)
+# 현재 파일에서만 실행되도록 조건 추가
+if __name__ == "__main__":
+    dataframe = fetch_data_from_es("recipe_cocktail")
+    train_tfidf_model(dataframe, "cocktail")
+    ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models("cocktail")
+    recommends = recommend_recipe(['1DonapUBcJinAtT_ZsG8'], dataframe, ing_vec, major_vec, minor_vec, abv_sca)
+    print(recommends)

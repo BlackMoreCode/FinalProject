@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from machine_learning.forest import fetch_data_from_es, load_tfidf_models, recommend_recipe
 
 app = Flask(__name__)
-es_host = os.getenv("ELASTICSEARCH_HOST", "localhost")
+es_host = os.getenv("ELASTICSEARCH_HOST", "elasticsearch")
 es = Elasticsearch([f"http://{es_host}:9200"])
 
 # ================================================================

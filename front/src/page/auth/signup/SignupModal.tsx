@@ -10,6 +10,7 @@ import VerifyPhone from "./VerifyPhone";
 import TermsContainer from "./TermsContainer";
 import AuthApi from "../../../api/AuthApi";
 import { signupReqDto } from "../../../api/dto/AuthDto";
+import ProfileImageInput from "./ProfileImageInput";
 
 const SignupModal = () => {
   const signup = useSelector((state: RootState) => state.modal.signupModal);
@@ -95,6 +96,7 @@ const SignupModal = () => {
     >
       <DialogTitle>회원가입</DialogTitle>
       <Container>
+        <ProfileImageInput/>
         <DuplicateVerifyInput setter={setter} label="이메일" id="email" type="email"/>
         <MatchInput setter={setter} />
         <DuplicateVerifyInput setter={setter} label="닉네임" id="nickname" />
