@@ -12,10 +12,11 @@ import Layout from "./page/layout/Layout";
 import GlobalStyle from "./page/layout/style/GlobalStyle";
 import MainPage from "./page/main/MainPage";
 
-// import RecipeDetail from "./page/RecipeDetail";
+
 import RecipeUploader from "./page/AddRecipeDetail";
 
 import Forum from "./page/forum/Forum";
+import RecipeDetail from "./page/food/FoodRecipeDetail";
 // import PostDetail from "./page/forum/PostDetail/PostDetail";
 // import CreatePost from "./page/forum/CreatePost";
 // import ForumPosts from "./page/forum/ForumPosts";
@@ -27,22 +28,22 @@ function App() {
       <GlobalStyle />
       <Router>
         <Routes>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<Layout/>}>
             <Route path="main" element={<MainPage />} />
             {/*프로필 페이지*/}
             <Route path="profile/:id?" element={<ProfilePage />} />
             {/*프로필 페이지에서 id가 있으면 다른 사람의 프로필을 볼 수 있게*/}
-            <Route path="detail/:index/:id" element={<CocktailDetailPage />} />
-            {/* <Route path="recipe/detail/:id/:type" element={<RecipeDetail />} /> */}
-            <Route
-              path="profile/cardcustom"
-              element={<ProfileCustomization />}
-            />
+            <Route path="profile/cardcustom" element={<ProfileCustomization />}/>
+
             {/* 레시피 페이지 (라우트 경로 수정됨) */}
             <Route path="recipe/:index" element={<CocktailListPage />} />
             {/*컴포넌트를 같은 컴포넌트를 쓰되 index를 다르게 해서 관리하기*/}
             <Route path="detail/:index/:id" element={<CocktailDetailPage />} />
             <Route path="recipe/food" element={<FoodListPage />} />
+
+            <Route path="foodrecipe/detail/:id/:type" element={<RecipeDetail />} />
+            <Route path="cocktailrecipe/detail/:id/:type" element={<CocktailDetailPage />} />
+
             {/* 포럼 게시판 페이지 */}
             <Route path="/forum" element={<Forum />} />
             {/* <Route path="/forum/post/:postId" element={<PostDetail />} /> */}
@@ -51,8 +52,7 @@ function App() {
               path="/forum/category/:categoryId"
               element={<ForumPosts />}
             /> */}
-            <Route path="recipe/upload" element={<RecipeUploader />} />{" "}
-            {/* 새로운 경로 추가 */}
+            <Route path="recipe/upload" element={<RecipeUploader />} /> {/* 새로운 경로 추가 */}
           </Route>
           {/* 결제 페이지 */}
           <Route path="/pay" element={<CheckoutPage />} />

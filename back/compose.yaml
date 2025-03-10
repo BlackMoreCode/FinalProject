@@ -35,8 +35,8 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch
     networks:
       - backend
-    volumes:
-      - ../flask:/app
+#    volumes:
+#      - ../flask:/app
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.12
