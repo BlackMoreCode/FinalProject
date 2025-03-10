@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from elasticsearch import Elasticsearch
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
+from machine_learning.forest import fetch_data_from_es, load_tfidf_models, recommend_recipe
 
 app = Flask(__name__)
 es_host = os.getenv("ELASTICSEARCH_HOST", "localhost")
@@ -106,7 +107,7 @@ def upload_json():
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
-        data = json.load(file)
+        data = json.load(file.read().decode("utf-8"))
         for item in data:
             es.index(index=index_name, body=item)
 
@@ -264,7 +265,7 @@ def create_forum_post():
         data.setdefault("likedBy", [])
         data.setdefault("reportCount", 0)
         data.setdefault("comments", [])
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         data.setdefault("createdAt", now)
         data.setdefault("updatedAt", now)
 
@@ -303,7 +304,7 @@ def update_forum_post_title(doc_id):
         index_name, _ = get_index_and_mapping("forum_post")
         post = es.get(index=index_name, id=doc_id)["_source"]
         post["title"] = new_title
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         post["editedByTitle"] = request.json.get("editedBy", "USER")
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": "제목이 수정되었습니다.", "title": new_title}), 200
@@ -325,7 +326,7 @@ def update_forum_post_content(doc_id):
         index_name, _ = get_index_and_mapping("forum_post")
         post = es.get(index=index_name, id=doc_id)["_source"]
         post["contentJSON"] = contentJSON
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         post["editedByContent"] = request.json.get("editedBy", "USER")
         if request.json.get("isAdmin", False):
             post["locked"] = True
@@ -358,7 +359,7 @@ def toggle_forum_post_like(doc_id):
             post["likesCount"] = post.get("likesCount", 0) + 1
             action = "추가"
         post["likedBy"] = liked_by
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": f"좋아요가 {action}되었습니다.", "likesCount": post["likesCount"]}), 200
     except Exception as e:
@@ -385,7 +386,7 @@ def report_forum_post(doc_id):
         post["reportCount"] = post.get("reportCount", 0) + 1
         if post["reportCount"] >= REPORT_THRESHOLD:
             post["hidden"] = True
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": "게시글이 신고되었습니다.", "reportCount": post["reportCount"]}), 200
     except Exception as e:
@@ -408,7 +409,7 @@ def delete_forum_post(doc_id):
             "title": post.get("title"),
             "content": post.get("content"),
             "authorName": post.get("member", {}).get("nickName", "Unknown"),
-            "deletedAt": datetime.utcnow().isoformat(),
+            "deletedAt": datetime.now(timezone.utc).isoformat(),
             "fileUrls": post.get("fileUrls", [])
         }
         es.index(index="forum_post_history", body=history)
@@ -417,7 +418,7 @@ def delete_forum_post(doc_id):
         post["hidden"] = True
         post["title"] = "[Deleted]"
         post["content"] = "This post has been deleted."
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": "게시글이 삭제 처리되었습니다."}), 200
     except Exception as e:
@@ -456,8 +457,8 @@ def create_forum_comment():
             "parentCommentId": data.get("parentCommentId"),
             "opAuthorName": data.get("opAuthorName", ""),
             "opContent": data.get("opContent", ""),
-            "createdAt": datetime.utcnow().isoformat(),
-            "updatedAt": datetime.utcnow().isoformat(),
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "updatedAt": datetime.now(timezone.utc).isoformat(),
             "editedBy": None,
             "locked": False
         }
@@ -465,7 +466,7 @@ def create_forum_comment():
         new_comment["id"] = len(comments) + 1
         comments.append(new_comment)
         post["comments"] = comments
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=post_id, body=post)
         return jsonify({"message": "댓글이 추가되었습니다.", "comment": new_comment}), 200
     except Exception as e:
@@ -513,7 +514,7 @@ def update_forum_comment(comment_id):
         for comment in comments:
             if comment.get("id") == comment_id:
                 comment["contentJSON"] = new_contentJSON
-                comment["updatedAt"] = datetime.utcnow().isoformat()
+                comment["updatedAt"] = datetime.now(timezone.utc).isoformat()
                 comment["editedBy"] = req_data.get("editedBy", "USER")
                 if req_data.get("isAdmin", False):
                     comment["locked"] = True
@@ -521,7 +522,7 @@ def update_forum_comment(comment_id):
                 break
         if not updated:
             return jsonify({"error": "댓글을 찾을 수 없습니다."}), 404
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=str(post_id), body=post)
         return jsonify({"message": "댓글이 수정되었습니다."}), 200
     except Exception as e:
@@ -550,18 +551,18 @@ def delete_forum_comment(comment_id):
                     "commentId": comment_id,
                     "content": comment.get("content"),
                     "authorName": comment.get("member", {}).get("nickName", "Unknown"),
-                    "deletedAt": datetime.utcnow().isoformat()
+                    "deletedAt": datetime.now(timezone.utc).isoformat()
                 }
                 es.index(index="forum_comment_history", body=history)
                 comment["content"] = "[Removed]"
                 comment["hidden"] = True
                 comment["removedBy"] = request.args.get("removedBy", "USER")
-                comment["updatedAt"] = datetime.utcnow().isoformat()
+                comment["updatedAt"] = datetime.now(timezone.utc).isoformat()
                 deleted = True
                 break
         if not deleted:
             return jsonify({"error": "댓글을 찾을 수 없습니다."}), 404
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=str(post_id), body=post)
         return jsonify({"message": "댓글이 삭제되었습니다."}), 200
     except Exception as e:
@@ -596,12 +597,12 @@ def report_forum_comment(comment_id):
                 comment["reportCount"] = comment.get("reportCount", 0) + 1
                 if comment["reportCount"] >= REPORT_THRESHOLD:
                     comment["hidden"] = True
-                comment["updatedAt"] = datetime.utcnow().isoformat()
+                comment["updatedAt"] = datetime.now(timezone.utc).isoformat()
                 updated = True
                 break
         if not updated:
             return jsonify({"error": "댓글을 찾을 수 없습니다."}), 404
-        post["updatedAt"] = datetime.utcnow().isoformat()
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
         es.index(index=index_name, id=str(post_id), body=post)
         return jsonify({"message": "댓글이 신고되었습니다."}), 200
     except Exception as e:
@@ -683,6 +684,41 @@ def search_forum_category():
             return jsonify({"error": "Not Found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/model/train", methods=["POST"])
+def train_machine_learning():
+    try:
+        index_type = request.args.get("type", "")
+        if not index_type:
+            return jsonify({"message": "type이 비어있습니다. "})
+        index_name, _ = get_index_and_mapping(index_type)
+        df = fetch_data_from_es(index_name)
+        train_machine_learning(df, index_type)
+        return jsonify({"message": index_type + " 모델 생성에 성공했습니다."}),200
+    except Exception as e:
+        print(e)
+        return jsonify({"message": index_type + " 모델 생성중 에러 : " + str(e)}), 500
+
+@app.route("/model/predict", methods=["POST"])
+def predict_machine_learning():
+    try:
+        index_type = request.args.get("type", "")
+        if not index_type:
+            return jsonify({"message": "type이 비어있습니다. "})
+        data = request.json
+        if not data:
+            return jsonify({"message": "데이터가 비었습니다."})
+        index_name, _ = get_index_and_mapping(index_type)
+        df = fetch_data_from_es(index_name)
+        ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)
+        recommendation = recommend_recipe(data, df, ing_vec, major_vec, minor_vec, abv_sca)
+        return jsonify(recommendation), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"message": index_type + " 모델 사용중 에러 : " + str(e)}), 500
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

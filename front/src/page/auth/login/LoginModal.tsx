@@ -157,7 +157,6 @@ const LoginModal = () => {
               회원가입
             </SignupTextButton>
           </TextButtonContainer>
-
           {/* 라인 및 SNS 로그인 섹션 */}
           <Line />
           <SnsLoginText>SNS 계정 간편 로그인</SnsLoginText>
