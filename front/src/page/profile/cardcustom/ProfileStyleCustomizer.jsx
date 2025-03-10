@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ChangeColor from "./ChangeColor";
 import ChangeFont from "./ChangeFont";
 import ChangeSize from "./ChangeSize";
@@ -14,6 +14,10 @@ import {
 
 const ProfileStyleCustomizer = ({ initialStyle, onChange }) => {
   const [customStyle, setCustomStyle] = useState(initialStyle);
+
+  useEffect(() => {
+    setCustomStyle(initialStyle);
+  }, [initialStyle]);
 
   const handleStyleChange = (e) => {
     const { name, value } = e.target;

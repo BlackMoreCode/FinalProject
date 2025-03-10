@@ -108,7 +108,7 @@ const ProfilePage = () => {
     <ProfilePageContainer>
       <ProfilePageHeader>
         <HeaderUp>
-          <Profile userId={id || loggedInUserId} customStyle={customStyle} />
+          <Profile userId={id || loggedInUserId} customStyle={null} />
           <ProfileButtonContainer>
             {isOwnProfile && (
               <ProfileButton onClick={handleCustomClick}>
