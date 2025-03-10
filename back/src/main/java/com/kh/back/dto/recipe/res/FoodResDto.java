@@ -38,9 +38,17 @@ public class FoodResDto implements SearchResDto {
     @JsonAlias("RCP_WAY2")
     private String cookingMethod;
 
+    @JsonProperty("ingredients")
+    @JsonAlias("ingredients")
     private List<FoodIngResDto> ingredients;
 
+    @JsonProperty("instructions")
+    @JsonAlias("MANUALS")
     private List<FoodManualDto> instructions;
+
+    private int like;
+    private int report;
+    private int author;
 
     @Getter
     @Setter
@@ -49,7 +57,18 @@ public class FoodResDto implements SearchResDto {
     @AllArgsConstructor
     public static class FoodManualDto {
         private String text;
+
         @JsonProperty("imageUrl")
         private String imageUrl;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FoodIngResDto {
+        private String ingredient;
+        private String amount;
     }
 }

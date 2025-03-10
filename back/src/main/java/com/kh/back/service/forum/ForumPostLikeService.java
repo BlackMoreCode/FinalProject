@@ -1,7 +1,7 @@
 package com.kh.back.service.forum;
 
 import com.kh.back.dto.forum.response.ForumPostLikeResponseDto;
-import com.kh.back.service.python.ElasticService;
+import com.kh.back.service.python.ForumEsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ForumPostLikeService {
 
-    private final ElasticService elasticService;
+    private final ForumEsService forumEsService;
 
     /**
      * 게시글에 대한 좋아요 토글
@@ -21,7 +21,7 @@ public class ForumPostLikeService {
      */
     @Transactional
     public ForumPostLikeResponseDto togglePostLike(Integer postId, Long memberId) {
-        return elasticService.togglePostLike(postId, memberId);
+        return forumEsService.togglePostLike(postId, memberId);
     }
 
     /**
@@ -33,6 +33,6 @@ public class ForumPostLikeService {
      */
     @Transactional
     public ForumPostLikeResponseDto toggleCommentLike(Integer commentId, Long memberId) {
-        return elasticService.toggleCommentLike(commentId, memberId);
+        return forumEsService.toggleCommentLike(commentId, memberId);
     }
 }

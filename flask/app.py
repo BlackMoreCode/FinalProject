@@ -185,7 +185,7 @@ def search():
             query = {"match_all": {}}
 
         if type_filter == "food":
-            source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv"]
+            source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv", "ATT_FILE_NO_MAIN"]
         else:
             source_fields = ["name", "category", "like", "abv"]
 
