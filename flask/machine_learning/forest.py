@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import joblib
 from elasticsearch import Elasticsearch
-from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -13,11 +12,11 @@ import re
 import os
 
 es_host = os.getenv("ELASTICSEARCH_HOST", "elasticsearch")
-# es = Elasticsearch([f"http://{es_host}:9200"])
-es = Elasticsearch(
-    ["http://localhost:9200"],  # Elasticsearch 서버 URL (localhost나 실제 서버 주소로 설정)
-    request_timeout=100,  # 연결 시간 초과 설정 (초 단위)
-)
+es = Elasticsearch([f"http://{es_host}:9200"])
+# es = Elasticsearch(
+#     ["http://localhost:9200"],  # Elasticsearch 서버 URL (localhost나 실제 서버 주소로 설정)
+#     request_timeout=100,  # 연결 시간 초과 설정 (초 단위)
+# )
 
 def extract_ingredients(source):
     """
@@ -123,30 +122,11 @@ def load_tfidf_models(category, name_path='_name.pkl', ingredient_path='_ingredi
     else:
         return name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer, None
 
-def update_weight(w, increase_count, decrease_count, lr=0.01, max_w=1, min_w=0.01):
-    """가중치 조정 (점근선 개념으로)"""
-    diff = increase_count - decrease_count  # 증가와 감소의 차이 (음수일 수도 있음)
-
-    if diff > 0:
-        # 증가하는 경우: 가중치가 1에 점진적으로 수렴하도록
-        # 변화량을 더 적게 해서 점진적으로 수렴하게 만듬
-        w += lr * diff * (max_w - w) * 0.1  # 0.1로 조정하여 더 완만하게 변화하도록
-    elif diff < 0:
-        # 감소하는 경우: 가중치가 최소값에 점진적으로 수렴하도록
-        w += lr * diff * (w - min_w) * 0.1  # 0.1로 조정하여 더 완만하게 변화하도록
-
-    # w가 최소값, 최대값 사이에서 점근선처럼 변하도록 설정
-    w = np.clip(w, min_w, max_w)
-
-    return w
-
-
-
 def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer,
                  abv_scaler=None,
                  weight_init_name=0.5, weight_init_ingredients=0.6, weight_init_major=0.3, weight_init_minor=0.1,
                  weight_init_abv=0.5,
-                 epochs=10, lr=0.01):
+                 epochs=10, lr=0.001):
     """
     릿지 회귀를 사용하여 최적의 가중치를 학습하는 함수
     """
@@ -168,9 +148,6 @@ def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vector
         print(f"Epoch {epoch + 1}")
         train_data, test_data = train_test_split(data, test_size=0.2)
 
-        increase_counts = np.zeros(5)  # 증가 카운트 [name, ingredient, major, minor, abv]
-        decrease_counts = np.zeros(5)  # 감소 카운트
-
         for _, row in train_data.iterrows():
             liked_items = row.dropna().tolist()
             if len(liked_items) <= 1:
@@ -188,17 +165,40 @@ def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vector
             top_3_ids = [rec[0] for rec in recommendations[:3]]
             predicted_similarity = recommendations[0][1]  # 1번째 요소가 점수
 
-            if y in top_3_ids:
-                # 올바르게 추천된 경우: 상위 몇개의 유사도가 높은 항목에 대해서만 가중치를 높임
-                for i, rec in enumerate(recommendations[:3]):
-                    increase_counts[i] += rec[1]  # 유사도 값만 더함 (단순히 카운트하지 않고)
-            else:
-                # 잘못 추천된 경우: 상위 몇개의 유사도가 낮은 항목에 대해서만 가중치를 감소
-                for i, rec in enumerate(recommendations[:3]):
-                    if rec[0] not in top_3_ids:
-                        decrease_counts[i] += 1  # 유사도 증가가 아닌 단순히 카운트만 증가
+            if y not in top_3_ids:
+                # y의 해당 인덱스를 찾고 유사도 값들을 가져옴
+                y_rec = next(rec for rec in recommendations if rec[0] == y)
+                similarities = y_rec[2:]  # name, ingredient, major, minor, abv 유사도 값들
 
-            # 추천 점수가 100을 초과하면 모든 가중치를 감소
+                # 유사도 기준으로 상위 2개 인덱스 선택
+                top_2 = sorted(enumerate(similarities), key=lambda x: x[1], reverse=True)[:2]
+                # 유사도 기준으로 하위 2개 인덱스 선택
+                bottom_2 = sorted(enumerate(similarities), key=lambda x: x[1])[:2]
+
+                # 가장 높은 유사도 2개 증가
+                for idx, _ in top_2:
+                    if idx == 0:
+                        weight_name += lr * (1 - weight_name)
+                    elif idx == 1:
+                        weight_ingredients += lr * (1 - weight_ingredients)
+                    elif idx == 2:
+                        weight_major += lr * (1 - weight_major)
+                    elif idx == 3:
+                        weight_minor += lr * (1 - weight_minor)
+                    elif idx == 4:
+                        weight_abv += lr * (1 - weight_abv)
+                for idx, _ in bottom_2:
+                    if idx == 0:
+                        weight_name -= lr * (weight_name - 0.01)
+                    elif idx == 1:
+                        weight_ingredients -= lr * (weight_ingredients - 0.01)
+                    elif idx == 2:
+                        weight_major -= lr * (weight_major - 0.01)
+                    elif idx == 3:
+                        weight_minor -= lr * (weight_minor - 0.01)
+                    elif idx == 4:
+                        weight_abv -= lr * (weight_abv - 0.01)
+
             # 추천 점수가 100을 초과하면 모든 가중치를 감소
             if predicted_similarity > 100:
                 scale_factor = 100 / predicted_similarity  # 모든 weight를 이 비율로 조정
@@ -236,14 +236,6 @@ def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vector
                 weight_abv = min(weight_abv, max_weight)
 
                 print(f"Adjusted Weights due to low similarity score: {predicted_similarity}")
-
-        # 한 에폭이 끝난 후 가중치 업데이트
-        weight_name = update_weight(weight_name, increase_counts[0], decrease_counts[0], lr)
-        weight_ingredients = update_weight(weight_ingredients, increase_counts[1], decrease_counts[1], lr)
-        weight_major = update_weight(weight_major, increase_counts[2], decrease_counts[2], lr)
-        weight_minor = update_weight(weight_minor, increase_counts[3], decrease_counts[3], lr)
-        weight_abv = update_weight(weight_abv, increase_counts[4], decrease_counts[4], lr)
-
         print(f"Updated Weights - Name: {weight_name:.4f}, Ingredients: {weight_ingredients:.4f}, "
               f"Major: {weight_major:.4f}, Minor: {weight_minor:.4f}, ABV: {weight_abv:.4f}")
 
@@ -251,29 +243,35 @@ def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vector
     return weight_name, weight_ingredients, weight_major, weight_minor, weight_abv
 
 
-
-
-def recommend(user_likes, df, name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer, abv_scaler=None, weight_name=0.5, weight_ingredient=0.6, weight_major=0.3, weight_minor=0.1, weight_abv=0.5):
+def recommend(user_likes, df, name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer, abv_scaler,
+              weight_name, weight_ingredient, weight_major, weight_minor, weight_abv):
     recommendations = []
 
-    for user_like_id in user_likes:
-        liked_recipe_row = df[df['id'] == user_like_id]
-        if liked_recipe_row.empty:
-            continue  # ID가 없으면 건너뛰기
+    for _, row in df.iterrows():
+        if row['id'] in user_likes:  # user_like 목록에 있는 아이디는 제외
+            continue  # 자기 자신 제외
 
-        # 사용자가 좋아한 레시피 벡터화
-        liked_name_vec = name_vectorizer.transform(liked_recipe_row['name_str'])
-        liked_ingredient_vec = ingredient_vectorizer.transform(liked_recipe_row['ingredients_str'])
-        liked_major_vec = major_vectorizer.transform(liked_recipe_row['major_str'])
-        liked_minor_vec = minor_vectorizer.transform(liked_recipe_row['minor_str'])
-        liked_abv = liked_recipe_row['abv'].values.reshape(-1, 1) if 'abv' in liked_recipe_row.columns else None
+        total_name_similarity = 0
+        total_ingredient_similarity = 0
+        total_major_similarity = 0
+        total_minor_similarity = 0
+        total_abv_similarity = 0
 
-        if abv_scaler is not None and liked_abv is not None:
-            liked_abv = abv_scaler.transform(liked_abv)
+        # 모든 user_like에 대해 유사도를 계산
+        for user_like_id in user_likes:
+            liked_recipe_row = df[df['id'] == user_like_id]
+            if liked_recipe_row.empty:
+                continue  # ID가 없으면 건너뛰기
 
-        for _, row in df.iterrows():
-            if row['id'] == user_like_id:
-                continue  # 자기 자신 제외
+            # 사용자가 좋아한 레시피 벡터화
+            liked_name_vec = name_vectorizer.transform(liked_recipe_row['name_str'])
+            liked_ingredient_vec = ingredient_vectorizer.transform(liked_recipe_row['ingredients_str'])
+            liked_major_vec = major_vectorizer.transform(liked_recipe_row['major_str'])
+            liked_minor_vec = minor_vectorizer.transform(liked_recipe_row['minor_str'])
+            liked_abv = liked_recipe_row['abv'].values.reshape(-1, 1) if 'abv' in liked_recipe_row.columns else None
+
+            if abv_scaler is not None and liked_abv is not None:
+                liked_abv = abv_scaler.transform(liked_abv)
 
             # 비교 대상 레시피 벡터화
             name_vec = name_vectorizer.transform([row['name_str']])
@@ -299,17 +297,34 @@ def recommend(user_likes, df, name_vectorizer, ingredient_vectorizer, major_vect
             if isinstance(abv_similarity, np.ndarray):
                 abv_similarity = abv_similarity[0][0]
 
-            # 최종 유사도 = (재료 * 0.6) + (조리법 * 0.3) + (음식 종류 * 0.1) + (abv * 0.5)
-            total_similarity = (
-                name_similarity * weight_name +
-                ingredient_similarity * weight_ingredient +
-                major_similarity * weight_major +
-                minor_similarity * weight_minor +
-                abv_similarity * weight_abv
-            )
+            # 유사도 항목을 더함
+            total_name_similarity += name_similarity
+            total_ingredient_similarity += ingredient_similarity
+            total_major_similarity += major_similarity
+            total_minor_similarity += minor_similarity
+            total_abv_similarity += abv_similarity
 
-            total_similarity_score = round(float(total_similarity) * 100)  # 첫 번째 값만 추출
-            recommendations.append((row['id'], total_similarity_score, name_similarity, ingredient_similarity, major_similarity, minor_similarity, abv_similarity))
+        # 평균 유사도 계산
+        avg_name_similarity = total_name_similarity / len(user_likes)
+        avg_ingredient_similarity = total_ingredient_similarity / len(user_likes)
+        avg_major_similarity = total_major_similarity / len(user_likes)
+        avg_minor_similarity = total_minor_similarity / len(user_likes)
+        avg_abv_similarity = total_abv_similarity / len(user_likes)
+
+        # 평균 유사도를 기반으로 최종 유사도 계산
+        total_similarity = (
+                avg_name_similarity * weight_name +
+                avg_ingredient_similarity * weight_ingredient +
+                avg_major_similarity * weight_major +
+                avg_minor_similarity * weight_minor +
+                avg_abv_similarity * weight_abv
+        )
+
+        # 점수화 (100을 곱해 점수화)
+        total_similarity_score = round(float(total_similarity) * 100)  # 100을 곱해 점수화
+        recommendations.append((row['id'], total_similarity_score, avg_name_similarity, avg_ingredient_similarity, avg_major_similarity, avg_minor_similarity, avg_abv_similarity))  # 레시피 아이디와 점수 저장
+
+    # 추천 목록을 점수 내림차순으로 정렬
     recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)
     return recommendations
 
@@ -331,10 +346,10 @@ def recommend_recipe(user_likes, df, name_vectorizer, ingredient_vectorizer, maj
 
 # 현재 파일에서만 실행되도록 조건 추가
 if __name__ == "__main__":
-    dataframe = fetch_data_from_es("recipe_cocktail")
-    train_tfidf_model(dataframe, "cocktail")
-    name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models("cocktail")
-    name_weight, ing_weight, major_weight, minor_weight, abv_weight = train_weight("cocktail", dataframe, name_vec, ing_vec, major_vec, minor_vec, abv_sca)
+    dataframe = fetch_data_from_es("recipe_food")
+    train_tfidf_model(dataframe, "food")
+    name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models("food")
+    name_weight, ing_weight, major_weight, minor_weight, abv_weight = train_weight("food", dataframe, name_vec, ing_vec, major_vec, minor_vec, abv_sca)
     print( name_weight, ing_weight, major_weight, minor_weight, abv_weight )
-    recommends = recommend_recipe(['1DonapUBcJinAtT_ZsG8'], dataframe, name_vec, ing_vec, major_vec, minor_vec, abv_sca, 3 , name_weight, ing_weight, minor_weight, abv_weight)
+    recommends = recommend_recipe(['VDoqapUBcJinAtT_JMIS'], dataframe, name_vec, ing_vec, major_vec, minor_vec, abv_sca, 3 , name_weight, ing_weight, minor_weight, abv_weight)
     print(recommends)
