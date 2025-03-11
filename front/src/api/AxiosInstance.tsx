@@ -4,7 +4,7 @@ import axios from 'axios';
 import ReduxApi from "./ReduxApi";
 import store from '../context/Store';
 import {setToken } from '../context/redux/TokenReducer';
-import {logout} from "../context/redux/CommonAction";
+import {handleLogout} from "../context/redux/CommonAction";
 
 // axios 인스턴스를 생성합니다.
 const axiosInstance = axios.create({
@@ -47,7 +47,7 @@ axiosInstance.interceptors.response.use(
         }
       } catch (e) {
         console.error('토큰 갱신 실패:', e);
-        store.dispatch(logout()); // 갱신 실패 시 로그아웃 처리
+        store.dispatch(handleLogout()); // 갱신 실패 시 로그아웃 처리
         return Promise.reject(error); // 에러 반환
       }
     }
