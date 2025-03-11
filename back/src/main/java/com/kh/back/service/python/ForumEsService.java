@@ -264,17 +264,17 @@ public class ForumEsService {
      */
     public ForumPostResponseDto detail(String postId) {
         try {
-            // 변경 전: "/detail/" + postId + "?type=forum_post"
-            // 변경 후: Flask에서 정의한 forum post 상세 조회 엔드포인트 "/forum/post/{postId}"
             URI uri = new URI(flaskBaseUrl + "/forum/post/" + postId);
             log.info("[ForumEsService.detail] 호출 URI: {}", uri);
 
             ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-            log.info("[ForumEsService.detail] 응답: {}", response);
+            String responseBody = response.getBody();
+            log.info("[ForumEsService.detail] Raw JSON from Flask: {}", responseBody);
 
-            // 주의: 날짜 형식 문제 (예: "2025-03-10T07:42:10.606373+00:00")가 발생하면
-            // ForumPostResponseDto의 날짜 필드를 OffsetDateTime으로 변경하거나, objectMapper에 JavaTimeModule을 등록합니다.
-            return objectMapper.readValue(response.getBody(), ForumPostResponseDto.class);
+            ForumPostResponseDto dto = objectMapper.readValue(responseBody, ForumPostResponseDto.class);
+            log.info("[ForumEsService.detail] Deserialized DTO: {}", dto);
+
+            return dto;
         } catch (Exception e) {
             log.error("포럼 상세조회 중 오류: {}", e.getMessage());
             return null;

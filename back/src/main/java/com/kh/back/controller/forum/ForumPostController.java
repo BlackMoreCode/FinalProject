@@ -58,11 +58,11 @@ public class ForumPostController {
      * @param requestDto 게시글 데이터 (제목, 내용, 카테고리 ID 등)
      * @return 생성된 게시글 정보
      */
+    // ForumPostController.java의 createPost 메서드 (이미 categoryId 체크가 되어 있음)
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody ForumPostRequestDto requestDto) {
         log.info("게시글 생성 요청, 제목: {}", requestDto.getTitle());
 
-        // 필수 필드 검증
         if (requestDto.getMemberId() == null) {
             log.warn("요청에 회원 ID가 누락되었습니다.");
             return ResponseEntity.badRequest().body("회원 ID는 필수입니다.");
@@ -80,12 +80,13 @@ public class ForumPostController {
             return ResponseEntity.badRequest().body("내용은 필수입니다.");
         }
 
-        // 서비스 호출 (ElasticSearch 기반)
+        // 앞서 수정한 게시글 생성 메서드가 memberService에서 닉네임을 조회하도록 되어 있음
         ForumPostResponseDto responseDto = postService.createPost(requestDto);
         log.info("게시글 생성 성공, ID: {}", responseDto.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
+
 
     /**
      * 게시글 제목 수정

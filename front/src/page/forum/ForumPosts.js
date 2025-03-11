@@ -15,6 +15,12 @@ import {
   StyledLink,
 } from "./style/ForumPostsStyles";
 
+/**
+ * ForumPosts 컴포넌트
+ * KR: 해당 컴포넌트는 선택한 카테고리의 게시글 목록을 가져오고,
+ *     카테고리 이름을 표시합니다.
+ *     (카테고리의 최신 게시글 정보는 제외됨)
+ */
 const ForumPosts = () => {
   const { categoryId } = useParams(); // URL에서 카테고리 ID 가져오기
   const [posts, setPosts] = useState([]); // 일반 게시글 상태
@@ -22,7 +28,13 @@ const ForumPosts = () => {
   const [loading, setLoading] = useState(true); // 로딩 상태 관리
   const [categoryName, setCategoryName] = useState(""); // 카테고리 이름 상태
 
-  // HTML 태그 제거 함수 (댓글 미리보기에서 사용)
+  /**
+   * HTML 태그 제거 함수
+   * KR: 댓글 미리보기 내용에서 HTML 태그를 제거하여 순수 텍스트만 추출합니다.
+   *
+   * @param {string} html - HTML 문자열
+   * @returns {string} - HTML 태그가 제거된 텍스트
+   */
   const stripHtmlTags = (html) => {
     const div = document.createElement("div");
     div.innerHTML = html;
@@ -30,31 +42,30 @@ const ForumPosts = () => {
   };
 
   /**
-   * API 호출: 특정 카테고리의 게시글과 카테고리 정보를 가져옵니다.
-   * - ForumApi.getPostsByCategoryId 함수는 페이지 번호를 1부터 시작하도록 변경되었습니다.
-   *   (즉, 첫 페이지의 경우 page=1, 계산 시 (1-1)*size = 0)
-   * - 검색 결과가 비어 있을 경우, 콘솔에 로그를 남깁니다.
+   * fetchPosts 함수
+   * KR: ForumApi를 사용하여 지정된 카테고리의 게시글과 카테고리 정보를 가져옵니다.
+   *     게시글 데이터는 페이지네이션하여 가져오며, 카테고리 정보는 단순 조회(getCategoryById)를 사용합니다.
    */
   const fetchPosts = async () => {
     try {
-      // 게시글 데이터를 가져올 때, 페이지 번호를 1로 설정하여 첫 페이지 호출
+      // 게시글 데이터를 첫 페이지 (page 1) 기준으로 가져옵니다.
       const data = await ForumApi.getPostsByCategoryId(categoryId, 1, 10);
       console.log("검색된 게시글 데이터:", data);
 
-      // data가 PaginationDto 형식이면 content 배열을 사용, 아니면 data 자체가 배열일 수 있음
+      // PaginationDto 형식이면 content 배열, 아니면 data 자체 배열을 사용
       const postList = data.content || data.data || [];
       console.log("게시글 목록:", postList);
 
-      // 비어있는 경우 로그 출력 (디버깅 용)
+      // 게시글 목록이 비어 있는 경우 경고 로그 출력
       if (postList.length === 0) {
         console.warn("검색 결과가 없습니다. (게시글 목록이 비어 있음)");
       }
 
-      // 고정 게시글과 일반 게시글을 분리
+      // 고정 게시글과 일반 게시글 분리
       setStickyPosts(postList.filter((post) => post.sticky));
       setPosts(postList.filter((post) => !post.sticky));
 
-      // 카테고리 이름 가져오기
+      // 단순 카테고리 정보 조회: getCategoryById 호출
       const category = await ForumApi.getCategoryById(categoryId);
       console.log("가져온 카테고리 정보:", category);
       setCategoryName(category.name);
@@ -65,7 +76,7 @@ const ForumPosts = () => {
     }
   };
 
-  // categoryId 변경 또는 컴포넌트가 처음 렌더링될 때 fetchPosts 호출
+  // categoryId가 변경되거나 컴포넌트가 마운트 될 때 fetchPosts 호출
   useEffect(() => {
     fetchPosts();
   }, [categoryId]);

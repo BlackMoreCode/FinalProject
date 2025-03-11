@@ -1,15 +1,19 @@
 import AxiosInstance from "./AxiosInstance";
 
 /**
- * ForumApi.js (리팩토링)
- * - 백엔드 Spring Boot 컨트롤러의 경로에 맞게 엔드포인트를 수정했습니다.
- * - 예: 게시글 생성은 POST /api/forums/posts, 댓글 생성은 POST /api/forums/comments
+ * ForumApi.js (Spring Boot Proxy 버전)
+ * KR: 이 파일은 프론트엔드와 Spring Boot 백엔드(Flask/ES 프록시)를 연결하는 API 호출 모듈입니다.
+ *     각 메서드는 Spring Boot 프록시 엔드포인트에 맞게 HTTP 요청을 전송합니다.
  */
 const ForumApi = {
   // ------------------ 카테고리 관련 ------------------
+
   /**
    * 모든 포럼 카테고리 가져오기
    * 엔드포인트: GET /api/forums/categories/proxy
+   * KR: Spring Boot에서 Flask의 카테고리 데이터를 프록시하여 클라이언트에 전달합니다.
+   *
+   * @returns {Promise} 카테고리 목록 데이터
    */
   fetchCategories: async () => {
     try {
@@ -22,28 +26,58 @@ const ForumApi = {
     }
   },
 
-  // 카테고리별 게시글 가져오기
-  // 기본 페이지를 1로 변경하여 첫 페이지가 page=1로 호출되도록 함.
-  // 이렇게 하면, Flask 백엔드에서 from 계산이 (page - 1) * size가 되어 0이 됩니다.
+  /**
+   * 카테고리별 게시글 가져오기
+   * 엔드포인트: GET /api/forums/posts?categoryId=...&page=...&size=...
+   * KR: 지정된 카테고리의 게시글들을 페이지네이션하여 가져옵니다.
+   *
+   * @param {string} categoryId - 조회할 카테고리 ID
+   * @param {number} page - 페이지 번호 (1부터 시작)
+   * @param {number} size - 페이지 당 게시글 수
+   * @returns {Promise} 게시글 데이터
+   */
   getPostsByCategoryId: async (categoryId, page = 1, size = 10) => {
     try {
-      // Ensure that page is at least 1.
       const safePage = page < 1 ? 1 : page;
       const response = await AxiosInstance.get("/api/forums/posts", {
         params: { categoryId, page: safePage, size },
       });
-      return response.data; // PaginationDto 또는 게시글 배열 반환
+      return response.data;
     } catch (error) {
       console.error("카테고리별 게시글 가져오기 중 오류 발생:", error);
       throw error;
     }
   },
 
+  /**
+   * 단순 카테고리 조회 (ID로)
+   * 엔드포인트: GET /api/forums/categories/{id}
+   * KR: 지정된 ID를 가진 카테고리의 기본 정보를 조회합니다.
+   *
+   * @param {string} categoryId - 조회할 카테고리의 ID
+   * @returns {Promise} 카테고리 데이터 (예: { id, name, description, ... })
+   */
+  getCategoryById: async (categoryId) => {
+    try {
+      const response = await AxiosInstance.get(
+        `/api/forums/categories/${categoryId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("카테고리 조회 중 오류:", error);
+      throw error;
+    }
+  },
+
   // ------------------ 게시글(Post) 관련 ------------------
+  // (이하 기존 게시글 관련 메서드 동일)
   /**
    * 특정 게시글 상세 정보 가져오기
    * 엔드포인트: GET /api/forums/posts/{postId}
-   * @param {number} postId - 게시글 ID
+   * KR: 지정된 게시글 ID의 상세 정보를 가져옵니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @returns {Promise} 게시글 상세 데이터
    */
   getPostById: async (postId) => {
     try {
@@ -58,7 +92,10 @@ const ForumApi = {
   /**
    * 포럼 게시글 생성
    * 엔드포인트: POST /api/forums/posts
-   * @param {Object} data - 게시글 생성 데이터 (제목, 내용, 카테고리 등)
+   * KR: 게시글 생성 데이터를 Spring Boot 프록시를 통해 전송하여 새 게시글을 만듭니다.
+   *
+   * @param {object} data - 게시글 생성 데이터
+   * @returns {Promise} 생성된 게시글 데이터
    */
   createPost: async (data) => {
     try {
@@ -73,10 +110,13 @@ const ForumApi = {
   /**
    * 포럼 게시글 제목 수정
    * 엔드포인트: PUT /api/forums/posts/{postId}/title?loggedInMemberId=...&isAdmin=...
-   * @param {number} postId - 수정할 게시글 ID
-   * @param {Object} data - 수정 데이터 (새 제목 포함)
-   * @param {number} loggedInMemberId - 로그인된 사용자 ID
+   * KR: 게시글 제목을 수정합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @param {object} data - 수정할 제목 데이터 (예: { title: "새 제목" })
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
    * @param {boolean} isAdmin - 관리자 여부
+   * @returns {Promise} 수정된 게시글 데이터
    */
   updatePostTitle: async (postId, data, loggedInMemberId, isAdmin) => {
     try {
@@ -94,10 +134,13 @@ const ForumApi = {
   /**
    * 포럼 게시글 내용 수정 (TipTap JSON 전용)
    * 엔드포인트: PUT /api/forums/posts/{postId}/content?loggedInMemberId=...&isAdmin=...
-   * @param {number} postId - 수정할 게시글 ID
-   * @param {Object} data - 수정 데이터 (contentJSON 포함)
-   * @param {number} loggedInMemberId - 로그인된 사용자 ID
+   * KR: 게시글 내용을 TipTap JSON 형식으로 수정합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @param {object} data - 수정할 내용 데이터 (예: { contentJSON: "..." })
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
    * @param {boolean} isAdmin - 관리자 여부
+   * @returns {Promise} 수정된 게시글 데이터
    */
   updatePostContent: async (postId, data, loggedInMemberId, isAdmin) => {
     try {
@@ -115,10 +158,13 @@ const ForumApi = {
   /**
    * 포럼 게시글 삭제 (논리 삭제)
    * 엔드포인트: DELETE /api/forums/posts/{postId}?loggedInMemberId=...&removedBy=...&isAdmin=...
-   * @param {number} postId - 삭제할 게시글 ID
-   * @param {number} loggedInMemberId - 로그인된 사용자 ID
-   * @param {string} removedBy - 삭제 수행자 (작성자 이름 또는 "ADMIN")
+   * KR: 게시글을 실제 삭제하지 않고 삭제된 상태로 마킹합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
+   * @param {string} removedBy - 삭제를 수행한 사용자 정보
    * @param {boolean} isAdmin - 관리자 여부
+   * @returns {Promise} 삭제 결과
    */
   deletePost: async (postId, loggedInMemberId, removedBy, isAdmin) => {
     try {
@@ -136,8 +182,11 @@ const ForumApi = {
   /**
    * 포럼 게시글 하드 삭제 (관리자 전용)
    * 엔드포인트: DELETE /api/forums/posts/{postId}/hard-delete?loggedInMemberId=...
-   * @param {number} postId - 하드 삭제할 게시글 ID
-   * @param {number} loggedInMemberId - 로그인된 관리자 ID
+   * KR: 관리자가 게시글을 완전히 삭제합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @param {number|string} loggedInMemberId - 관리자 사용자 ID
+   * @returns {Promise} 하드 삭제 결과
    */
   hardDeletePost: async (postId, loggedInMemberId) => {
     try {
@@ -154,17 +203,19 @@ const ForumApi = {
 
   /**
    * 포럼 게시글 신고 처리
-   * 엔드포인트: POST /api/forums/posts/{postId}/report?reporterId=...
-   * @param {number} postId - 신고할 게시글 ID
+   * 엔드포인트: POST /api/forums/posts/{postId}/report
+   * KR: 신고자 ID와 신고 사유를 전송하여 게시글 신고를 처리합니다.
+   *
+   * @param {string} postId - 게시글 ID
    * @param {number} reporterId - 신고자 ID
    * @param {string} reason - 신고 사유
+   * @returns {Promise} 신고 처리 결과
    */
   reportPost: async (postId, reporterId, reason) => {
     try {
       const response = await AxiosInstance.post(
         `/api/forums/posts/${postId}/report`,
-        { reason },
-        { params: { reporterId } }
+        { reporterId, reason }
       );
       return response.data;
     } catch (error) {
@@ -176,7 +227,10 @@ const ForumApi = {
   /**
    * 포럼 게시글 복원
    * 엔드포인트: POST /api/forums/posts/{postId}/restore
-   * @param {number} postId - 복원할 게시글 ID
+   * KR: 삭제되었거나 숨김 처리된 게시글을 복원합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @returns {Promise} 복원 처리 결과
    */
   restorePost: async (postId) => {
     try {
@@ -190,13 +244,43 @@ const ForumApi = {
     }
   },
 
+  /**
+   * 게시글 좋아요 토글
+   * 엔드포인트: POST /api/forums/posts/{postId}/like
+   * KR: 특정 게시글에 대해 좋아요 추가/취소를 수행합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
+   * @returns {Promise} 좋아요 토글 결과
+   */
+  toggleLikePost: async (postId, loggedInMemberId) => {
+    try {
+      const response = await AxiosInstance.post(
+        `/api/forums/posts/${postId}/like`,
+        { memberId: loggedInMemberId }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("포럼 게시글 좋아요 토글 중 오류:", error);
+      throw error;
+    }
+  },
+
   // ------------------ 댓글(Comment) 관련 ------------------
-  // 수정된 코드: postId를 쿼리 파라미터로 전송
+  // 이하 댓글 관련 메서드는 기존 코드와 동일합니다.
+  /**
+   * 특정 게시글의 댓글 조회
+   * 엔드포인트: GET /api/forums/comments/{postId}
+   * KR: 지정된 게시글에 속한 모든 댓글을 조회합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @returns {Promise} 댓글 목록 데이터
+   */
   getCommentsByPostId: async (postId) => {
     try {
-      const response = await AxiosInstance.get(`/api/forums/comments`, {
-        params: { postId },
-      });
+      const response = await AxiosInstance.get(
+        `/api/forums/comments/${postId}`
+      );
       console.log("Fetched Comments:", response.data);
       return response.data;
     } catch (error) {
@@ -206,15 +290,18 @@ const ForumApi = {
   },
 
   /**
-   * 댓글 생성 (포럼)
+   * 댓글 생성
    * 엔드포인트: POST /api/forums/comments
-   * @param {Object} data - 댓글 생성 데이터 (postId, memberId, content 등)
-   * @param {string} token - 사용자 액세스 토큰 (Authorization 헤더 사용)
+   * KR: 새 댓글 데이터를 전송하여 댓글을 생성합니다.
+   *
+   * @param {object} data - 댓글 생성 데이터
+   * @param {string} [token=""] - (선택) 인증 토큰
+   * @returns {Promise} 생성된 댓글 데이터
    */
-  addComment: async (data, token) => {
+  addComment: async (data, token = "") => {
     try {
       const response = await AxiosInstance.post("/api/forums/comments", data, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       return response.data;
     } catch (error) {
@@ -224,12 +311,15 @@ const ForumApi = {
   },
 
   /**
-   * 댓글 수정 (포럼)
+   * 댓글 수정
    * 엔드포인트: PUT /api/forums/comments/{commentId}?loggedInMemberId=...&isAdmin=...
-   * @param {number} commentId - 수정할 댓글 ID
-   * @param {Object} data - 수정 데이터 (content, contentJSON 등)
-   * @param {number} loggedInMemberId - 로그인된 사용자 ID
+   * KR: 수정할 댓글의 ID, 새 데이터를, 로그인한 사용자 ID, 관리자 여부를 전달합니다.
+   *
+   * @param {number} commentId - 댓글 ID
+   * @param {object} data - 수정할 댓글 데이터
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
    * @param {boolean} isAdmin - 관리자 여부
+   * @returns {Promise} 수정된 댓글 데이터
    */
   editComment: async (commentId, data, loggedInMemberId, isAdmin) => {
     try {
@@ -248,11 +338,14 @@ const ForumApi = {
   },
 
   /**
-   * 댓글 삭제 (포럼, 논리 삭제)
+   * 댓글 삭제 (논리 삭제)
    * 엔드포인트: DELETE /api/forums/comments/{commentId}?loggedInMemberId=...&isAdmin=...
-   * @param {number} commentId - 삭제할 댓글 ID
-   * @param {number} loggedInMemberId - 로그인된 사용자 ID
+   * KR: 댓글을 실제 삭제하지 않고, 삭제된 것으로 마킹합니다.
+   *
+   * @param {number} commentId - 댓글 ID
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
    * @param {boolean} isAdmin - 관리자 여부
+   * @returns {Promise} 삭제 처리 결과
    */
   deleteComment: async (commentId, loggedInMemberId, isAdmin) => {
     try {
@@ -267,10 +360,13 @@ const ForumApi = {
   },
 
   /**
-   * 댓글 하드 삭제 (포럼, 관리자 전용)
+   * 댓글 하드 삭제 (관리자 전용)
    * 엔드포인트: DELETE /api/forums/comments/{commentId}/hard-delete?loggedInMemberId=...
-   * @param {number} commentId - 하드 삭제할 댓글 ID
-   * @param {number} loggedInMemberId - 로그인된 관리자 ID
+   * KR: 관리자가 댓글을 완전히 삭제합니다.
+   *
+   * @param {number} commentId - 댓글 ID
+   * @param {number|string} loggedInMemberId - 관리자 사용자 ID
+   * @returns {Promise} 하드 삭제 결과
    */
   hardDeleteComment: async (commentId, loggedInMemberId) => {
     try {
@@ -286,18 +382,20 @@ const ForumApi = {
   },
 
   /**
-   * 댓글 신고 (포럼)
-   * 엔드포인트: POST /api/forums/comments/{commentId}/report?reporterId=...
-   * @param {number} commentId - 신고할 댓글 ID
+   * 댓글 신고 처리
+   * 엔드포인트: POST /api/forums/comments/{commentId}/report
+   * KR: 신고자 ID와 신고 사유를 전송하여 댓글 신고를 처리합니다.
+   *
+   * @param {number} commentId - 댓글 ID
    * @param {number} reporterId - 신고자 ID
    * @param {string} reason - 신고 사유
+   * @returns {Promise} 신고 처리 결과
    */
   reportComment: async (commentId, reporterId, reason) => {
     try {
       const response = await AxiosInstance.post(
         `/api/forums/comments/${commentId}/report`,
-        { reason },
-        { params: { reporterId } }
+        { reporterId, reason }
       );
       return response.data;
     } catch (error) {
@@ -307,9 +405,12 @@ const ForumApi = {
   },
 
   /**
-   * 댓글 복원 (포럼)
+   * 댓글 복원 처리
    * 엔드포인트: POST /api/forums/comments/{commentId}/restore
-   * @param {number} commentId - 복원할 댓글 ID
+   * KR: 삭제된 댓글을 복원합니다.
+   *
+   * @param {number} commentId - 댓글 ID
+   * @returns {Promise} 복원 처리 결과
    */
   restoreComment: async (commentId) => {
     try {
@@ -319,6 +420,76 @@ const ForumApi = {
       return response.data;
     } catch (error) {
       console.error("포럼 댓글 복원 중 오류:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * 댓글 좋아요 토글
+   * 엔드포인트: POST /api/forums/comments/{commentId}/like
+   * KR: 댓글에 대해 좋아요 추가/취소를 수행합니다.
+   *
+   * @param {number} commentId - 댓글 ID
+   * @param {number|string} loggedInMemberId - 요청 사용자 ID
+   * @returns {Promise} 좋아요 토글 결과
+   */
+  toggleLikeComment: async (commentId, loggedInMemberId) => {
+    try {
+      const response = await AxiosInstance.post(
+        `/api/forums/comments/${commentId}/like`,
+        { memberId: loggedInMemberId }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("포럼 댓글 좋아요 토글 중 오류:", error);
+      throw error;
+    }
+  },
+
+  // ------------------ 검색 및 상세 조회 ------------------
+  /**
+   * 포럼 게시글 검색
+   * 엔드포인트: GET /api/forums/search?q=...&type=forum_post&category=...&page=...&size=...
+   * KR: 검색어, 카테고리, 페이지, 사이즈를 받아 해당 게시글을 검색합니다.
+   *
+   * @param {string} q - 검색어
+   * @param {string} category - 카테고리 필터
+   * @param {number} page - 페이지 번호
+   * @param {number} size - 페이지 크기
+   * @returns {Promise} 검색 결과 데이터
+   */
+  search: async (q, category, page, size) => {
+    try {
+      const safePage = page < 1 ? 1 : page;
+      const encodedQ = encodeURIComponent(q);
+      // type은 고정으로 forum_post로 설정
+      const encodedType = encodeURIComponent("forum_post");
+      const categoryParam = category
+        ? `&category=${encodeURIComponent(category)}`
+        : "";
+      const uri = `/api/forums/search?q=${encodedQ}&type=${encodedType}${categoryParam}&page=${safePage}&size=${size}`;
+      const response = await AxiosInstance.get(uri);
+      return response.data;
+    } catch (error) {
+      console.error("포럼 게시글 검색 중 오류:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * 게시글 상세 조회
+   * 엔드포인트: GET /api/forums/posts/{postId}
+   * KR: 지정된 게시글 ID의 상세 정보를 조회합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @returns {Promise} 게시글 상세 데이터
+   */
+  detail: async (postId) => {
+    try {
+      const response = await AxiosInstance.get(`/api/forums/posts/${postId}`);
+      return response.data;
+    } catch (error) {
+      console.error("포럼 게시글 상세 조회 중 오류:", error);
       throw error;
     }
   },
