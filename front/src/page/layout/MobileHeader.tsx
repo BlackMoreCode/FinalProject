@@ -10,7 +10,7 @@ import {
 } from "./style/HeaderStyle";
 import { useLocation, useNavigate } from "react-router-dom";
 import { openModal } from "../../context/redux/ModalReducer";
-import { logout } from "../../context/redux/CommonAction";
+import { handleLogout } from "../../context/redux/CommonAction";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../context/Store";
 import { useState } from "react";
@@ -53,7 +53,7 @@ const MobileHeader = () => {
         {
           name: "로그아웃",
           fn: () => {
-            dispatch(logout());
+            dispatch(handleLogout());
           },
         },
       ]
@@ -62,7 +62,7 @@ const MobileHeader = () => {
         {
           name: "로그아웃",
           fn: () => {
-            dispatch(logout());
+            dispatch(handleLogout());
           },
         },
       ];

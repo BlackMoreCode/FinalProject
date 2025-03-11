@@ -2,8 +2,8 @@ import {useDispatch, useSelector} from "react-redux";
 import {useEffect} from "react";
 import ReduxApi from "../../api/ReduxApi";
 import {setGuest, setUserInfo} from "../../context/redux/UserReducer";
-import {logout} from "../../context/redux/CommonAction";
-import {RootState} from "../../context/Store";
+import {handleLogout} from "../../context/redux/CommonAction";
+import {AppDispatch, RootState} from "../../context/Store";
 import ChatModal from "./chat/ChatModal";
 import {Background, Header, Mobile, PC} from "./style/HeaderStyle";
 import { Outlet } from "react-router-dom";
@@ -15,9 +15,8 @@ import MainContainer from "../../component/MainContainer";
 
 
 const Layout = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const accessToken = useSelector((state: RootState) => state.token.accessToken);
-
   useEffect(() => {
     const fetchMyinfo = async () => {
       try {
@@ -27,7 +26,7 @@ const Layout = () => {
           if (rsp.data) {
             dispatch(setUserInfo(rsp.data));
           } else {
-            dispatch(logout());
+            dispatch(handleLogout());
           }
         }
         else {
@@ -35,7 +34,7 @@ const Layout = () => {
         }
       } catch (error) {
         console.log(error);
-        dispatch(logout());
+        dispatch(handleLogout());
       }
     };
     fetchMyinfo();
