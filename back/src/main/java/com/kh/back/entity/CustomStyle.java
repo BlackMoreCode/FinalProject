@@ -45,6 +45,7 @@ public class CustomStyle {
     @OneToOne
     @JoinColumn(name = "member_id", nullable = false)
     @JsonBackReference
+    @ToString.Exclude  // 이 부분을 추가하여 toString에서 member를 제외
     private Member member;
 
     @Builder

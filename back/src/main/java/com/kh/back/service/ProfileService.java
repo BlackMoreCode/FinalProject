@@ -10,6 +10,11 @@ import com.kh.back.repository.member.MemberRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -87,21 +92,63 @@ public class ProfileService {
         memberRepository.save(member);
     }
 
-    // 3. Authentication과 프로필 정보를 받아 유저 정보 수정
-    public void updateProfile(Authentication authentication, ProfileUpdateDto profileUpdateDto) {
-        Long userId = ((Member) authentication.getPrincipal()).getMemberId();
+    public void updateProfile(Authentication authentication, Map<String, String> updates) {
+        Long userId = Long.valueOf(authentication.getName());
         log.info("프로필 정보 수정시 맴버 아이디 값 : {}", userId);
 
+        // 회원 정보를 가져옵니다.
         Member member = memberRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        member.setNickName(profileUpdateDto.getNickName());
-        member.setMemberImg(profileUpdateDto.getMemberImg());
-        member.setIntroduce(profileUpdateDto.getIntroduce());
+        // 전달된 업데이트 정보에 대해 반복문을 통해 필드 갱신
+        updates.forEach((key, value) -> {
+            try {
+                // 해당 필드의 setter 메서드를 동적으로 호출
+                Method method = member.getClass().getMethod("set" + capitalizeFirstLetter(key), String.class);
+                method.invoke(member, value);
+            } catch (Exception e) {
+                log.error("필드 업데이트 오류: {}", e.getMessage());
+            }
+        });
 
+        // 회원 정보 저장
         memberRepository.save(member);
     }
 
+    // 첫 글자 대문자로 변환
+    private String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
+    }
 
+    public void saveImageUrl(MultipartFile file, Authentication authentication) throws IOException {
+        try {
+            // 인증된 유저 가져오기
+            Long memberId = Long.valueOf(authentication.getName());
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+            // 파이어베이스에 업로드하고 URL 반환
+            String imageUrl = FirebaseService.uploadProfileImage(file);
+            log.info("저장하려는 유저 id값 {}", member.getMemberId());
+            log.info("저장하려는 유저 이름 {}", member.getName());
+            log.info("저장하려는 이미지 url 주소값 : {}", imageUrl);
+
+            // DB에 이미지 URL 저장
+            member.setMemberImg(imageUrl);
+            memberRepository.save(member);
+            log.info("DB에 이미지 URL 저장 성공: {}", imageUrl);
+
+        } catch (IllegalArgumentException e) {
+            log.error("회원 정보를 찾을 수 없습니다: {}", e.getMessage());
+            throw e; // 예외를 다시 던져서 호출자에게 전달
+        } catch (IOException e) {
+            log.error("파일 처리 중 오류 발생: {}", e.getMessage());
+            throw e; // 예외를 다시 던져서 호출자에게 전달
+        } catch (Exception e) {
+            log.error("알 수 없는 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("이미지 저장 과정에서 오류가 발생했습니다.", e);
+        }
+    }
 
 }
