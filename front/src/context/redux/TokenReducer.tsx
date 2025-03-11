@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TokenState } from "../types";
 import { logout } from './CommonAction';
+import {persistor} from "../Store";
+
 
 const initialState: TokenState = {
   accessToken: null,
@@ -27,6 +29,7 @@ const TokenReducer = createSlice({
       // 로그아웃 시 토큰 초기화
       state.accessToken = null;
       state.refreshToken = null;
+      // 로그아웃 후 퍼시스트의 상태를 초기화 (로컬스토리지 삭제)
     });
   }
 });
