@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { loadTossPayments, ANONYMOUS } from "@tosspayments/tosspayments-sdk";
 import "./style.css";
+import axiosInstance from "../../api/AxiosInstance";
 
 const generateRandomString = () => window.btoa(Math.random()).slice(0, 20);
 const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
@@ -11,12 +12,26 @@ export function CheckoutPage() {
 
   // ✅ 한 번에 관리할 결제 정보
   const [paymentDetails, setPaymentDetails] = useState({
-    amount: { currency: "KRW", value: 5_000 },
+    amount: { currency: "KRW", value: 8_900 },
     orderId: generateRandomString(),
-    orderName: "토스 티셔츠 외 2건",
+    orderName: "맴버십 결제",
     customerName: "김토스",
     customerEmail: "customer123@gmail.com",
   });
+
+  useEffect(() => {
+    axiosInstance
+      .get(`/api/member/get`)
+      .then((response) => {
+        const { name, email } = response.data;
+        setPaymentDetails((prevDetails) => ({
+          ...prevDetails,
+          customerName: name,
+          customerEmail: email,
+        }));
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   useEffect(() => {
     async function fetchPaymentWidgets() {
@@ -76,83 +91,64 @@ export function CheckoutPage() {
     }));
   }
 
-  /*
-  setPaymentDetailsHandler(data) 사용법
-  
-  1.
-  useEffect(() => {
-  async function fetchOrderDetails() {
-    const response = await fetch("/api/order-details"); // 백엔드 API 요청
-    const data = await response.json();
-    
-    setPaymentDetailsHandler(data); // 받아온 데이터를 결제 정보로 설정
-  }
+  // ✅ 결제 정보 전송 메서드
+  const handlePayment = async () => {
+    try {
+      /**
+       * 결제 요청
+       * 결제를 요청하기 전에 orderId, amount를 서버에 저장하세요.
+       * 결제 과정에서 악의적으로 결제 금액이 바뀌는 것을 확인하는 용도입니다.
+       * @docs https://docs.tosspayments.com/sdk/v2/js#widgetsrequestpayment
+       */
 
-  fetchOrderDetails();
-  }, []);
-  이런식으로 백엔드에서 정형화된 데이터를 받아오거나
+      //PurchaseRecord 생성
+      const purchaseRecordDto = {
+        orderId: paymentDetails.orderId,
+        orderName: paymentDetails.orderName,
+        amount: paymentDetails.amount.value,
+        customerName: paymentDetails.customerName,
+        customerEmail: paymentDetails.customerEmail,
+      };
 
-  2.
-  const savePaymentDetailsToLocalStorage = (data) => {
-  localStorage.setItem("paymentDetails", JSON.stringify(data));
+      // axios 요청과 결제 위젯 요청을 병렬로 처리
+      await Promise.all([
+        // PurchaseRecord 저장을 위한 POST 요청
+        axiosInstance.post("/api/purchase/create", purchaseRecordDto),
+
+        // 결제 요청
+        widgets?.requestPayment({
+          orderId: paymentDetails.orderId,
+          orderName: paymentDetails.orderName,
+          customerName: paymentDetails.customerName,
+          customerEmail: paymentDetails.customerEmail,
+          successUrl:
+            window.location.origin + "/pay/success" + window.location.search,
+          failUrl:
+            window.location.origin + "/pay/fail" + window.location.search,
+        }),
+      ]);
+    } catch (error) {
+      console.error("Payment request failed:", error);
+      // TODO: 결제 실패 처리
+    }
   };
-
-  savePaymentDetailsToLocalStorage({
-  amount: { currency: "KRW", value: 100_000 },
-  orderId: "order_67890",
-  orderName: "아이패드 프로",
-  customerName: "홍길동",
-  customerEmail: "hong@example.com",
-  }); 
-  이렇게 로컬스토리지에서 저장된 데이터를
-
-  useEffect(() => {
-  const storedPaymentDetails = localStorage.getItem("paymentDetails");
-
-  if (storedPaymentDetails) {
-    const parsedDetails = JSON.parse(storedPaymentDetails);
-    setPaymentDetailsHandler(parsedDetails); // 저장된 정보로 결제 정보 업데이트
-  }
-}, []);
-
-이렇게 가져와서 설정하게
-
-  */
 
   return (
     <div className="wrapper w-100">
       <div className="max-w-540 w-100">
         <div id="payment-method" className="w-100" />
+        {paymentDetails && (
+          <div className="payment-summary">
+            <p>구매자: {paymentDetails.customerName}</p>
+            <p>상품명: {paymentDetails.orderName}</p>
+            <p>금액: {paymentDetails.amount.value}원</p>
+          </div>
+        )}
         <div id="agreement" className="w-100" />
         <div className="btn-wrapper w-100">
           <button
             className="btn primary w-100"
-            onClick={async () => {
-              try {
-                /**
-                 * 결제 요청
-                 * 결제를 요청하기 전에 orderId, amount를 서버에 저장하세요.
-                 * 결제 과정에서 악의적으로 결제 금액이 바뀌는 것을 확인하는 용도입니다.
-                 * @docs https://docs.tosspayments.com/sdk/v2/js#widgetsrequestpayment
-                 */
-                await widgets?.requestPayment({
-                  orderId: paymentDetails.orderId,
-                  orderName: paymentDetails.orderName,
-                  customerName: paymentDetails.customerName,
-                  customerEmail: paymentDetails.customerEmail,
-                  successUrl:
-                    window.location.origin +
-                    "/pay/success" +
-                    window.location.search,
-                  failUrl:
-                    window.location.origin +
-                    "/pay/fail" +
-                    window.location.search,
-                });
-              } catch (error) {
-                // TODO: 에러 처리
-              }
-            }}
+            onClick={handlePayment}
             disabled={!ready} // ready가 true일 때만 활성화
           >
             {ready ? "결제하기" : "로딩 중..."}{" "}

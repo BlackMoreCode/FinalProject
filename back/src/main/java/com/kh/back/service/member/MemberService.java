@@ -2,6 +2,7 @@ package com.kh.back.service.member;
 
 
 import com.kh.back.constant.Authority;
+import com.kh.back.dto.member.res.MemberInfoDto;
 import com.kh.back.entity.member.Member;
 import com.kh.back.jwt.TokenProvider;
 import com.kh.back.repository.member.MemberRepository;
@@ -165,6 +166,29 @@ public class MemberService {
 				.orElseThrow(() -> new IllegalArgumentException("유효하지 않은 회원 ID입니다: " + memberId));
 		return member.getAuthority() == Authority.ROLE_ADMIN;
 	}
+
+	public MemberInfoDto getMemberInfo(Authentication authentication) {
+		// 로그인한 사용자 정보 얻기
+		Long userId = Long.valueOf(authentication.getName());
+
+		Member member = memberRepository.findByMemberId(userId)
+				.orElseThrow(()->new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+		// MemberInfoDto로 변환
+		MemberInfoDto memberInfoDto = new MemberInfoDto();
+		memberInfoDto.setMemberId(member.getMemberId());
+		memberInfoDto.setName(member.getName());
+		memberInfoDto.setNickName(member.getNickName());
+		memberInfoDto.setEmail(member.getEmail());
+		memberInfoDto.setPhone(member.getPhone());
+		memberInfoDto.setIntroduce(member.getIntroduce());
+
+		return memberInfoDto;
+
+
+	}
+
+
 
 
 	/**
