@@ -5,7 +5,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import React, { useState } from "react";
 import { openModal } from "../../context/redux/ModalReducer";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../context/redux/CommonAction";
+import { handleLogout } from "../../context/redux/CommonAction";
 import CloseIcon from '@mui/icons-material/Close';
 import DropdownComponent from "../../component/DropdownComponent";
 
@@ -26,11 +26,11 @@ const ProfileButton = () => {
       ? [
         { name: "프로필", fn: () => navigate("/profile") },
         { name: "관리자 페이지", fn: () => navigate("/admin") },
-        { name: "로그아웃", fn: () => dispatch(logout()) },
+        { name: "로그아웃", fn: () => dispatch(handleLogout()) },
       ]
       : [
         { name: "프로필", fn: () => navigate("/profile") },
-        { name: "로그아웃", fn: () => dispatch(logout()) },
+        { name: "로그아웃", fn: () => dispatch(handleLogout()) },
       ];
 
   return (

@@ -53,8 +53,6 @@ def get_index_and_mapping(file_type: str):
     index_mapping = {
         "cocktail": ("recipe_cocktail", "cocktail_mapping.json"),
         "food": ("recipe_food", "food_mapping.json"),
-        "cocktail_ingredient": ("cocktail_ingredient", "cocktail_ingredient_mapping.json"),
-        "food_ingredient": ("food_ingredient", "food_ingredient_mapping.json"),
         "feed": ("feed", "feed_mapping.json"),
         "forum_post": ("forum_post", "forum_post_mapping.json"),
         "forum_category": ("forum_category", "forum_category_mapping.json")
@@ -107,7 +105,7 @@ def upload_json():
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
-        data = json.load(file.read().decode("utf-8"))
+        data = json.load(file)
         for item in data:
             es.index(index=index_name, body=item)
 

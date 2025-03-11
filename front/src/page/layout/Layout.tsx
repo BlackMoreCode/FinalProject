@@ -1,11 +1,11 @@
-import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import {useDispatch, useSelector} from "react-redux";
+import {useEffect} from "react";
 import ReduxApi from "../../api/ReduxApi";
-import { setGuest, setUserInfo } from "../../context/redux/UserReducer";
-import { logout } from "../../context/redux/CommonAction";
-import { RootState } from "../../context/Store";
+import {setGuest, setUserInfo} from "../../context/redux/UserReducer";
+import {handleLogout} from "../../context/redux/CommonAction";
+import {AppDispatch, RootState} from "../../context/Store";
 import ChatModal from "./chat/ChatModal";
-import { Background, Header, Mobile, PC } from "./style/HeaderStyle";
+import {Background, Header, Mobile, PC} from "./style/HeaderStyle";
 import { Outlet } from "react-router-dom";
 import React from "react";
 import PCHeader from "./PCHeader";
@@ -13,12 +13,10 @@ import ModalComponents from "./ModalComponents";
 import MobileHeader from "./MobileHeader";
 import MainContainer from "../../component/MainContainer";
 
-const Layout = () => {
-  const dispatch = useDispatch();
-  const accessToken = useSelector(
-    (state: RootState) => state.token.accessToken
-  );
 
+const Layout = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const accessToken = useSelector((state: RootState) => state.token.accessToken);
   useEffect(() => {
     const fetchMyinfo = async () => {
       try {
@@ -28,15 +26,15 @@ const Layout = () => {
           if (rsp.data) {
             dispatch(setUserInfo(rsp.data));
           } else {
-            console.log("logout");
-            dispatch(logout());
+            dispatch(handleLogout());
           }
-        } else {
-          dispatch(setGuest());
+        }
+        else {
+          dispatch(setGuest())
         }
       } catch (error) {
         console.log(error);
-        dispatch(logout());
+        dispatch(handleLogout());
       }
     };
     fetchMyinfo();
@@ -46,19 +44,19 @@ const Layout = () => {
     <Background>
       <Header>
         <PC>
-          <PCHeader />
+          <PCHeader/>
         </PC>
         <Mobile>
-          <MobileHeader />
+          <MobileHeader/>
         </Mobile>
       </Header>
-      <ChatModal />
+      <ChatModal/>
       <MainContainer>
-        <Outlet />
+        <Outlet/>
       </MainContainer>
       {/*<Footer/>*/}
-      <ModalComponents />
+      <ModalComponents/>
     </Background>
-  );
-};
+  )
+}
 export default Layout;
