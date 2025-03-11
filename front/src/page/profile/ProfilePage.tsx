@@ -20,6 +20,7 @@ const ProfilePage = () => {
   const { id } = useParams(); // URL에서 id 가져오기
   const [loggedInUserId, setLoggedInUserId] = useState(null); // 로그인한 유저의 ID
   const [isOwnProfile, setIsOwnProfile] = useState(false); // 본인 프로필 여부 체크
+  const [isPaidMember, setIsPaidMember] = useState(false); // 맴버십 구매 여부 체크
 
   const [user, setUser] = useState({
     name: "홍길동",
@@ -52,6 +53,16 @@ const ProfilePage = () => {
   }, []); // 이 useEffect는 로그인된 ID를 가져오는 역할만 합니다.
 
   useEffect(() => {
+    axiosInstance
+      .get("/api/purchase/check")
+      .then((response) => {
+        setIsPaidMember(response.data); // 로그인한 유저의 구매 여부 확인
+        console.log("Response data:", response.data); // 참, 거짓 반환
+      })
+      .catch((err) => console.error(err));
+  }, []); // 이 useEffect는 로그인된 유저의 구매 여부만 확인
+
+  useEffect(() => {
     if (id) {
       // URL의 id 값이 있는 경우
       if (id === String(loggedInUserId)) {
@@ -68,33 +79,6 @@ const ProfilePage = () => {
       }
     }
   }, [loggedInUserId, id]); // loggedInUserId와 id가 변경될 때마다 실행
-
-  // useEffect(() => {
-  //   if (isOwnProfile && loggedInUserId) {
-  //     // 본인 프로필이면 사용자 정보 및 스타일을 백엔드에서 가져오기
-  //     axiosInstance
-  //       .get(`/api/profile/${loggedInUserId}`)
-  //       .then((response) => {
-  //         setUser({
-  //           name: response.data.nickName,
-  //           introduce: response.data.introduce,
-  //           profileImg: response.data.memberImg,
-  //           postsCount: 12, // 예시 값
-  //           likesCount: 25, // 예시 값
-  //         });
-  //         setCustomStyle({
-  //           bgColor: response.data.bgColor,
-  //           nicknameFont: response.data.nicknameFont,
-  //           nicknameSize: response.data.nicknameSize,
-  //           nicknameColor: response.data.textColorNickname,
-  //           introduceFont: response.data.introduceFont,
-  //           introduceSize: response.data.introduceSize,
-  //           introduceColor: response.data.textColorIntroduce,
-  //         });
-  //       })
-  //       .catch((err) => console.error(err));
-  //   }
-  // }, [isOwnProfile, loggedInUserId]);
 
   const handlePaymentClick = () => {
     navigate("/pay"); // 결제 페이지로 이동
@@ -116,12 +100,12 @@ const ProfilePage = () => {
                 <span>프로필 수정</span>
               </ProfileButton>
             )}
-            {isOwnProfile && (
+            {isOwnProfile && !isPaidMember && (
               <ProfileButton onClick={handlePaymentClick}>
-                <span>결제하기</span>
+                <span>맴버십 결제하기</span>
               </ProfileButton>
             )}
-            {isOwnProfile && (
+            {isOwnProfile && isPaidMember && (
               <ProfileButton onClick={handleCustomClick}>
                 <span>프로필 디자인</span>
               </ProfileButton>
