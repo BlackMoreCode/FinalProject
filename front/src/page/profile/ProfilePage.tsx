@@ -84,6 +84,10 @@ const ProfilePage = () => {
     navigate("/pay"); // 결제 페이지로 이동
   };
 
+  const handleEditClick = () => {
+    navigate("/profile/edit");
+  };
+
   const handleCustomClick = () => {
     navigate("/profile/cardcustom");
   };
@@ -95,7 +99,7 @@ const ProfilePage = () => {
           <Profile userId={id || loggedInUserId} customStyle={null} />
           <ProfileButtonContainer>
             {isOwnProfile && (
-              <ProfileButton onClick={handleCustomClick}>
+              <ProfileButton onClick={handleEditClick}>
                 <EditIcon />
                 <span>프로필 수정</span>
               </ProfileButton>

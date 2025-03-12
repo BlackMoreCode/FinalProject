@@ -2,8 +2,14 @@ package com.kh.back.service;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
 import com.google.firebase.cloud.StorageClient;
+import com.kh.back.entity.member.Member;
+import com.kh.back.repository.member.MemberRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -15,8 +21,15 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class FirebaseService {
+
+    private final MemberRepository memberRepository;
+
+    public FirebaseService(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
 
     // 이미지 리사이징, 압축 후 레시피 이름 폴더로 업로드
     public String uploadImage(MultipartFile file, String recipeName) throws IOException {
@@ -50,7 +63,7 @@ public class FirebaseService {
                 + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "?alt=media";
     }
 
-    public String uploadProfileImage(MultipartFile file) throws IOException {
+    public static String uploadProfileImage(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("파일이 없습니다.");
         }
@@ -80,4 +93,22 @@ public class FirebaseService {
         return "https://firebasestorage.googleapis.com/v0/b/" + bucket.getName() + "/o/"
                 + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "?alt=media";
     }
+
+    // 본인 프로필 이미지 가져오기
+    public String getProfileImage(Authentication authentication) {
+        Long memberId = Long.valueOf(authentication.getName());
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+        return member.getMemberImg();
+    }
+
+    // 특정 유저 프로필 이미지 가져오기
+    public String getMemberProfileImage(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+        return member.getMemberImg();
+    }
+
+
+
 }

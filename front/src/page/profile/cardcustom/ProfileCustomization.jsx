@@ -97,9 +97,7 @@ const ProfileCustomization = () => {
 
   return (
     <CustomizationPageContainer>
-      <CustomizationPageTitle>
-        프로필 스타일 커스터마이징
-      </CustomizationPageTitle>
+      <CustomizationPageTitle>프로필 디자인 변경</CustomizationPageTitle>
 
       <ProfileContainer>
         <Profile userId={loggedInUserId} customStyle={customStyle} />

@@ -35,7 +35,7 @@ public class Member {
     @Column(length = 50)
     private String name;
 
-    @Column
+    @Column(name = "member_img")
     private String memberImg;
 
     @Column(length = 50)
@@ -60,6 +60,7 @@ public class Member {
     // CustomStyle과 1:1 관계 설정 (Member 삭제 시 CustomStyle도 삭제됨)
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonBackReference
+    @ToString.Exclude  // 이 부분을 추가하여 toString에서 customStyle을 제외
     private CustomStyle customStyle;
 
     @Builder
