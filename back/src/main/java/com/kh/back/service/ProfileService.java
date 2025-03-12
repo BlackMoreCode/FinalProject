@@ -151,4 +151,12 @@ public class ProfileService {
         }
     }
 
+    public ProfileUpdateDto getProfileInfo(Authentication authentication) {
+        Long memberId = Long.valueOf(authentication.getName()); // 현재 로그인한 유저의 이메일 가져오기
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+
+        return new ProfileUpdateDto(member.getNickName(), member.getIntroduce(), member.getMemberImg());
+    }
+
 }

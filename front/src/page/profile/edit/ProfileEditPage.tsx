@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../../api/AxiosInstance";
+import {
+  Container,
+  ProfileImageWrapper,
+  ProfileImage,
+  UploadButton,
+  UploadIcon,
+  ProfileImagePlaceholder,
+  InputWrapper,
+  Label,
+  Input,
+  Button,
+} from "./ProfileEditStyles";
 
 const ProfileEditPage = () => {
   const navigate = useNavigate();
@@ -11,19 +23,21 @@ const ProfileEditPage = () => {
   });
 
   const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null); // 이미지 미리보기 URL
 
   // 프로필 데이터 로드
   useEffect(() => {
     // 처음에 유저의 프로필 데이터를 로드합니다.
     const fetchProfile = async () => {
       try {
-        const response = await axiosInstance.get("/api/profile/image"); // 프로필 이미지 가져오기
         const { data } = await axiosInstance.get("/api/profile/get"); // 유저 정보 가져오기
         setProfile({
           nickName: data.nickName,
           introduce: data.introduce,
-          memberImg: response.data,
+          memberImg: data.memberImg,
         });
+        setPreview(data.memberImg); // 기존 이미지 미리보기 설정
+        console.log(data);
       } catch (error) {
         console.error("프로필 정보를 가져오는 데 실패했습니다.", error);
       }
@@ -33,11 +47,15 @@ const ProfileEditPage = () => {
 
   // 이미지 파일 변경 핸들러
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFile(file);
+
+      // 선택한 이미지의 미리보기 URL 생성
+      const fileURL = URL.createObjectURL(file);
+      setPreview(fileURL);
     }
   };
-
   // 프로필 수정 요청
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,43 +95,55 @@ const ProfileEditPage = () => {
     const { name, value } = e.target;
     setProfile((prevProfile) => ({
       ...prevProfile,
-      [name]: value,
+      [name]: value, // 값이 비어 있으면 기존 값 유지
     }));
   };
-
   return (
-    <div>
+    <Container>
       <h1>프로필 수정</h1>
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>프로필 이미지:</label>
-          <input type="file" onChange={handleFileChange} />
-          {profile.memberImg && <img src={profile.memberImg} alt="Profile" />}
-        </div>
+        <ProfileImageWrapper>
+          {preview ? (
+            <ProfileImage src={preview} alt="Profile Preview" />
+          ) : (
+            <ProfileImagePlaceholder>이미지 없음</ProfileImagePlaceholder>
+          )}
+          <UploadButton>
+            <UploadIcon />
+            <input
+              type="file"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+          </UploadButton>
+        </ProfileImageWrapper>
 
-        <div>
-          <label>닉네임:</label>
-          <input
-            type="text"
-            name="nickName"
-            value={profile.nickName}
-            onChange={handleChange}
-          />
-        </div>
+        <Label htmlFor="nickName">닉네임</Label>
+        <Input
+          type="text"
+          id="nickName"
+          name="nickName"
+          value={profile.nickName}
+          onChange={handleChange}
+          placeholder="닉네임을 입력하세요"
+        />
 
-        <div>
-          <label>자기소개:</label>
-          <input
-            type="text"
-            name="introduce"
-            value={profile.introduce}
-            onChange={handleChange}
-          />
-        </div>
+        <Label htmlFor="introduce">자기소개</Label>
+        <Input
+          type="text"
+          id="introduce"
+          name="introduce"
+          value={profile.introduce}
+          onChange={handleChange}
+          placeholder="자기소개를 입력하세요"
+        />
 
-        <button type="submit">수정</button>
+        <Button type="submit">수정</Button>
+        <Button type="button" onClick={() => navigate("/profile")}>
+          취소
+        </Button>
       </form>
-    </div>
+    </Container>
   );
 };
 

@@ -13,5 +13,6 @@ public class ProfileUpdateDto {
 
     private String nickName;
     private String introduce;
+    private String memberImg;
 
 }

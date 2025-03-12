@@ -88,4 +88,15 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("조회 실패: " + e.getMessage());
         }
     }
+    @GetMapping("/get")
+    public ResponseEntity<ProfileUpdateDto> getProfileInfo(Authentication authentication) {
+        try {
+            ProfileUpdateDto profile = profileService.getProfileInfo(authentication);
+            return ResponseEntity.ok(profile);
+        } catch (Exception e) {
+            log.error("프로필 정보 조회 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

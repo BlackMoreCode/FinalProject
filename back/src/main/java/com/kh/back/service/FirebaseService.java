@@ -2,6 +2,7 @@ package com.kh.back.service;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
 import com.google.firebase.cloud.StorageClient;
 import com.kh.back.entity.member.Member;
 import com.kh.back.repository.member.MemberRepository;
@@ -84,35 +85,13 @@ public class FirebaseService {
         // Firebase Storage에 업로드
         Bucket bucket = StorageClient.getInstance().bucket();
         String fileName = folderName + "/" + UUID.randomUUID() + "_profile.jpg"; // 파일명 고유값 추가
-        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
+        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg", Bucket.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.PUBLIC_READ));
 
         String filePath = blob.getName(); // 저장된 파일 경로
         log.info("파일이 저장된 경로: {}", filePath);
 
         return blob.getMediaLink();
     }
-
-    // 이미지 업로드 및 DB 저장
-//    @Transactional
-//    public void saveImageUrl(MultipartFile file, Authentication authentication) throws IOException {
-//        // 인증된 유저 가져오기
-//        Long memberId = Long.valueOf(authentication.getName());
-//        Member member = memberRepository.findById(memberId)
-//                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
-//
-//        // 파이어베이스에 업로드하고 URL 반환
-//        String imageUrl = uploadProfileImage(file);
-//        log.info("저장하려는 유저 id값 {}", member.getMemberId());
-//        log.info("저장하려는 유저 이름 {}", member.getName());
-//        log.info("저장하려는 이미지 url 주소값 : {}", imageUrl);
-//
-//        // DB에 이미지 URL 저장
-//        member.setMemberImg(imageUrl);
-//        memberRepository.save(member);  // 다시 저장
-//        memberRepository.flush();
-//        log.info("DB에 반영된 이미지 URL: {}", member.getMemberImg());
-//
-//    }
 
     // 본인 프로필 이미지 가져오기
     public String getProfileImage(Authentication authentication) {
