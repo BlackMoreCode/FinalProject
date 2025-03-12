@@ -38,6 +38,12 @@ public class ForumPostCommentService {
         // 필요 시 HTML sanitize 처리 (여기서는 단순 통과)
         String sanitizedContent = requestDto.getContent();
         requestDto.setContent(sanitizedContent);
+
+        // MemberService를 통해 실제 닉네임 조회 (회원 정보는 Member 테이블에서 가져옵니다)
+        String nickname = memberService.getNickname(requestDto.getMemberId());
+        // 조회한 닉네임을 댓글 작성자 이름(authorName)과 member.nickName에 설정
+        requestDto.setAuthorName(nickname);
+
         return forumEsService.createComment(requestDto);
     }
 

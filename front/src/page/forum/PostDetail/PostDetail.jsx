@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-// 기존 AxiosInstanse 대신 ReduxApi를 사용하여 로그인 사용자 정보를 가져옵니다.
+// ReduxApi를 통해 로그인 사용자 정보를 가져옵니다.
 import ReduxApi from "../../../api/ReduxApi";
 import ForumApi from "../../../api/ForumApi";
 import { ToastContainer, toast } from "react-toastify";
@@ -19,10 +19,10 @@ import {
 } from "../style/PostDetailStyles";
 
 // 하위 컴포넌트 임포트
-import PostBox from "./PostBox"; // 게시글 정보 및 액션 버튼 렌더링
-import CommentList from "./CommentList";
-import CommentInput from "./CommentInput";
-import ConfirmationModal from "../ConfirmationModal";
+import PostBox from "./PostBox"; // 게시글 본문과 액션 버튼 렌더링 컴포넌트
+import CommentList from "./CommentList"; // 댓글 목록 렌더링 컴포넌트
+import CommentInput from "./CommentInput"; // 댓글 입력 에디터 컴포넌트
+import ConfirmationModal from "../ConfirmationModal"; // 확인(컨펌) 모달 컴포넌트
 
 // TipTap 에디터 관련 임포트
 import { useEditor } from "@tiptap/react";
@@ -66,18 +66,18 @@ const convertHtmlToJson = (html) => {
 };
 
 const PostDetail = () => {
-  const { postId } = useParams();
+  const { postId } = useParams(); // URL에서 게시글 ID 추출
   const navigate = useNavigate();
 
-  // 주요 상태값들
-  const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [memberId, setMemberId] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // 주요 상태값 선언
+  const [post, setPost] = useState(null); // 게시글 데이터
+  const [comments, setComments] = useState([]); // 댓글 목록
+  const [replyingTo, setReplyingTo] = useState(null); // 인용(답글) 대상 정보
+  const [memberId, setMemberId] = useState(null); // 로그인 사용자 ID
+  const [isAdmin, setIsAdmin] = useState(false); // 관리자 여부
+  const [loading, setLoading] = useState(true); // 로딩 상태
 
-  // 모달 관련 상태값
+  // 모달 관련 상태값 선언 (컨펌 모달)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
     type: "",
@@ -85,7 +85,7 @@ const PostDetail = () => {
     content: "",
   });
 
-  // 새 댓글 작성을 위한 에디터 설정
+  // TipTap 에디터 설정 (댓글 입력용)
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -101,9 +101,8 @@ const PostDetail = () => {
 
   /**
    * ReduxApi를 통해 로그인 사용자 정보를 가져오는 함수
-   * 사용자 정보가 없으면 로그인 페이지로 리디렉션합니다.
+   * 로그인 정보가 없으면 로그인 페이지로 이동합니다.
    */
-  // 수정: getMyInfo() is the correct function
   const fetchMemberData = async () => {
     try {
       const response = await ReduxApi.getMyInfo();
@@ -124,26 +123,32 @@ const PostDetail = () => {
 
   /**
    * 게시글 및 댓글 데이터를 가져오는 함수
+   * 1. 로그인 정보를 먼저 가져옵니다.
+   * 2. 게시글 상세 정보를 백엔드에서 가져옵니다.
+   * 3. 댓글 목록 데이터를 가져와 날짜 기준으로 정렬합니다.
+   * 4. 게시글 및 댓글의 contentJSON 필드를 파싱하거나, 없을 경우 HTML을 JSON으로 변환합니다.
    */
   useEffect(() => {
     const fetchPostData = async () => {
       try {
-        await fetchMemberData();
+        await fetchMemberData(); // 로그인 사용자 정보 로드
         const postData = await ForumApi.getPostById(postId);
         console.log("Fetched postData (raw):", postData);
 
-        // contentJSON가 문자열이면 파싱 시도
+        // contentJSON이 문자열이면 파싱 시도
         if (postData.contentJSON && typeof postData.contentJSON === "string") {
           try {
             const parsed = JSON.parse(postData.contentJSON);
             console.log("Fetched postData.contentJSON (parsed):", parsed);
           } catch (err) {
-            console.warn("Failed to parse postData.contentJSON:", err);
+            console.warn("postData.contentJSON 파싱 실패:", err);
           }
         }
+
+        // 댓글 데이터 불러오기
         const commentData = await ForumApi.getCommentsByPostId(postId);
 
-        // 게시글 contentJSON 파싱 (없으면 HTML을 JSON으로 변환)
+        // 게시글의 contentJSON 처리 (없으면 HTML -> JSON 변환)
         if (postData.contentJSON) {
           try {
             if (typeof postData.contentJSON === "string") {
@@ -156,11 +161,11 @@ const PostDetail = () => {
           postData.contentJSON = convertHtmlToJson(postData.content);
         }
 
-        // 관리자 수정 여부 설정
+        // 관리자에 의한 수정 여부 설정 (예: "ADMIN" 값 비교)
         postData.editedByAdminTitle = postData.editedByTitle === "ADMIN";
         postData.editedByAdminContent = postData.editedByContent === "ADMIN";
 
-        // 댓글의 contentJSON 파싱
+        // 댓글의 contentJSON 처리 및 정렬
         const sortedComments = commentData.sort(
           (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
         );
@@ -191,8 +196,9 @@ const PostDetail = () => {
   }, [postId, navigate]);
 
   /**
-   * 모달을 열 때 사용하는 함수 (작업 유형, ID, 내용을 설정)
-   * 편집 작업 시 content를 JSON 문자열로 변환합니다.
+   * 모달 열기 함수
+   * 작업 유형(type), 대상 ID, 내용(content)을 받아서 모달을 엽니다.
+   * 만약 작업 유형이 'editPostContent'나 'editComment'라면 content를 JSON 문자열로 변환합니다.
    */
   const openModal = (type, id, content) => {
     if (type === "editPostContent" || type === "editComment") {
@@ -204,6 +210,7 @@ const PostDetail = () => {
 
   /**
    * 모달 확인 버튼 클릭 시 처리하는 함수
+   * 입력된 값(inputVal)을 기반으로 다양한 작업(삭제, 수정, 신고 등)을 처리합니다.
    */
   const handleModalConfirm = async (inputVal) => {
     const { type, id } = modalData;
@@ -393,10 +400,10 @@ const PostDetail = () => {
     }
   };
 
-  /** 답글(인용) 취소 함수 */
+  // 답글(인용) 취소 함수
   const resetReplying = () => setReplyingTo(null);
 
-  /** "Link" 버튼 클릭 시 모달을 여는 함수 */
+  // "Link" 버튼 클릭 시 모달을 여는 함수
   const handleAddLink = () => {
     openModal("addLink", null, "");
   };
@@ -404,7 +411,7 @@ const PostDetail = () => {
   /**
    * 인용(답글) 생성 함수
    * - 대상 콘텐츠의 JSON 유효성 검사 및 fallback 처리
-   * - 인용 블록 생성 후 에디터에 추가합니다.
+   * - 인용 블록을 생성하여 에디터에 추가합니다.
    */
   const filterEmptyParagraphs = (nodes) => {
     if (!nodes || !Array.isArray(nodes)) return [];
@@ -420,7 +427,9 @@ const PostDetail = () => {
       return true;
     });
   };
+
   const handleReply = (target, type) => {
+    // 인용할 대상을 설정 (게시글 또는 댓글)
     if (type === "post") {
       setReplyingTo({
         type,
@@ -435,6 +444,7 @@ const PostDetail = () => {
       setReplyingTo({ type, parentCommentId: target.id });
     }
 
+    // 대상 콘텐츠의 JSON 파싱
     let parsedJson;
     if (target.contentJSON) {
       if (typeof target.contentJSON === "string") {
@@ -453,6 +463,7 @@ const PostDetail = () => {
     const rawBody = (parsedJson && parsedJson.content) || [];
     const filteredBody = filterEmptyParagraphs(rawBody);
 
+    // 인용 헤더와 본문 생성
     const headerParagraph = {
       type: "paragraph",
       attrs: { class: "reply-quote-header" },
@@ -470,12 +481,14 @@ const PostDetail = () => {
           : [{ type: "text", text: "(내용이 없습니다.)" }],
     };
 
+    // 인용 블록 생성
     const quotedContent = {
       type: "blockquote",
       attrs: { class: "reply-quote" },
       content: [headerParagraph, bodyParagraph],
     };
 
+    // 기존 에디터 콘텐츠 앞에 인용 블록 추가
     const current = editor.getJSON();
     const newContent =
       !current.content || current.content.length === 0
@@ -490,7 +503,7 @@ const PostDetail = () => {
     toast.info(`${target.authorName}님의 내용을 인용합니다.`);
   };
 
-  /** 새 댓글 추가 함수 */
+  // 새 댓글 추가 함수
   const handleAddComment = async () => {
     const jsonData = editor.getJSON();
     const htmlData = editor.getHTML();
@@ -499,7 +512,8 @@ const PostDetail = () => {
       return;
     }
     try {
-      const response = await ForumApi.addComment({
+      // 댓글 생성 API 호출 (memberId는 로그인 사용자 ID)
+      await ForumApi.addComment({
         postId: post.id,
         memberId,
         content: htmlData,
@@ -508,22 +522,12 @@ const PostDetail = () => {
         opAuthorName: replyingTo?.opAuthorName || null,
         opContent: replyingTo?.opContent || null,
       });
-      if (typeof response.contentJSON === "string") {
-        try {
-          response.contentJSON = JSON.parse(response.contentJSON);
-        } catch {
-          response.contentJSON = convertHtmlToJson(response.content);
-        }
-      }
-      const newComment = {
-        ...response,
-        reportCount: response.reportCount || 0,
-      };
-      setComments((prev) =>
-        [...prev, newComment].sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        )
+      // 댓글 생성 후 백엔드에서 전체 댓글 목록 재조회
+      const commentData = await ForumApi.getCommentsByPostId(post.id);
+      const sortedComments = commentData.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
       );
+      setComments(sortedComments);
       editor.commands.clearContent();
       setReplyingTo(null);
       toast.success("댓글이 성공적으로 추가되었습니다.");
@@ -533,7 +537,7 @@ const PostDetail = () => {
     }
   };
 
-  /** 게시글 좋아요 토글 함수 */
+  // 게시글 좋아요 토글 함수
   const handleLikePost = async () => {
     try {
       if (!memberId) await fetchMemberData();
@@ -551,7 +555,7 @@ const PostDetail = () => {
     }
   };
 
-  /** 댓글 좋아요 토글 함수 */
+  // 댓글 좋아요 토글 함수
   const handleLikeComment = async (commentId) => {
     try {
       if (!memberId) await fetchMemberData();
@@ -578,7 +582,7 @@ const PostDetail = () => {
     }
   };
 
-  // 게시글 제목 인라인 수정용 핸들러
+  // 게시글 제목 인라인 수정 핸들러
   const handleEditTitleClick = () => {
     openModal("editPostTitle", post.id, post.title);
   };
@@ -637,7 +641,7 @@ const PostDetail = () => {
         )}
       </PostTitle>
 
-      {/* (B) 게시글 본문 박스 */}
+      {/* (B) 게시글 본문 및 액션 버튼 영역 */}
       <PostBox
         post={post}
         memberId={memberId}

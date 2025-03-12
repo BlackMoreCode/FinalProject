@@ -8,6 +8,8 @@ import {
   HiddenCommentNotice,
   AdminEditIndicator,
   ReportCountText,
+  ReportButton,
+  AdminButton,
 } from "../style/PostDetailStyles";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -25,6 +27,7 @@ import ReadOnlyEditor from "../ReadOnlyEditor";
 
 /**
  * Safely parse JSON. Returns `null` if invalid.
+ *
  */
 function parseJSONSafe(jsonString) {
   try {

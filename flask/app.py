@@ -469,10 +469,6 @@ def delete_forum_post(doc_id):
 # Forum 댓글 생성
 @app.route("/forum/comment", methods=["POST"])
 def create_forum_comment():
-    """
-    댓글 생성 (Forum)
-    KR: 클라이언트로부터 받은 댓글 데이터를 기반으로, 해당 게시글의 'comments' 배열에 새 댓글을 추가합니다.
-    """
     try:
         data = request.json
         # 필수 필드 확인
@@ -493,8 +489,10 @@ def create_forum_comment():
             "contentJSON": data.get("contentJSON", ""),
             "member": {
                 "memberId": data["memberId"],
-                "nickName": nick_name  # 수정: 기본값 "Unknown" 처리
+                "nickName": nick_name
             },
+            "authorName": nick_name,       # 추가: 댓글 작성자 이름
+            "memberId": data["memberId"],   # 추가: 댓글 작성자 ID
             "likesCount": 0,
             "hidden": False,
             "removedBy": None,
@@ -513,7 +511,11 @@ def create_forum_comment():
         comments.append(new_comment)
         post["comments"] = comments
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
         es.index(index=index_name, id=post_id, body=post)
+        # 강제 인덱스 새로고침 (새 댓글이 즉시 검색되도록 보장)
+        es.indices.refresh(index=index_name)
+
         return jsonify({"message": "댓글이 추가되었습니다.", "comment": new_comment}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

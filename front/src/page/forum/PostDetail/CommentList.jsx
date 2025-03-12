@@ -9,6 +9,8 @@ import {
   HiddenCommentNotice,
   ReportCountText,
   ActionButtons,
+  ReportButton,
+  AdminButton,
 } from "../style/PostDetailStyles";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {

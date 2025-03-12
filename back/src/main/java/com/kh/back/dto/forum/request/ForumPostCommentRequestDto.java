@@ -32,4 +32,7 @@ public class ForumPostCommentRequestDto {
      * KR: Tiptap 에디터의 JSON 형태 콘텐츠를 저장하기 위한 필드
      */
     private String contentJSON;
+
+    // 아래 필드를 추가합니다.
+    private String authorName;
 }
