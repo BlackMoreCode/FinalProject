@@ -1,5 +1,6 @@
 package com.kh.back.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.kh.back.entity.member.Member;
 import lombok.*;
 
@@ -43,6 +44,7 @@ public class CustomStyle {
     // Member와 1:1 관계 설정 (CustomStyle이 Member에 종속됨)
     @OneToOne
     @JoinColumn(name = "member_id", nullable = false)
+    @JsonBackReference
     private Member member;
 
     @Builder

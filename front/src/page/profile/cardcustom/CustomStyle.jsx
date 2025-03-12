@@ -94,3 +94,9 @@ export const ProfileContainer = styled.div`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
 `;
+
+export const ChangeWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
