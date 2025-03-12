@@ -15,9 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Slf4j
@@ -48,7 +49,6 @@ public class FirebaseService {
         g.drawImage(originalImage, 0, 0, 400, 400, null);
         g.dispose();
 
-
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(resizedImage, "jpg", outputStream);
         byte[] imageBytes = outputStream.toByteArray();
@@ -58,7 +58,9 @@ public class FirebaseService {
         String fileName = folderName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename(); // 폴더 경로 추가
         Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
 
-        return blob.getMediaLink();
+        // ✅ 공개 URL 반환
+        return "https://firebasestorage.googleapis.com/v0/b/" + bucket.getName() + "/o/"
+                + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "?alt=media";
     }
 
     public static String uploadProfileImage(MultipartFile file) throws IOException {
@@ -67,7 +69,7 @@ public class FirebaseService {
         }
 
         // 프로필 이미지 저장 경로 설정
-        String folderName = "profile" ;
+        String folderName = "profile/";
 
         // 파일을 BufferedImage로 변환
         BufferedImage originalImage = ImageIO.read(file.getInputStream());
@@ -84,13 +86,12 @@ public class FirebaseService {
 
         // Firebase Storage에 업로드
         Bucket bucket = StorageClient.getInstance().bucket();
-        String fileName = folderName + "/" + UUID.randomUUID() + "_profile.jpg"; // 파일명 고유값 추가
-        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg", Bucket.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.PUBLIC_READ));
+        String fileName = folderName + UUID.randomUUID() + "_profile.jpg"; // 파일명 고유값 추가
+        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
 
-        String filePath = blob.getName(); // 저장된 파일 경로
-        log.info("파일이 저장된 경로: {}", filePath);
-
-        return blob.getMediaLink();
+        // ✅ 공개 URL 반환
+        return "https://firebasestorage.googleapis.com/v0/b/" + bucket.getName() + "/o/"
+                + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "?alt=media";
     }
 
     // 본인 프로필 이미지 가져오기

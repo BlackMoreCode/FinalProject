@@ -20,13 +20,9 @@
         private String name;
         private String phone;
         private String nickname;
-        private MultipartFile memberImg;
+        private String memberImg;
 
-
-
-
-
-        public Member toEntity(PasswordEncoder passwordEncoder, String imagePath) {
+        public Member toEntity(PasswordEncoder passwordEncoder) {
             return Member.builder()
                     .email(email)
                     .pwd(passwordEncoder.encode(pwd))
@@ -35,7 +31,7 @@
                     .phone(phone)
                     .regDate(LocalDateTime.now()) // 가입 날짜 자동 설정
                     .authority(Authority.ROLE_USER) // 기본 권한 설정
-                    .memberImg(imagePath)
+                    .memberImg(memberImg)
                     .build();
         }
 
