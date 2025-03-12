@@ -43,4 +43,5 @@ public class ForumPostResponseDto implements SearchResDto {
     private Integer reportCount; // 신고 횟수
     private Boolean hasReported; // 신고 여부
     private String contentJSON; // 게시글 콘텐츠의 JSON 표현 (Tiptap JSON)
+    private String category; // 게시글 카테고리 (ES에서 categoryId가 복사되어 저장됨)
 }

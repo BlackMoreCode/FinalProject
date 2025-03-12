@@ -69,7 +69,7 @@ public class ForumPostCommentService {
      * KR: 게시글에 대한 직접 답글은 parentCommentId 없이 생성됩니다.
      */
     @Transactional
-    public ForumPostCommentResponseDto replyToPost(Integer postId, ForumPostCommentRequestDto requestDto) {
+    public ForumPostCommentResponseDto replyToPost(String postId, ForumPostCommentRequestDto requestDto) {
         log.info("게시글 ID: {} 에 대한 답글 생성 요청", postId);
         requestDto.setPostId(postId);
         requestDto.setParentCommentId(null);

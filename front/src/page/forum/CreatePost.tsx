@@ -67,8 +67,6 @@ const convertHtmlToJson = (html: string) => {
  * 게시글 생성 컴포넌트 (CreatePost)
  * - 사용자가 게시글 제목, 카테고리, 내용을 입력하면 데이터를 백엔드에 전송합니다.
  * - TipTap 에디터를 사용하여 내용을 입력하고, HTML 및 JSON 형식으로 저장합니다.
- *
- * 모바일에서는 기본적으로 full width로 보이고, 데스크탑에서는 최대 1200px까지 확장되도록 TailwindCSS 클래스를 적용합니다.
  */
 const CreatePost: React.FC = () => {
   const navigate = useNavigate();
@@ -120,11 +118,8 @@ const CreatePost: React.FC = () => {
 
   /**
    * 사용자 정보 및 카테고리 리스트를 불러오는 함수
-   * ReduxApi.getMyInfo를 통해 사용자 정보를 받고,
-   * ForumApi.fetchCategories로 카테고리 목록을 받아옵니다.
-   *
-   * 변경된 사항:
-   * - 로그인 정보가 없으면 로그인 페이지로 이동하는 대신, 로그인 모달을 열도록 dispatch(openModal("login"))를 호출합니다.
+   * KR: ReduxApi.getMyInfo를 통해 사용자 정보를 받고,
+   *     ForumApi.fetchCategories로 카테고리 목록을 받아옵니다.
    */
   useEffect(() => {
     const fetchData = async () => {
@@ -173,6 +168,7 @@ const CreatePost: React.FC = () => {
 
   /**
    * 게시글 생성 처리 함수
+   * KR: 이제 ForumApi.createPostAndFetch를 사용하여 게시글 생성 후 전체 상세 정보를 바로 조회합니다.
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -228,8 +224,9 @@ const CreatePost: React.FC = () => {
 
     console.log("최종 postData:", postData);
     try {
-      const response = (await ForumApi.createPost(postData)) as { id: string };
-      console.log("API 응답:", response);
+      // 새 게시글 생성 후 전체 상세 정보 조회
+      const response = await ForumApi.createPostAndFetch(postData);
+      console.log("전체 게시글 데이터:", response);
       toast.success("게시글이 성공적으로 생성되었습니다!");
       navigate(`/forum/post/${response.id}`);
     } catch (error) {

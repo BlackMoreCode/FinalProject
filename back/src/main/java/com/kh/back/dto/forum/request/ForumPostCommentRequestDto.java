@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class ForumPostCommentRequestDto {
-    private Integer postId; // 게시글 ID
+    private String postId; // 게시글 ID
     private Long memberId; // 작성자 ID
     private String content; // 댓글 내용 (HTML)
 

@@ -177,7 +177,7 @@ public class ForumPostCommentController {
      */
     @PostMapping("/post/{postId}/reply")
     public ResponseEntity<ForumPostCommentResponseDto> replyToPost(
-            @PathVariable Integer postId,
+            @PathVariable String postId,
             @RequestBody ForumPostCommentRequestDto requestDto) {
         log.info("게시글 ID: {} 에 대한 답글 생성 요청", postId);
         ForumPostCommentResponseDto reply = commentService.replyToPost(postId, requestDto);

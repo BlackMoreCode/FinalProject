@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 게시글 컨트롤러 클래스
@@ -232,9 +233,16 @@ public class ForumPostController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ForumPostResponseDto> getPostDetails(@PathVariable String id) {
-        return postService.getPostDetails(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<ForumPostResponseDto> optDto = postService.getPostDetails(id);
+        if (optDto.isPresent()) {
+            ForumPostResponseDto dto = optDto.get();
+            // 추가: 최종 응답 전 DTO 값을 로그로 출력
+            log.debug("getPostDetails() 응답 DTO: {}", dto);
+            return ResponseEntity.ok(dto);
+        } else {
+            log.warn("getPostDetails() -> 게시글을 찾을 수 없습니다. ID: {}", id);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**

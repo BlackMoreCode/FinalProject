@@ -272,8 +272,14 @@ public class ForumEsService {
             log.info("[ForumEsService.detail] Raw JSON from Flask: {}", responseBody);
 
             ForumPostResponseDto dto = objectMapper.readValue(responseBody, ForumPostResponseDto.class);
-            log.info("[ForumEsService.detail] Deserialized DTO: {}", dto);
-
+            // 디버그 로그 추가: 모든 주요 필드 출력
+            log.debug("[ForumEsService.detail] Deserialized DTO:" +
+                            " id={}, title={}, content={}, authorName={}, memberId={}, createdAt={}, updatedAt={}, " +
+                            "contentJSON={}, sticky={}, viewsCount={}, likesCount={}, reportCount={}",
+                    dto.getId(), dto.getTitle(), dto.getContent(), dto.getAuthorName(),
+                    dto.getMemberId(), dto.getCreatedAt(), dto.getUpdatedAt(),
+                    dto.getContentJSON(), dto.getSticky(), dto.getViewsCount(), dto.getLikesCount(),
+                    dto.getReportCount());
             return dto;
         } catch (Exception e) {
             log.error("포럼 상세조회 중 오류: {}", e.getMessage());

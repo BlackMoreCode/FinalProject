@@ -88,16 +88,19 @@ public class ForumPostService {
         return new PaginationDto<>(postList, page, totalPages, totalElements);
     }
 
-    /**
-     * 게시글 상세 조회
-     */
     public Optional<ForumPostResponseDto> getPostDetails(String postId) {
         log.info("게시글 상세 조회, ID: {}", postId);
         ForumPostResponseDto rawDto = forumEsService.detail(postId);
-        log.debug("getPostDetails() -> rawDto: {}", rawDto);
         if (rawDto == null) {
+            log.warn("getPostDetails() -> 받은 DTO가 null입니다.");
             return Optional.empty();
         }
+        // 모든 필드 디버그 로그 출력
+        log.debug("getPostDetails() -> DTO 값: " +
+                        "id={}, title={}, content={}, authorName={}, memberId={}, createdAt={}, updatedAt={}, contentJSON={}, sticky={}, viewsCount={}, likesCount={}, reportCount={}",
+                rawDto.getId(), rawDto.getTitle(), rawDto.getContent(), rawDto.getAuthorName(),
+                rawDto.getMemberId(), rawDto.getCreatedAt(), rawDto.getUpdatedAt(), rawDto.getContentJSON(),
+                rawDto.getSticky(), rawDto.getViewsCount(), rawDto.getLikesCount(), rawDto.getReportCount());
         return Optional.of(rawDto);
     }
 

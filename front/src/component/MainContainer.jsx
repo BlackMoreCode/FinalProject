@@ -2,6 +2,7 @@ import styled from "styled-components";
 
 const MainContainer = styled.main`
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 16px;
   /* 원하는 배경색으로 변경 가능 */

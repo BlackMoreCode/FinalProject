@@ -90,6 +90,33 @@ const ForumApi = {
   },
 
   /**
+   * 게시글 생성 후 전체 필드 조회까지 수행
+   * KR: 새 게시글을 생성하면, 백엔드에서 반환되는 값은 {id, message} 뿐입니다.
+   *     게시글의 전체 정보를 얻으려면 생성 후 곧바로 'getPostById'를 호출해야 합니다.
+   *
+   * @param {object} data - 게시글 생성 데이터
+   * @returns {Promise} 생성된 게시글 상세 데이터 (title, content, etc.)
+   */
+  createPostAndFetch: async (data) => {
+    try {
+      // 1) 새 게시글 생성
+      const createRes = await AxiosInstance.post("/api/forums/posts", data);
+      const createData = createRes.data;
+      // createData는 { id, message } 형태일 수 있음
+
+      // 2) 생성된 게시글의 id를 이용하여 상세 조회
+      //    KR: 이렇게 해야 title, content, category, etc.를 모두 가져올 수 있음
+      const detailRes = await AxiosInstance.get(
+        `/api/forums/posts/${createData.id}`
+      );
+      return detailRes.data;
+    } catch (error) {
+      console.error("게시글 생성(및 상세조회) 중 오류:", error);
+      throw error;
+    }
+  },
+
+  /**
    * 포럼 게시글 생성
    * 엔드포인트: POST /api/forums/posts
    * KR: 게시글 생성 데이터를 Spring Boot 프록시를 통해 전송하여 새 게시글을 만듭니다.
@@ -490,6 +517,24 @@ const ForumApi = {
       return response.data;
     } catch (error) {
       console.error("포럼 게시글 상세 조회 중 오류:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * 게시글 조회수 증가
+   * 엔드포인트: POST /api/forums/posts/{postId}/increment-view
+   * KR: 게시글의 조회수를 증가시키기 위해, Spring Boot의 해당 엔드포인트를 호출합니다.
+   *
+   * @param {string} postId - 게시글 ID
+   * @returns {Promise} 조회수 증가 요청의 결과
+   */
+  incrementViewCount: async (postId) => {
+    try {
+      // POST 요청을 통해 조회수를 증가시키고 별도의 응답 데이터는 사용하지 않습니다.
+      await AxiosInstance.post(`/api/forums/posts/${postId}/increment-view`);
+    } catch (error) {
+      console.error("게시글 조회수 증가 중 오류:", error);
       throw error;
     }
   },

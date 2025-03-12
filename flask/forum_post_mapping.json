@@ -29,7 +29,8 @@
       "createdAt": { "type": "date" },
       "updatedAt": { "type": "date" },
       "memberId": { "type": "long" },
-      "authorName": { "type": "text" }
+      "authorName": { "type": "text" },
+      "category": { "type": "keyword" }
     }
   }
 }

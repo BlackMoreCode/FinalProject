@@ -128,15 +128,23 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
+        # KR: 검색어/카테고리/조리방법 등에 따른 query 빌드
         if type_filter == "food":
             category_field = "RCP_PAT2"   # 음식은 ES 매핑에서 RCP_PAT2로 저장됨
             cooking_field = "RCP_WAY2"    # 음식의 조리방법 필드
             multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
+        elif type_filter == "forum_post":
+            # KR: 포럼 게시글 검색을 위한 필드 지정
+            #     -> 실제 검색하려면 title, content, authorName 등에 대해 multi_match 할 수도 있음
+            category_field = "category"
+            cooking_field = "cookingMethod"  # (포럼엔 없으니 사용X, 혹은 무시)
+            multi_match_fields = ["title", "content", "authorName", "category"]
         else:
-            category_field = "category"   # 칵테일은 기존 필드 사용
-            cooking_field = "cookingMethod"  # 칵테일은 조리방법 필터가 없을 수 있으므로 기본값
+            category_field = "category"   # 칵테일 등 기본
+            cooking_field = "cookingMethod"
             multi_match_fields = ["name", "ingredients.ingredient", "category"]
 
+        # KR: 검색조건 조합
         if q and category and cooking_method:
             query = {
                 "bool": {
@@ -183,8 +191,17 @@ def search():
         else:
             query = {"match_all": {}}
 
+        # KR: 검색 결과에 포함할 필드 (type_filter별로 다름)
         if type_filter == "food":
             source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv", "ATT_FILE_NO_MAIN"]
+        elif type_filter == "forum_post":
+            # KR: forum_post에 대해서는 우리가 보고 싶은 필드 지정
+            #     (title, content, authorName, createdAt, updatedAt 등등)
+            source_fields = [
+                "title", "content", "authorName",
+                "contentJSON", "viewsCount", "likesCount",
+                "createdAt", "updatedAt", "category"
+            ]
         else:
             source_fields = ["name", "category", "like", "abv"]
 
@@ -251,8 +268,8 @@ def create_forum_post():
 
         # 백엔드에서 categoryId가 있으면 category 필드로 복사 (Option B)
         # 현제 테스트로 제거
-        # if "categoryId" in data and "category" not in data:
-        #     data["category"] = data["categoryId"]
+        if "categoryId" in data and "category" not in data:
+            data["category"] = data["categoryId"]
 
         index_name, mapping_file = get_index_and_mapping("forum_post")
         if not es.indices.exists(index=index_name):
