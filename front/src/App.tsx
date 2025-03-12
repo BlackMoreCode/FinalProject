@@ -8,6 +8,7 @@ import CocktailListPage from "./page/cocktail/CocktailListPage";
 import CocktailDetailPage from "./page/cocktail/CocktailDetailPage";
 import FoodListPage from "./page/food/FoodListPage";
 import ProfileCustomization from "./page/profile/cardcustom/ProfileCustomization";
+import ProfileEditPage from "./page/profile/edit/ProfileEditPage";
 import Layout from "./page/layout/Layout";
 import GlobalStyle from "./page/layout/style/GlobalStyle";
 import MainPage from "./page/main/MainPage";
@@ -36,6 +37,8 @@ function App() {
               path="profile/cardcustom"
               element={<ProfileCustomization />}
             />
+            <Route path="profile/edit" element={<ProfileEditPage />} />
+
             {/* 레시피 페이지 (라우트 경로 수정됨) */}
             <Route path="recipe/:index" element={<CocktailListPage />} />
             {/*컴포넌트를 같은 컴포넌트를 쓰되 index를 다르게 해서 관리하기*/}
@@ -57,6 +60,7 @@ function App() {
               path="/forum/category/:categoryId"
               element={<ForumPosts />}
             />
+
             <Route path="recipe/upload" element={<RecipeUploader />} />{" "}
             {/* 새로운 경로 추가 */}
           </Route>

@@ -27,11 +27,19 @@ const AuthApi = {
   phoneExists: async (phone: string) => {
     return await axios.get<boolean>(Commons.BASE_URL + `/auth/phone/${phone}`);
   },
-  signup: async (signupReq: signupReqDto) => {
-    return await axios.post<string>(
-      Commons.BASE_URL + "/auth/signup",
-      signupReq
-    );
+
+  signup: async (formData: FormData) => {
+    try {
+      const response = await axios.post(Commons.BASE_URL +`/auth/signup`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error("Signup error:", error);
+      throw error;
+    }
   },
   verifySmsToken: async (verify: SmsTokenVerificationDto) => {
     return await axios.post<boolean>(

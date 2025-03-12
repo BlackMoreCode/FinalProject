@@ -16,6 +16,7 @@
 	import org.springframework.http.ResponseEntity;
 	import org.springframework.security.crypto.password.PasswordEncoder;
 	import org.springframework.web.bind.annotation.*;
+	import org.springframework.web.multipart.MultipartFile;
 
 
 	@Slf4j
@@ -52,12 +53,21 @@
 			return ResponseEntity.ok(existPhone);
 		}
 
-		// 회원 가입
-		@PostMapping("/signup")
-		public ResponseEntity<String> signup(@RequestBody SignupDto signupDto) {
-			String  isSuccess = authService.signup(signupDto);
-			return ResponseEntity.ok(isSuccess);
-		}
+////		// 회원 가입
+//		@PostMapping("/signup")
+//		public ResponseEntity<String> signup(@RequestBody SignupDto signupDto) {
+//			String  isSuccess = authService.signup(signupDto);
+//			return ResponseEntity.ok(isSuccess);
+//		}
+
+@PostMapping("/signup")
+public ResponseEntity<String> signup(
+		@ModelAttribute SignupDto signupDto,
+		@RequestParam(required = false) MultipartFile profileImage) {
+	String isSuccess = authService.signup(signupDto, profileImage);
+	return ResponseEntity.ok(isSuccess);
+}
+
 
 		// 이메일 전송 - 비밀번호 찾기
 		@PostMapping("/sendPw")

@@ -1,10 +1,13 @@
 package com.kh.back.service.redis;
 
+import com.kh.back.service.action.ReActionService;
+import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,7 +17,9 @@ import java.util.*;
 public class RedisService {
 	
 	private final RedisTemplate<String, Object> redisTemplate;
-	
+	private final MemberService memberService;
+	private final ReActionService reActionService;
+
 	// Redis에 값 저장
 	public void setValue(String key, String value) {
 		redisTemplate.opsForValue().set(key, value);
@@ -65,16 +70,18 @@ public class RedisService {
 	}
 
 
-	public boolean updateRecipeCount(String action, String postId, String type, boolean increase) {
+	public boolean updateRecipeCount(Authentication authentication, String action, String postId, String type, boolean increase) {
 		try {
 			String key = action + ":" + postId + ":" + type; // ex) likes:123:recipe 또는 reports:123:recipe
 			if (increase) {
+				reActionService.updateAction(authentication, action, postId);
 				redisTemplate.opsForValue().increment(key, 1); // +1 증가
 			} else {
-				// 값이 null일 경우 0으로 설정하고, 그 후 -1을 수행
+
 				String value = Optional.ofNullable((String) redisTemplate.opsForValue().get(key)).orElse("0");
 				redisTemplate.opsForValue().set(key, value); // null일 경우 0으로 설정
 				redisTemplate.opsForValue().decrement(key, 1); // -1 감소
+				reActionService.deleteAction(authentication, postId);
 			}
 			return true;  // 성공
 		} catch (Exception e) {
