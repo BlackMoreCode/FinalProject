@@ -2,8 +2,14 @@ package com.kh.back.service;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
 import com.google.firebase.cloud.StorageClient;
+import com.kh.back.entity.member.Member;
+import com.kh.back.repository.member.MemberRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -14,8 +20,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class FirebaseService {
+
+    private final MemberRepository memberRepository;
+
+    public FirebaseService(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
 
     // 이미지 리사이징, 압축 후 레시피 이름 폴더로 업로드
     public String uploadImage(MultipartFile file, String recipeName) throws IOException {
@@ -48,13 +61,13 @@ public class FirebaseService {
         return blob.getMediaLink();
     }
 
-    public String uploadProfileImage(MultipartFile file) throws IOException {
+    public static String uploadProfileImage(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("파일이 없습니다.");
         }
 
         // 프로필 이미지 저장 경로 설정
-        String folderName = "profile/" ;
+        String folderName = "profile" ;
 
         // 파일을 BufferedImage로 변환
         BufferedImage originalImage = ImageIO.read(file.getInputStream());
@@ -72,8 +85,29 @@ public class FirebaseService {
         // Firebase Storage에 업로드
         Bucket bucket = StorageClient.getInstance().bucket();
         String fileName = folderName + "/" + UUID.randomUUID() + "_profile.jpg"; // 파일명 고유값 추가
-        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg");
+        Blob blob = bucket.create(fileName, imageBytes, "image/jpeg", Bucket.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.PUBLIC_READ));
+
+        String filePath = blob.getName(); // 저장된 파일 경로
+        log.info("파일이 저장된 경로: {}", filePath);
 
         return blob.getMediaLink();
     }
+
+    // 본인 프로필 이미지 가져오기
+    public String getProfileImage(Authentication authentication) {
+        Long memberId = Long.valueOf(authentication.getName());
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+        return member.getMemberImg();
+    }
+
+    // 특정 유저 프로필 이미지 가져오기
+    public String getMemberProfileImage(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+        return member.getMemberImg();
+    }
+
+
+
 }
