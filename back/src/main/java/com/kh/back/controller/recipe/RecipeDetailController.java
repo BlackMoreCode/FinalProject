@@ -6,13 +6,15 @@ import com.kh.back.service.member.MemberService;
 import com.kh.back.service.recipe.AddCocktailRecipeService;
 import com.kh.back.service.recipe.AddFoodRecipeService;
 import com.kh.back.service.redis.RedisService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-
 @RestController
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/recipe")
 public class RecipeDetailController {
     @Autowired
@@ -48,7 +50,6 @@ public class RecipeDetailController {
                                                      @RequestParam String postId,
                                                      @RequestParam String type,
                                                      @RequestParam boolean increase) {
-
         boolean isUpdated = redisService.updateRecipeCount(authentication,action, postId, type, increase);
         return ResponseEntity.ok(isUpdated);  // 성공 여부 (true/false) 반환
     }

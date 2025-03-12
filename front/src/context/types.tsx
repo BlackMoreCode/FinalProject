@@ -6,12 +6,14 @@ export interface TokenState{
   accessToken: string | null,
   refreshToken: string | null,
 }
-export interface UserState{
-  id: number | null,
-  email: string,
-  nickname: string,
-  guest: boolean,
-  admin: boolean,
+export interface UserState {
+  id: number | null;
+  email: string;
+  nickname: string;
+  guest: boolean;
+  admin: boolean;
+  likedRecipes: Set<string>; // 좋아요한 레시피 ID 목록
+  reportedRecipes: Set<string>; // 신고한 레시피 ID 목록
 }
 // 모달에 들어가는 데이터 타입
 export interface ModalState {

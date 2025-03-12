@@ -64,7 +64,6 @@
 public ResponseEntity<String> signup(
 		@ModelAttribute SignupDto signupDto,
 		@RequestParam(required = false) MultipartFile profileImage) {
-
 	String isSuccess = authService.signup(signupDto, profileImage);
 	return ResponseEntity.ok(isSuccess);
 }

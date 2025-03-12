@@ -19,7 +19,7 @@ public class FirebaseConfig {
         try {
             // 클래스패스에서 JSON 파일을 로드 (절대경로 X)
             InputStream serviceAccount = getClass().getClassLoader()
-                    .getResourceAsStream("finalproject-99667-firebase-adminsdk-fbsvc-9ad17156a0.json");
+                    .getResourceAsStream("finalproject-public-firebase-adminsdk-fbsvc-58610cfee3.json");
 
             if (serviceAccount == null) {
                 throw new IOException("Firebase 인증 키 파일을 찾을 수 없습니다.");
@@ -27,7 +27,7 @@ public class FirebaseConfig {
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .setStorageBucket("finalproject-99667.firebasestorage.app")
+                    .setStorageBucket("finalproject-public.firebasestorage.app")
                     .build();
 
             // 동기화 블록을 사용해 멀티스레드 환경에서 안전하게 초기화

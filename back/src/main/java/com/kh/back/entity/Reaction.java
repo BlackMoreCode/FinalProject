@@ -6,7 +6,6 @@ import lombok.*;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "custom_style")
 @Getter
 @Setter
 @ToString
