@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import DuplicateVerifyInput from "./DuplicateVerifyInput";
 import MatchInput from "./MatchInput";
 import { Dialog, DialogTitle } from "@mui/material";
-import {ButtonContainer, Container, SignupButton} from "../Style";
+import { ButtonContainer, Container, SignupButton } from "../Style";
 import { closeModal, openModal, setConfirmModal, setRejectModal } from "../../../context/redux/ModalReducer";
 import VerifyPhone from "./VerifyPhone";
 import TermsContainer from "./TermsContainer";
@@ -24,6 +24,7 @@ const SignupModal = () => {
     serviceTerm : false,
     privacyTerm : false,
   });
+  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   // 이메일, 비밀번호, 닉네임, 전화번호 상태 업데이트
   const setter = useCallback((value: string, type: string) => {
@@ -46,14 +47,17 @@ const SignupModal = () => {
   // 회원가입 API 호출 (리덕스와 리코일 분리된 상태에서 관리)
   const onClickSignup = async () => {
     try {
-      const signupReq: signupReqDto = {
-        email: check.email,
-        phone: check.phone,
-        pwd: check.password,
-        nickname: check.nickname,
-      };
+      const formData = new FormData();
+      formData.append("email", check.email);
+      formData.append("phone", check.phone);
+      formData.append("pwd", check.password);
+      formData.append("nickname", check.nickname);
 
-      const rsp = await AuthApi.signup(signupReq);
+      if (profileImage) {
+        formData.append("profileImage", profileImage);
+      }
+
+      const rsp = await AuthApi.signup(formData);
       if (rsp.data === "성공") {
         dispatch(setConfirmModal({
           message: "회원가입에 성공했습니다.\n바로 로그인 하시겠습니까?",
@@ -96,8 +100,8 @@ const SignupModal = () => {
     >
       <DialogTitle>회원가입</DialogTitle>
       <Container>
-        <ProfileImageInput/>
-        <DuplicateVerifyInput setter={setter} label="이메일" id="email" type="email"/>
+        <ProfileImageInput onFileChange={(file) => setProfileImage(file)} />
+        <DuplicateVerifyInput setter={setter} label="이메일" id="email" type="email" />
         <MatchInput setter={setter} />
         <DuplicateVerifyInput setter={setter} label="닉네임" id="nickname" />
         <DuplicateVerifyInput setter={setter} label="전화번호" id="phone" />

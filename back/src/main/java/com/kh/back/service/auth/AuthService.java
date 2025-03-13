@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 // 스프링게 조금 더 낫다
 
 
@@ -71,19 +72,22 @@ public class AuthService {
 //		}
 //	}
 
-	public String signup(SignupDto signupDto) {
+	public String signup(SignupDto signupDto, MultipartFile profileImage) {
 		try {
+			// 이메일 중복 확인
 			if (memberRepository.existsByEmail(signupDto.getEmail())) {
 				throw new RuntimeException("이미 가입되어 있는 유저입니다.");
 			}
 
-			String imagePath = null;
-			if (signupDto.getMemberImg() != null && !signupDto.getMemberImg().isEmpty()) {
-				imagePath = firebaseService.uploadProfileImage(signupDto.getMemberImg()); // 파일 저장 후 경로 리턴
+			// 프로필 이미지 업로드 (파일이 있는 경우에만 처리)
+			String imageUrl = null;
+			if (profileImage != null && !profileImage.isEmpty()) {
+				imageUrl = firebaseService.uploadProfileImage(profileImage);  // Firebase에 업로드하고 URL을 받음
 			}
-
+			// SignupDto의 imagePath에 URL 저장
+			signupDto.setMemberImg(imageUrl);
 			// 엔티티 변환 및 저장
-			Member member = signupDto.toEntity(passwordEncoder, imagePath);
+			Member member = signupDto.toEntity(passwordEncoder);
 			memberRepository.save(member);
 			return "성공";
 		} catch (Exception e) {

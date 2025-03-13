@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class ProfileUpdateDto {
 
     private String nickName;
-    private String memberImg;
     private String introduce;
+    private String memberImg;
 
 }

@@ -11,6 +11,9 @@ import com.kh.back.dto.recipe.res.FoodResDto;
 import com.kh.back.service.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,9 @@ public class ElasticService {
 	private final String flaskBaseUrl = "http://localhost:5001";
 	private final ObjectMapper objectMapper;
 	private final RedisService redisService;
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;  // RedisTemplate 주입
+
 
 	/**
 	 * [통합 검색 메서드: 칵테일/음식]
@@ -189,10 +195,39 @@ public class ElasticService {
 
 			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
 			log.info("[updateLikesAndReports] Response from Flask: {}", response.getBody());
+
+			// Redis에서 데이터 삭제
+			redisTemplate.execute((RedisCallback<Object>) connection -> {
+				connection.flushAll();  // 모든 레디스 데이터를 삭제
+				return null;
+			});
+
+			log.info("[updateLikesAndReports] All data cleared from Redis.");
+
 		} catch (Exception e) {
 			log.error("[updateLikesAndReports] Error sending like/report data to Flask: {}", e.getMessage());
 		}
 	}
 
+	public List<SearchListResDto> getUserRecipes(Long userId, String type, int page, int size) {
+		try {
+			URI uri = new URI(flaskBaseUrl + "/user-recipes?userId=" + userId
+					+ "&type=" + URLEncoder.encode(type, StandardCharsets.UTF_8)
+					+ "&page=" + page
+					+ "&size=" + size);
+
+			log.info("[getUserRecipes] Calling Flask with URI: {}", uri);
+
+			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
+			log.info("[getUserRecipes] Flask response: {}", response);
+
+			return convertResToList(response.getBody(), type);
+
+		} catch (Exception e) {
+			log.error("사용자 레시피 조회 중 에러 발생 (userId={}, type={}, page={}, size={}): {}",
+					userId, type, page, size, e.getMessage());
+			return null;
+		}
+	}
 
 }
