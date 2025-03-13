@@ -372,6 +372,8 @@ def update_forum_post_content(doc_id):
             post["editedByContent"] = request.json.get("editedBy", "USER")
 
         es.index(index=index_name, id=doc_id, body=post)
+        # ★ 인덱스 새로고침 추가: 문서가 즉시 검색될 수 있도록 보장합니다.
+        es.indices.refresh(index=index_name)
         return jsonify({"message": "내용이 수정되었습니다.", "contentJSON": contentJSON}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -439,13 +441,18 @@ def report_forum_post(doc_id):
 def delete_forum_post(doc_id):
     """
     게시글 삭제 (Forum, 논리 삭제)
-    KR: 게시글을 실제 삭제하지 않고, 삭제 상태로 표시합니다.
-        삭제 이력은 'forum_post_history' 인덱스에 기록됩니다.
     """
     try:
         index_name, _ = get_index_and_mapping("forum_post")
         post = es.get(index=index_name, id=doc_id)["_source"]
 
+        # 1) 원본 제목/내용이 없으면 저장해 둡니다. (이미 있으면 덮어쓰지 않음)
+        if "originalTitle" not in post:
+            post["originalTitle"] = post.get("title", "")
+        if "originalContent" not in post:
+            post["originalContent"] = post.get("content", "")
+
+        # 2) 삭제 이력은 forum_post_history 인덱스에 기록
         history = {
             "postId": post.get("id", doc_id),
             "title": post.get("title"),
@@ -456,17 +463,49 @@ def delete_forum_post(doc_id):
         }
         es.index(index="forum_post_history", body=history)
 
+        # 3) 실제로 소프트 삭제 처리
         post["removedBy"] = request.args.get("removedBy", "USER")
         post["hidden"] = True
         post["title"] = "[Deleted]"
         post["content"] = "This post has been deleted."
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": "게시글이 삭제 처리되었습니다."}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Forum 댓글 생성
+
+
+@app.route("/forum/post/<doc_id>/restore", methods=["POST"])
+def restore_forum_post(doc_id):
+    """
+    게시글 복구 (Forum)
+    """
+    try:
+        index_name, _ = get_index_and_mapping("forum_post")
+        post = es.get(index=index_name, id=doc_id)["_source"]
+
+        # 1) 저장된 원본 제목과 내용을 복원
+        if "originalTitle" in post:
+            post["title"] = post["originalTitle"]
+        if "originalContent" in post:
+            post["content"] = post["originalContent"]
+
+        # 2) hidden 상태를 False로 전환하고 삭제 정보 제거
+        post["hidden"] = False
+        post["removedBy"] = None  # (선택) 삭제자 정보 제거
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
+        es.index(index=index_name, id=doc_id, body=post)
+        return jsonify({"message": "게시글이 복구되었습니다."}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Forum 댓글 생성 엔드포인트
 @app.route("/forum/comment", methods=["POST"])
 def create_forum_comment():
     try:
@@ -481,7 +520,7 @@ def create_forum_comment():
         post = es.get(index=index_name, id=post_id)["_source"]
 
         # 클라이언트에서 nickName이 제공되지 않으면 "Unknown"으로 기본값 설정
-        nick_name = data.get("nickName", "Unknown")
+        nick_name = data.get("authorName", data.get("nickName", "Unknown"))
 
         new_comment = {
             "id": None,
@@ -491,8 +530,8 @@ def create_forum_comment():
                 "memberId": data["memberId"],
                 "nickName": nick_name
             },
-            "authorName": nick_name,       # 추가: 댓글 작성자 이름
-            "memberId": data["memberId"],   # 추가: 댓글 작성자 ID
+            "authorName": nick_name,       # 댓글 작성자 이름 추가
+            "memberId": data["memberId"],   # 댓글 작성자 ID 추가
             "likesCount": 0,
             "hidden": False,
             "removedBy": None,
@@ -513,7 +552,7 @@ def create_forum_comment():
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
 
         es.index(index=index_name, id=post_id, body=post)
-        # 강제 인덱스 새로고침 (새 댓글이 즉시 검색되도록 보장)
+        # ★ 인덱스 새로고침 추가: 새 댓글이 즉시 검색되도록 보장합니다.
         es.indices.refresh(index=index_name)
 
         return jsonify({"message": "댓글이 추가되었습니다.", "comment": new_comment}), 200
@@ -615,6 +654,69 @@ def delete_forum_comment(comment_id):
         return jsonify({"message": "댓글이 삭제되었습니다."}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/forum/comment/<int:comment_id>/restore", methods=["POST"])
+def restore_forum_comment(comment_id):
+    try:
+        # postId 파라미터를 통해 해당 게시글 ID를 가져옵니다.
+        post_id = request.args.get("postId")
+        if not post_id:
+            return jsonify({"error": "postId 파라미터가 필요합니다."}), 400
+
+        # 'forum_post' 인덱스 이름과 매핑 정보를 가져옵니다.
+        index_name, _ = get_index_and_mapping("forum_post")
+        # 게시글을 Elasticsearch에서 조회합니다.
+        post = es.get(index=index_name, id=str(post_id))["_source"]
+        comments = post.get("comments", [])
+        restored = False
+        original_content = None
+
+        # 댓글 삭제 시 저장된 이력을 통해 원래 내용을 복원합니다.
+        # 여기서는 'forum_comment_history' 인덱스에서 해당 댓글의 최근 삭제 이력을 조회합니다.
+        history_query = {
+            "query": {
+                "term": {
+                    "commentId": comment_id
+                }
+            },
+            "sort": [
+                {
+                    "deletedAt": {
+                        "order": "desc"
+                    }
+                }
+            ],
+            "size": 1
+        }
+        history_res = es.search(index="forum_comment_history", body=history_query)
+        if history_res["hits"]["total"]["value"] > 0:
+            original_content = history_res["hits"]["hits"][0]["_source"]["content"]
+
+        # 게시글 내의 댓글 배열에서 해당 comment_id를 가진 댓글을 찾습니다.
+        for comment in comments:
+            if comment.get("id") == comment_id:
+                # 삭제 이력에서 원본 내용이 있으면 복원합니다.
+                if original_content:
+                    comment["content"] = original_content
+                else:
+                    # 원본 내용을 찾을 수 없으면, 복원할 수 없다는 메시지를 남깁니다.
+                    comment["content"] = "원본 내용 복원 불가"
+                comment["hidden"] = False
+                comment["removedBy"] = None
+                comment["updatedAt"] = datetime.now(timezone.utc).isoformat()
+                restored = True
+                break
+
+        if not restored:
+            return jsonify({"error": "복원할 댓글을 찾을 수 없습니다."}), 404
+
+        # 게시글의 업데이트 시간을 갱신하고 재인덱싱합니다.
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        es.index(index=index_name, id=str(post_id), body=post)
+        return jsonify({"message": "댓글이 복원되었습니다."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # Forum 댓글 신고 처리
 @app.route("/forum/comment/<int:comment_id>/report", methods=["POST"])

@@ -101,8 +101,12 @@ const PostBox = ({
         ) : (
           <InlineBlockContainer>
             <div>
+              {/* 수정된 코드: key prop 추가 */}
               {shouldUseTipTap ? (
-                <ReadOnlyEditor contentJSON={parsedJSON} />
+                <ReadOnlyEditor
+                  key={JSON.stringify(parsedJSON)} // parsedJSON의 문자열값을 key로 사용하여 재마운트 강제
+                  contentJSON={parsedJSON}
+                />
               ) : (
                 <HtmlContent html={post.content} />
               )}

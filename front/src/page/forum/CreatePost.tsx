@@ -108,10 +108,12 @@ const CreatePost: React.FC = () => {
         "Editor 업데이트 - JSON (formatted):",
         JSON.stringify(json, null, 2)
       );
+      // 만약 JSON 내용이 비어있다면 기본값을 사용하도록 처리
       setFormData((prev) => ({
         ...prev,
         content: html,
-        contentJSON: JSON.stringify(json),
+        contentJSON:
+          JSON.stringify(json) || JSON.stringify({ type: "doc", content: [] }),
       }));
     },
   });
@@ -177,7 +179,7 @@ const CreatePost: React.FC = () => {
     // 에디터의 최신 JSON 내용을 사용합니다.
     const currentJSON = editor
       ? JSON.stringify(editor.getJSON())
-      : formData.contentJSON;
+      : formData.contentJSON || JSON.stringify({ type: "doc", content: [] });
     console.log("폼 제출 시 formData:", formData);
     console.log("폼 제출 시 currentJSON (raw):", currentJSON);
     try {
@@ -214,17 +216,16 @@ const CreatePost: React.FC = () => {
     }
     */
 
-    // 최종 게시글 데이터 구성
+    // 최종 게시글 데이터 구성 (contentJSON이 없는 경우 기본값 사용)
     const postData = {
       ...formData,
-      memberId, // Redux에서 받은 id (문자열)
-      fileUrls: [], // 파일 업로드 로직은 주석 처리됨
-      contentJSON: currentJSON,
+      memberId,
+      fileUrls: [],
+      contentJSON: currentJSON || JSON.stringify({ type: "doc", content: [] }),
     };
 
     console.log("최종 postData:", postData);
     try {
-      // 새 게시글 생성 후 전체 상세 정보 조회
       const response = await ForumApi.createPostAndFetch(postData);
       console.log("전체 게시글 데이터:", response);
       toast.success("게시글이 성공적으로 생성되었습니다!");

@@ -16,7 +16,9 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ForumEsService
@@ -80,23 +82,44 @@ public class ForumEsService {
     }
 
     /**
-     * 게시글 내용 수정
+     * 게시글 내용 수정 메서드 (Flask 백엔드에 요청)
+     *
+     * 이 메서드는 게시글의 contentJSON, 수정자 정보(editedBy) 및 관리자 여부(isAdmin)를
+     * 포함하는 payload를 생성하여 Flask의 /forum/post/{postId}/content 엔드포인트로 PUT 요청을 보냅니다.
+     *
+     * 기존의 String.format 방식을 대체하여, Map을 사용한 후 ObjectMapper.writeValueAsString으로 직렬화합니다.
+     * 이 방법은 내부 따옴표(큰따옴표 등)가 올바르게 이스케이프되어 잘못된 JSON 형식을 방지합니다.
+     *
+     * @param postId 수정할 게시글 ID
+     * @param contentJSON 수정된 TipTap JSON 형식의 내용 (문자열)
+     * @param editedBy 수정한 사용자의 ID 또는 "ADMIN"
+     * @param isAdmin 관리자 여부 (true이면 관리자 수정)
+     * @return 수정된 게시글 정보를 담은 ForumPostResponseDto, 실패 시 null 반환
      */
     public ForumPostResponseDto updatePostContent(String postId, String contentJSON, String editedBy, boolean isAdmin) {
         try {
+            // Flask 엔드포인트 URI 구성
             URI uri = new URI(flaskBaseUrl + "/forum/post/" + postId + "/content");
-            String jsonBody = String.format(
-                    "{\"contentJSON\": \"%s\", \"editedBy\": \"%s\", \"isAdmin\": %s}",
-                    contentJSON, editedBy, isAdmin
-            );
 
+            // 수정할 데이터(payload)를 Map으로 구성
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("contentJSON", contentJSON);  // TipTap JSON 문자열
+            payload.put("editedBy", editedBy);          // 수정자 정보
+            payload.put("isAdmin", isAdmin);            // 관리자 여부
+
+            // ObjectMapper를 사용하여 Map을 JSON 문자열로 직렬화 (내부 따옴표 자동 이스케이프)
+            String jsonBody = objectMapper.writeValueAsString(payload);
+
+            // HTTP 요청 헤더 설정 (Content-Type: application/json)
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
+            // PUT 요청을 보내 Flask 백엔드에 수정 요청 수행
             ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.PUT, entity, String.class);
             log.info("updatePostContent 응답: {}", response);
 
+            // 응답 본문을 ForumPostResponseDto 객체로 역직렬화하여 반환
             return objectMapper.readValue(response.getBody(), ForumPostResponseDto.class);
         } catch (Exception e) {
             log.error("게시글 내용 수정 중 오류: {}", e.getMessage());
