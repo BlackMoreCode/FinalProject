@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../../api/AxiosInstance";
+import { CgProfile } from "react-icons/cg";
 import {
   Container,
   ProfileImageWrapper,
@@ -106,7 +107,7 @@ const ProfileEditPage = () => {
           {preview ? (
             <ProfileImage src={preview} alt="Profile Preview" />
           ) : (
-            <ProfileImagePlaceholder>이미지 없음</ProfileImagePlaceholder>
+            <CgProfile size={50} color="#ccc" />
           )}
           <UploadButton>
             <UploadIcon />

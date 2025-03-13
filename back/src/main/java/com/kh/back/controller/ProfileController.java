@@ -5,6 +5,7 @@ import com.kh.back.dto.profile.ProfileUpdateDto;
 import com.kh.back.dto.profile.ProfileCardWithStyleDto;
 import com.kh.back.service.FirebaseService;
 import com.kh.back.service.ProfileService;
+import com.kh.back.service.recipe.RecipeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -24,6 +26,7 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final FirebaseService firebaseService;
+    private final RecipeService recipeService;
 
     // 1. 프로필 정보와 스타일 조회
     @GetMapping("/{memberId}")
@@ -98,5 +101,11 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
+//    public ResponseEntity<List<Map<String, Object>>> getUserRecipes(@PathVariable Long memberId) {
+//        log.info("유저 {}의 작성 레시피 조회 요청", memberId);
+//
+//        List<Map<String, Object>> recipes = recipeService.getUserRecipes(memberId);
+//
+//        return ResponseEntity.ok(recipes);
+//    }
 }
