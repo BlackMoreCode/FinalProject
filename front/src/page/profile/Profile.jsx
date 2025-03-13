@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../api/AxiosInstance";
+import { CgProfile } from "react-icons/cg";
 import {
   ProfileCard,
   ProfileHeaderContainer,
@@ -88,7 +89,7 @@ const Profile = ({ userId, customStyle }) => {
               alt={`${user.name} 프로필 이미지`}
             />
           ) : (
-            <ProfileImagePlaceholder>이미지 없음</ProfileImagePlaceholder>
+            <CgProfile size={120} color="#9f8473" />
           )}
         </ProfileImageWrapper>
         <ProfileInfo>

@@ -71,4 +71,23 @@ public class RecipeService {
             return res;
         }
     }
+
+    public List<?> getUserRecipes(Long userId, String type, int page, int size) {
+        List<SearchListResDto> rawList = elasticService.getUserRecipes(userId, type, page, size);
+        if (rawList == null) {
+            return Collections.emptyList();
+        }
+        if ("food".equalsIgnoreCase(type)) {
+            return rawList.stream()
+                    .map(item -> (FoodListResDto) item)
+                    .collect(Collectors.toList());
+        } else if ("cocktail".equalsIgnoreCase(type)) {
+            return rawList.stream()
+                    .map(item -> (CocktailListResDto) item)
+                    .collect(Collectors.toList());
+        } else {
+            return rawList;
+        }
+    }
+
 }

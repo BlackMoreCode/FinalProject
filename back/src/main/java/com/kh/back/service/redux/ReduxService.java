@@ -27,7 +27,7 @@ public class ReduxService {
 	private final MemberRepository memberRepository;
 	private final ObjectMapper objectMapper;
 	private final MemberService memberService;
-	private ReactionRepository reactionRepository;
+	private final ReactionRepository reactionRepository;
 
 	public MemberPublicResDto getMemberPublicResDto(Long id) {
 		Member member = memberRepository.findById(id)

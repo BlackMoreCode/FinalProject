@@ -209,6 +209,25 @@ public class ElasticService {
 		}
 	}
 
+	public List<SearchListResDto> getUserRecipes(Long userId, String type, int page, int size) {
+		try {
+			URI uri = new URI(flaskBaseUrl + "/user-recipes?userId=" + userId
+					+ "&type=" + URLEncoder.encode(type, StandardCharsets.UTF_8)
+					+ "&page=" + page
+					+ "&size=" + size);
 
+			log.info("[getUserRecipes] Calling Flask with URI: {}", uri);
+
+			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
+			log.info("[getUserRecipes] Flask response: {}", response);
+
+			return convertResToList(response.getBody(), type);
+
+		} catch (Exception e) {
+			log.error("사용자 레시피 조회 중 에러 발생 (userId={}, type={}, page={}, size={}): {}",
+					userId, type, page, size, e.getMessage());
+			return null;
+		}
+	}
 
 }
