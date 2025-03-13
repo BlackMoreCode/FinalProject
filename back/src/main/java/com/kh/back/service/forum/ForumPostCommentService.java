@@ -23,7 +23,7 @@ public class ForumPostCommentService {
      * 특정 게시글에 대한 댓글 리스트 조회
      * KR: ES의 /forum/post/{postId}/comments 엔드포인트를 호출하여 댓글 목록을 가져옵니다.
      */
-    public List<ForumPostCommentResponseDto> getCommentsForPost(Integer postId) {
+    public List<ForumPostCommentResponseDto> getCommentsForPost(String postId) {
         log.info("게시글 ID: {} 의 댓글 조회 요청", postId);
         return forumEsService.searchCommentsForPost(postId);
     }
@@ -38,6 +38,12 @@ public class ForumPostCommentService {
         // 필요 시 HTML sanitize 처리 (여기서는 단순 통과)
         String sanitizedContent = requestDto.getContent();
         requestDto.setContent(sanitizedContent);
+
+        // MemberService를 통해 실제 닉네임 조회 (회원 정보는 Member 테이블에서 가져옵니다)
+        String nickname = memberService.getNickname(requestDto.getMemberId());
+        // 조회한 닉네임을 댓글 작성자 이름(authorName)과 member.nickName에 설정
+        requestDto.setAuthorName(nickname);
+
         return forumEsService.createComment(requestDto);
     }
 
@@ -69,7 +75,7 @@ public class ForumPostCommentService {
      * KR: 게시글에 대한 직접 답글은 parentCommentId 없이 생성됩니다.
      */
     @Transactional
-    public ForumPostCommentResponseDto replyToPost(Integer postId, ForumPostCommentRequestDto requestDto) {
+    public ForumPostCommentResponseDto replyToPost(String postId, ForumPostCommentRequestDto requestDto) {
         log.info("게시글 ID: {} 에 대한 답글 생성 요청", postId);
         requestDto.setPostId(postId);
         requestDto.setParentCommentId(null);

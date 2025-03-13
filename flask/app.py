@@ -128,15 +128,23 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
+        # KR: 검색어/카테고리/조리방법 등에 따른 query 빌드
         if type_filter == "food":
             category_field = "RCP_PAT2"   # 음식은 ES 매핑에서 RCP_PAT2로 저장됨
             cooking_field = "RCP_WAY2"    # 음식의 조리방법 필드
             multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
+        elif type_filter == "forum_post":
+            # KR: 포럼 게시글 검색을 위한 필드 지정
+            #     -> 실제 검색하려면 title, content, authorName 등에 대해 multi_match 할 수도 있음
+            category_field = "category"
+            cooking_field = "cookingMethod"  # (포럼엔 없으니 사용X, 혹은 무시)
+            multi_match_fields = ["title", "content", "authorName", "category"]
         else:
-            category_field = "category"   # 칵테일은 기존 필드 사용
-            cooking_field = "cookingMethod"  # 칵테일은 조리방법 필터가 없을 수 있으므로 기본값
+            category_field = "category"   # 칵테일 등 기본
+            cooking_field = "cookingMethod"
             multi_match_fields = ["name", "ingredients.ingredient", "category"]
 
+        # KR: 검색조건 조합
         if q and category and cooking_method:
             query = {
                 "bool": {
@@ -183,8 +191,17 @@ def search():
         else:
             query = {"match_all": {}}
 
+        # KR: 검색 결과에 포함할 필드 (type_filter별로 다름)
         if type_filter == "food":
             source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv", "ATT_FILE_NO_MAIN"]
+        elif type_filter == "forum_post":
+            # KR: forum_post에 대해서는 우리가 보고 싶은 필드 지정
+            #     (title, content, authorName, createdAt, updatedAt 등등)
+            source_fields = [
+                "title", "content", "authorName",
+                "contentJSON", "viewsCount", "likesCount",
+                "createdAt", "updatedAt", "category"
+            ]
         else:
             source_fields = ["name", "category", "like", "abv"]
 
@@ -241,23 +258,24 @@ def detail(doc_id):
 # Forum Endpoints (ElasticSearch-based) - 새 Forum 기능
 # ================================================================
 
-# Forum 게시글 생성
+# Forum 게시글 생성 (Flask)
 @app.route("/forum/post", methods=["POST"])
 def create_forum_post():
-    """
-    새 포럼 게시글 생성
-    KR: 클라이언트로부터 받은 게시글 데이터를 기반으로 ES의 'forum_post' 인덱스에 게시글 문서를 생성합니다.
-    """
     try:
         data = request.json
         if not data:
             return jsonify({"error": "데이터가 제공되지 않았습니다."}), 400
 
-        # 변경: 'forum' -> 'forum_post'
+        # 백엔드에서 categoryId가 있으면 category 필드로 복사 (Option B)
+        # 현제 테스트로 제거
+        if "categoryId" in data and "category" not in data:
+            data["category"] = data["categoryId"]
+
         index_name, mapping_file = get_index_and_mapping("forum_post")
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
+        # 기본 필드 설정
         data.setdefault("viewsCount", 0)
         data.setdefault("likesCount", 0)
         data.setdefault("likedBy", [])
@@ -267,7 +285,12 @@ def create_forum_post():
         data.setdefault("createdAt", now)
         data.setdefault("updatedAt", now)
 
+        # 게시글을 ES에 인덱싱
         res = es.index(index=index_name, body=data)
+
+        # ★ 인덱스 새로고침 추가: 문서가 즉시 검색될 수 있도록 보장합니다.
+        es.indices.refresh(index=index_name)
+
         return jsonify({"message": "게시글이 생성되었습니다.", "id": res["_id"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -279,15 +302,20 @@ def get_forum_post(doc_id):
     """
     게시글 상세 조회 (Forum)
     KR: ES의 'forum_post' 인덱스에서 주어진 문서 ID의 게시글을 조회하여 반환합니다.
+        **변경 사항:** ES가 생성한 _id 값을 별도의 'id' 필드에 할당하여 반환합니다.
     """
     try:
         index_name, _ = get_index_and_mapping("forum_post")
         res = es.get(index=index_name, id=doc_id)
-        return jsonify(res["_source"])
+        data = res["_source"]
+        # ES에서 생성된 문서 id를 JSON 응답에 포함시킵니다.
+        data["id"] = res["_id"]
+        return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
 
-# Forum 게시글 제목 수정
+
+# Forum 게시글 제목 수정 (수정된 버전)
 @app.route("/forum/post/<doc_id>/title", methods=["PUT"])
 def update_forum_post_title(doc_id):
     """
@@ -303,14 +331,22 @@ def update_forum_post_title(doc_id):
         post = es.get(index=index_name, id=doc_id)["_source"]
         post["title"] = new_title
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
-        post["editedByTitle"] = request.json.get("editedBy", "USER")
+
+        # 수정자 정보 처리: isAdmin 플래그에 따라 관리자인 경우와 일반 사용자인 경우 분기 처리
+        if request.json.get("isAdmin", False):
+            post["editedTitleByAdmin"] = True  # 관리자가 수정한 경우
+            post["editedByTitle"] = "ADMIN"  # 관리자인 경우 수정자 정보를 "ADMIN" 또는 관리자의 이름/ID로 설정
+        else:
+            post["editedTitleByAdmin"] = False  # 일반 사용자가 수정한 경우
+            post["editedByTitle"] = request.json.get("editedBy", "USER")
+
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": "제목이 수정되었습니다.", "title": new_title}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# Forum 게시글 내용 수정 (TipTap JSON 전용)
+# Forum 게시글 내용 수정 (TipTap JSON 전용, 수정된 버전)
 @app.route("/forum/post/<doc_id>/content", methods=["PUT"])
 def update_forum_post_content(doc_id):
     """
@@ -325,13 +361,23 @@ def update_forum_post_content(doc_id):
         post = es.get(index=index_name, id=doc_id)["_source"]
         post["contentJSON"] = contentJSON
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
-        post["editedByContent"] = request.json.get("editedBy", "USER")
+
+        # 수정자 정보 처리: isAdmin 플래그에 따라 관리자인지 여부를 체크
         if request.json.get("isAdmin", False):
+            post["editedContentByAdmin"] = True
+            post["editedByContent"] = "ADMIN"  # 관리자인 경우 수정자 정보를 "ADMIN" 또는 관리자의 이름/ID로 설정
             post["locked"] = True
+        else:
+            post["editedContentByAdmin"] = False
+            post["editedByContent"] = request.json.get("editedBy", "USER")
+
         es.index(index=index_name, id=doc_id, body=post)
+        # ★ 인덱스 새로고침 추가: 문서가 즉시 검색될 수 있도록 보장합니다.
+        es.indices.refresh(index=index_name)
         return jsonify({"message": "내용이 수정되었습니다.", "contentJSON": contentJSON}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # Forum 게시글 좋아요 토글
 @app.route("/forum/post/<doc_id>/like", methods=["POST"])
@@ -395,13 +441,18 @@ def report_forum_post(doc_id):
 def delete_forum_post(doc_id):
     """
     게시글 삭제 (Forum, 논리 삭제)
-    KR: 게시글을 실제 삭제하지 않고, 삭제 상태로 표시합니다.
-        삭제 이력은 'forum_post_history' 인덱스에 기록됩니다.
     """
     try:
         index_name, _ = get_index_and_mapping("forum_post")
         post = es.get(index=index_name, id=doc_id)["_source"]
 
+        # 1) 원본 제목/내용이 없으면 저장해 둡니다. (이미 있으면 덮어쓰지 않음)
+        if "originalTitle" not in post:
+            post["originalTitle"] = post.get("title", "")
+        if "originalContent" not in post:
+            post["originalContent"] = post.get("content", "")
+
+        # 2) 삭제 이력은 forum_post_history 인덱스에 기록
         history = {
             "postId": post.get("id", doc_id),
             "title": post.get("title"),
@@ -412,25 +463,54 @@ def delete_forum_post(doc_id):
         }
         es.index(index="forum_post_history", body=history)
 
+        # 3) 실제로 소프트 삭제 처리
         post["removedBy"] = request.args.get("removedBy", "USER")
         post["hidden"] = True
         post["title"] = "[Deleted]"
         post["content"] = "This post has been deleted."
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
         es.index(index=index_name, id=doc_id, body=post)
         return jsonify({"message": "게시글이 삭제 처리되었습니다."}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Forum 댓글 생성
-@app.route("/forum/comment", methods=["POST"])
-def create_forum_comment():
+
+
+@app.route("/forum/post/<doc_id>/restore", methods=["POST"])
+def restore_forum_post(doc_id):
     """
-    댓글 생성 (Forum)
-    KR: 클라이언트로부터 받은 댓글 데이터를 기반으로, 해당 게시글의 'comments' 배열에 새 댓글을 추가합니다.
+    게시글 복구 (Forum)
     """
     try:
+        index_name, _ = get_index_and_mapping("forum_post")
+        post = es.get(index=index_name, id=doc_id)["_source"]
+
+        # 1) 저장된 원본 제목과 내용을 복원
+        if "originalTitle" in post:
+            post["title"] = post["originalTitle"]
+        if "originalContent" in post:
+            post["content"] = post["originalContent"]
+
+        # 2) hidden 상태를 False로 전환하고 삭제 정보 제거
+        post["hidden"] = False
+        post["removedBy"] = None  # (선택) 삭제자 정보 제거
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
+        es.index(index=index_name, id=doc_id, body=post)
+        return jsonify({"message": "게시글이 복구되었습니다."}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Forum 댓글 생성 엔드포인트
+@app.route("/forum/comment", methods=["POST"])
+def create_forum_comment():
+    try:
         data = request.json
+        # 필수 필드 확인
         for field in ["postId", "memberId", "content"]:
             if field not in data:
                 return jsonify({"error": f"{field} 필드는 필수입니다."}), 400
@@ -439,14 +519,19 @@ def create_forum_comment():
         post_id = str(data["postId"])
         post = es.get(index=index_name, id=post_id)["_source"]
 
+        # 클라이언트에서 nickName이 제공되지 않으면 "Unknown"으로 기본값 설정
+        nick_name = data.get("authorName", data.get("nickName", "Unknown"))
+
         new_comment = {
             "id": None,
             "content": data["content"],
             "contentJSON": data.get("contentJSON", ""),
             "member": {
                 "memberId": data["memberId"],
-                "nickName": data.get("nickName", "")
+                "nickName": nick_name
             },
+            "authorName": nick_name,       # 댓글 작성자 이름 추가
+            "memberId": data["memberId"],   # 댓글 작성자 ID 추가
             "likesCount": 0,
             "hidden": False,
             "removedBy": None,
@@ -465,7 +550,11 @@ def create_forum_comment():
         comments.append(new_comment)
         post["comments"] = comments
         post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
         es.index(index=index_name, id=post_id, body=post)
+        # ★ 인덱스 새로고침 추가: 새 댓글이 즉시 검색되도록 보장합니다.
+        es.indices.refresh(index=index_name)
+
         return jsonify({"message": "댓글이 추가되었습니다.", "comment": new_comment}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -566,6 +655,69 @@ def delete_forum_comment(comment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/forum/comment/<int:comment_id>/restore", methods=["POST"])
+def restore_forum_comment(comment_id):
+    try:
+        # postId 파라미터를 통해 해당 게시글 ID를 가져옵니다.
+        post_id = request.args.get("postId")
+        if not post_id:
+            return jsonify({"error": "postId 파라미터가 필요합니다."}), 400
+
+        # 'forum_post' 인덱스 이름과 매핑 정보를 가져옵니다.
+        index_name, _ = get_index_and_mapping("forum_post")
+        # 게시글을 Elasticsearch에서 조회합니다.
+        post = es.get(index=index_name, id=str(post_id))["_source"]
+        comments = post.get("comments", [])
+        restored = False
+        original_content = None
+
+        # 댓글 삭제 시 저장된 이력을 통해 원래 내용을 복원합니다.
+        # 여기서는 'forum_comment_history' 인덱스에서 해당 댓글의 최근 삭제 이력을 조회합니다.
+        history_query = {
+            "query": {
+                "term": {
+                    "commentId": comment_id
+                }
+            },
+            "sort": [
+                {
+                    "deletedAt": {
+                        "order": "desc"
+                    }
+                }
+            ],
+            "size": 1
+        }
+        history_res = es.search(index="forum_comment_history", body=history_query)
+        if history_res["hits"]["total"]["value"] > 0:
+            original_content = history_res["hits"]["hits"][0]["_source"]["content"]
+
+        # 게시글 내의 댓글 배열에서 해당 comment_id를 가진 댓글을 찾습니다.
+        for comment in comments:
+            if comment.get("id") == comment_id:
+                # 삭제 이력에서 원본 내용이 있으면 복원합니다.
+                if original_content:
+                    comment["content"] = original_content
+                else:
+                    # 원본 내용을 찾을 수 없으면, 복원할 수 없다는 메시지를 남깁니다.
+                    comment["content"] = "원본 내용 복원 불가"
+                comment["hidden"] = False
+                comment["removedBy"] = None
+                comment["updatedAt"] = datetime.now(timezone.utc).isoformat()
+                restored = True
+                break
+
+        if not restored:
+            return jsonify({"error": "복원할 댓글을 찾을 수 없습니다."}), 404
+
+        # 게시글의 업데이트 시간을 갱신하고 재인덱싱합니다.
+        post["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        es.index(index=index_name, id=str(post_id), body=post)
+        return jsonify({"message": "댓글이 복원되었습니다."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # Forum 댓글 신고 처리
 @app.route("/forum/comment/<int:comment_id>/report", methods=["POST"])
 def report_forum_comment(comment_id):
@@ -624,6 +776,36 @@ def get_forum_categories():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Forum 카테고리 상세 조회 (ID 기반)
+@app.route("/forum/category/<category_id>", methods=["GET"])
+def get_forum_category_by_id(category_id):
+    """
+    특정 카테고리 ID를 기반으로 ES의 'forum_category' 인덱스에서 카테고리 문서를 조회합니다.
+    만약 해당 ID를 가진 카테고리가 존재하면, 문서의 내용을 반환하며,
+    ES에서 생성한 _id 값을 'id' 필드에 할당하여 클라이언트에 반환합니다.
+
+    매개변수:
+        category_id (str): 조회할 카테고리의 ID
+    반환값:
+        - 성공 시: 조회된 카테고리 문서를 JSON 형식으로 반환 (HTTP 200)
+        - 실패 시: 에러 메시지를 포함한 JSON 형식의 응답 (HTTP 404)
+    """
+    try:
+        # ES 인덱스 이름과 매핑 파일 정보를 가져옵니다.
+        index_name, _ = get_index_and_mapping("forum_category")
+
+        # ES에서 주어진 category_id로 문서를 조회합니다.
+        res = es.get(index=index_name, id=category_id)
+        category = res["_source"]
+
+        # ES가 생성한 _id 값을 별도의 'id' 필드에 할당합니다.
+        category["id"] = res["_id"]
+
+        # 조회된 카테고리 문서를 클라이언트에 반환합니다.
+        return jsonify(category), 200
+    except Exception as e:
+        # 카테고리를 찾지 못한 경우 에러 메시지와 함께 404 응답을 반환합니다.
+        return jsonify({"error": str(e)}), 404
 
 # Forum 카테고리 생성 엔드포인트 (POST)
 @app.route("/forum/category", methods=["POST"])
@@ -644,6 +826,8 @@ def create_forum_category():
 
         # ES에 데이터 삽입 (새 카테고리 생성)
         res = es.index(index=index_name, body=data)
+        # 인덱스 새로고침: 생성된 문서가 즉시 검색될 수 있도록 보장합니다.
+        es.indices.refresh(index=index_name)
         return jsonify({"message": "카테고리가 생성되었습니다.", "id": res["_id"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -682,7 +866,6 @@ def search_forum_category():
             return jsonify({"error": "Not Found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/model/train", methods=["POST"])
 def train_machine_learning():

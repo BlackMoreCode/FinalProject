@@ -134,58 +134,61 @@ const ConfirmationModal = ({
   const [linkInput, setLinkInput] = useState("");
   const [isAddingLink, setIsAddingLink] = useState(false);
 
-  // Tiptap editor for content edits
+  // TipTap 에디터 설정 (편집 작업용)
   const editor = useEditor({
     extensions: [StarterKit, Bold, Italic, Underline, Link],
     content: "",
     onUpdate: ({ editor }) => {
       if (type === "editPostContent" || type === "editComment") {
-        // store as JSON string
+        // 에디터의 JSON 내용을 문자열로 저장
         setInputValue(JSON.stringify(editor.getJSON()));
       } else {
-        // or store as HTML if you prefer
         setInputValue(editor.getHTML());
       }
     },
   });
 
-  // When the modal opens, set up initial content
+  // 모달이 열릴 때 초기 설정 (content가 없으면 기본값으로 설정)
   useEffect(() => {
     if (!isOpen) return;
     setIsAddingLink(false);
     setLinkInput("");
 
     if (type === "editPostTitle") {
-      // just a text input
       setInputValue(content || "");
       editor?.commands.clearContent();
     } else if (type === "editPostContent" || type === "editComment") {
-      // parse content as JSON
+      // content가 유효하지 않으면 기본값 사용
+      let validContent = content;
+      if (!validContent || validContent === "undefined") {
+        validContent = JSON.stringify({ type: "doc", content: [] });
+      }
       try {
         const parsed =
-          typeof content === "string" ? JSON.parse(content) : content;
+          typeof validContent === "string"
+            ? JSON.parse(validContent)
+            : validContent;
         editor?.commands.setContent(parsed);
         setInputValue(JSON.stringify(editor.getJSON()));
       } catch (err) {
         console.error("에디터 컨텐츠 설정 실패:", err);
-        editor?.commands.setContent(convertHtmlToJson(content || ""));
+        // fallback: HTML -> JSON 변환 후 사용
+        editor?.commands.setContent(convertHtmlToJson(validContent || ""));
         setInputValue(JSON.stringify(editor.getJSON()));
       }
     } else if (type === "reportComment" || type === "reportPost") {
-      // simple text area
       editor?.commands.clearContent();
       setInputValue("");
     } else if (type === "addLink") {
-      // separate link input
       editor?.commands.clearContent();
       setInputValue("");
     } else {
-      // e.g. deletePost / deleteComment => no input needed
       editor?.commands.clearContent();
       setInputValue("");
     }
   }, [isOpen, type, content, editor]);
 
+  // 모달에 표시할 메시지
   const messages = {
     editPostTitle: "게시글 제목 수정:",
     editPostContent: "게시글 내용 수정:",
@@ -205,7 +208,7 @@ const ConfirmationModal = ({
       <ModalContent>
         <h3>{dynamicMessage}</h3>
 
-        {/* (A) editPostTitle => simple text input */}
+        {/* (A) editPostTitle => 단순 텍스트 입력 */}
         {type === "editPostTitle" && (
           <div style={{ marginTop: "10px" }}>
             <input
@@ -229,7 +232,7 @@ const ConfirmationModal = ({
           </div>
         )}
 
-        {/* (C) addLink => single input */}
+        {/* (C) addLink => 링크 입력 */}
         {type === "addLink" && (
           <input
             type="text"
@@ -240,7 +243,7 @@ const ConfirmationModal = ({
           />
         )}
 
-        {/* (D) editPostContent / editComment => TipTap editor */}
+        {/* (D) editPostContent / editComment => TipTap 에디터 사용 */}
         {(type === "editPostContent" || type === "editComment") && (
           <>
             <Toolbar>
@@ -270,7 +273,6 @@ const ConfirmationModal = ({
           </>
         )}
 
-        {/* (D-1) link insertion UI (within TipTap) */}
         {isAddingLink && (
           <LinkInputWrapper>
             <input
@@ -308,7 +310,6 @@ const ConfirmationModal = ({
           <button
             onClick={() => {
               if (type === "addLink") {
-                // "addLink" => pass final URL
                 if (!linkInput.trim())
                   return toast.warning("URL을 입력해주세요.");
                 let finalUrl = linkInput.trim();
@@ -317,12 +318,10 @@ const ConfirmationModal = ({
                 }
                 onConfirm(finalUrl);
               } else if (type === "editPostContent" || type === "editComment") {
-                // pass JSON from editor
                 onConfirm(inputValue);
               } else if (type === "editPostTitle") {
                 onConfirm(inputValue.trim());
               } else {
-                // e.g. reportPost, reportComment, deletePost, deleteComment => pass inputValue
                 onConfirm(inputValue.trim());
               }
             }}

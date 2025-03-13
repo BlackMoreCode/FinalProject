@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 댓글 응답 DTO
@@ -16,14 +17,15 @@ public class ForumPostCommentResponseDto {
     private Integer id;             // 댓글 ID
     private String content;         // 댓글 내용 (HTML)
     private String authorName;      // 작성자 이름
-    private Long memberId;       // 댓글 작성자 ID
+    private Long memberId;          // 댓글 작성자 ID
     private Integer likesCount;     // 좋아요 수
     private Boolean hidden;         // 숨김 여부
     private String removedBy;       // 삭제자 정보
     private String editedBy;        // 수정자 정보
     private Boolean locked;         // 편집 잠금 상태
-    private LocalDateTime createdAt;  // 생성 시간
-    private LocalDateTime updatedAt;  // 수정 시간
+    // 생성 및 수정 시간을 OffsetDateTime으로 변경
+    private OffsetDateTime createdAt;  // 생성 시간
+    private OffsetDateTime updatedAt;  // 수정 시간
     private String fileUrl;         // 첨부 파일 URL
     private Long reportCount;       // 누적 신고 횟수
     private Boolean hasReported;    // 신고 여부

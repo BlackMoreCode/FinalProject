@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class ForumPostCommentRequestDto {
-    private Integer postId; // 게시글 ID
+    private String postId; // 게시글 ID
     private Long memberId; // 작성자 ID
     private String content; // 댓글 내용 (HTML)
 
@@ -32,4 +32,7 @@ public class ForumPostCommentRequestDto {
      * KR: Tiptap 에디터의 JSON 형태 콘텐츠를 저장하기 위한 필드
      */
     private String contentJSON;
+
+    // 아래 필드를 추가합니다.
+    private String authorName;
 }

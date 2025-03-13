@@ -27,7 +27,7 @@ public class ForumPostLikeController {
      */
     @PostMapping("/posts/{postId}/like")
     public ResponseEntity<ForumPostLikeResponseDto> toggleLikePost(
-            @PathVariable Integer postId,
+            @PathVariable String postId,
             @RequestParam Long loggedInMemberId) {
         ForumPostLikeResponseDto response = likeService.togglePostLike(postId, loggedInMemberId);
         return ResponseEntity.ok(response);

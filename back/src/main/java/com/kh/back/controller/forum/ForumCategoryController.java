@@ -47,7 +47,7 @@ public class ForumCategoryController {
      * @return ForumCategoryDto (존재 시) 또는 404 Not Found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ForumCategoryDto> getCategoryWithLatestPost(@PathVariable Integer id) {
+    public ResponseEntity<ForumCategoryDto> getCategoryWithLatestPost(@PathVariable String id) {
         log.info("카테고리 ID {} 조회 요청", id);
         return categoryService.getCategoryWithLatestPost(id)
                 .map(ResponseEntity::ok)                    // Optional에 값이 있으면 200 OK

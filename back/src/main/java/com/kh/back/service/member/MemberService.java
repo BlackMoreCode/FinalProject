@@ -187,4 +187,21 @@ public class MemberService {
 
 
 	}
+
+
+
+
+	/**
+	 * 회원 ID에 해당하는 닉네임을 조회하는 메서드
+	 * @param memberId 회원의 고유 ID
+	 * @return 해당 회원의 닉네임
+	 * @throws IllegalArgumentException 유효하지 않은 회원 ID인 경우 예외 발생
+	 */
+	public String getNickname(Long memberId) {
+		// memberRepository에서 memberId로 회원 조회, 없으면 예외 발생
+		Member member = memberRepository.findById(memberId)
+				.orElseThrow(() -> new IllegalArgumentException("유효하지 않은 회원 ID입니다: " + memberId));
+		// 회원 엔티티에서 닉네임 반환
+		return member.getNickName();
+	}
 }

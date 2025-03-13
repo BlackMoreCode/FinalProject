@@ -32,7 +32,7 @@ public class ForumPostCommentController {
      * @return 댓글 리스트 (Response DTO)
      */
     @GetMapping("/{postId}")
-    public ResponseEntity<List<ForumPostCommentResponseDto>> getCommentsForPost(@PathVariable Integer postId) {
+    public ResponseEntity<List<ForumPostCommentResponseDto>> getCommentsForPost(@PathVariable String postId) {
         log.info("게시글 ID: {} 의 댓글 목록 조회", postId);
         List<ForumPostCommentResponseDto> comments = commentService.getCommentsForPost(postId);
         return ResponseEntity.ok(comments);
@@ -177,7 +177,7 @@ public class ForumPostCommentController {
      */
     @PostMapping("/post/{postId}/reply")
     public ResponseEntity<ForumPostCommentResponseDto> replyToPost(
-            @PathVariable Integer postId,
+            @PathVariable String postId,
             @RequestBody ForumPostCommentRequestDto requestDto) {
         log.info("게시글 ID: {} 에 대한 답글 생성 요청", postId);
         ForumPostCommentResponseDto reply = commentService.replyToPost(postId, requestDto);

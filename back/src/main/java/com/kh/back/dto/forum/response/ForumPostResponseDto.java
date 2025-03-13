@@ -1,10 +1,13 @@
 package com.kh.back.dto.forum.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kh.back.dto.python.SearchResDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import java.time.LocalDateTime;
+import lombok.NoArgsConstructor;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -14,9 +17,11 @@ import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ForumPostResponseDto implements SearchResDto {
-    // 기존 필드
-    private Integer id; // 게시글 ID
+    @JsonProperty("id")
+    private String id; // 게시글 ID
     private String title; // 게시글 제목
     private String content; // 게시글 내용 (HTML)
     private String authorName; // 작성자 이름
@@ -29,22 +34,14 @@ public class ForumPostResponseDto implements SearchResDto {
     private String editedByTitle; // 제목 수정자 정보
     private String editedByContent; // 내용 수정자 정보
     private Boolean locked; // 수정 불가능 여부
-    private LocalDateTime createdAt; // 생성 시간
-    private LocalDateTime updatedAt; // 수정 시간
-
-    // 최신 댓글 객체
-    private ForumPostCommentResponseDto latestComment;
-
+    private OffsetDateTime createdAt; // 생성시간
+    private OffsetDateTime updatedAt; // 수정시간
+    private ForumPostCommentResponseDto latestComment; // 최신 댓글 객체
     private Boolean editedTitleByAdmin; // 제목이 관리자에 의해 수정되었는지 여부
     private Boolean editedContentByAdmin; // 내용이 관리자에 의해 수정되었는지 여부
     private List<String> fileUrls; // 첨부 파일 URL 목록
-
     private Integer reportCount; // 신고 횟수
     private Boolean hasReported; // 신고 여부
-
-    /**
-     * 게시글 콘텐츠의 JSON 표현 (Tiptap JSON)
-     * KR: Tiptap 에디터의 JSON 형태 콘텐츠를 클라이언트에 전달하기 위한 필드
-     */
-    private String contentJSON;
+    private String contentJSON; // 게시글 콘텐츠의 JSON 표현 (Tiptap JSON)
+    private String category; // 게시글 카테고리 (ES에서 categoryId가 복사되어 저장됨)
 }

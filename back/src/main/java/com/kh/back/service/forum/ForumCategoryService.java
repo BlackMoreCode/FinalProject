@@ -70,7 +70,7 @@ public class ForumCategoryService {
      * @param categoryId 조회할 카테고리 ID
      * @return Optional<ForumCategoryDto>
      */
-    public Optional<ForumCategoryDto> getCategoryWithLatestPost(Integer categoryId) {
+    public Optional<ForumCategoryDto> getCategoryWithLatestPost(String categoryId) {
         log.info("ElasticSearch에서 카테고리 ID {} 를 조회합니다.", categoryId);
         ForumCategoryDto categoryDto = forumEsService.getCategoryById(categoryId);
 

@@ -167,7 +167,7 @@ export const CommentCard = styled.div`
   border: 1px solid #ddd;
   border-radius: 10px;
   padding: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   transition: background-color 0.5s ease;
 
   /* :target 가상 클래스를 사용하여, URL 해시와 일치하는 요소에 하이라이트 효과를 적용합니다. */

@@ -4,6 +4,7 @@ package com.kh.back.jwt;
 import com.kh.back.dto.auth.AccessTokenDto;
 import com.kh.back.dto.auth.TokenDto;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,11 @@ import java.util.stream.Collectors;
 		public TokenProvider(@Value("${jwt.secret}") String secretKey) {
 			this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512); // HS512 알고리즘을 사용하는 키 생성
 		}
+
+//		public TokenProvider(@Value("${jwt.secret}") String secretKey) {
+//			byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+//			this.key = Keys.hmacShaKeyFor(keyBytes);
+//		}
 
 		// 토큰 생성
 		public TokenDto generateTokenDto(Authentication authentication) {

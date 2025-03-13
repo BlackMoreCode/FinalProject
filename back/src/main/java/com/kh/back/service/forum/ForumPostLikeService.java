@@ -20,7 +20,7 @@ public class ForumPostLikeService {
      * @return 좋아요 결과 DTO
      */
     @Transactional
-    public ForumPostLikeResponseDto togglePostLike(Integer postId, Long memberId) {
+    public ForumPostLikeResponseDto togglePostLike(String postId, Long memberId) {
         return forumEsService.togglePostLike(postId, memberId);
     }
 
