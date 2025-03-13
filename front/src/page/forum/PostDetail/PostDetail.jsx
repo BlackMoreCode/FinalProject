@@ -476,7 +476,7 @@ const PostDetail = () => {
           : [{ type: "text", text: "(내용이 없습니다.)" }],
     };
 
-    // 인용 블록 생성
+    // 인용 블록 생성 (답글 누를때 인용할 부분을 보여주는 코드)
     const quotedContent = {
       type: "blockquote",
       attrs: { class: "reply-quote" },
@@ -499,7 +499,7 @@ const PostDetail = () => {
 
   /**
    * 새 댓글 추가 함수
-   * KR: 댓글 추가 후 전체 댓글 목록을 재조회하여 최신 상태로 업데이트합니다.
+   * - 댓글 추가 후 전체 댓글 목록을 재조회하여 최신 상태로 업데이트합니다.
    */
   const handleAddComment = async () => {
     const jsonData = editor.getJSON();
@@ -509,7 +509,7 @@ const PostDetail = () => {
       return;
     }
     try {
-      await ForumApi.addComment({
+      const response = await ForumApi.addComment({
         postId: post.id,
         memberId,
         content: htmlData,
@@ -518,16 +518,19 @@ const PostDetail = () => {
         opAuthorName: replyingTo?.opAuthorName || null,
         opContent: replyingTo?.opContent || null,
       });
-      // 댓글 추가 후 약간의 지연 후 전체 댓글 목록 재조회 및 refreshKey 증가
-      setTimeout(async () => {
-        const commentData = await ForumApi.getCommentsByPostId(post.id);
-        const sortedComments = commentData.sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        );
-        setComments(sortedComments);
-        // refreshKey를 증가시켜 모든 댓글 컴포넌트를 강제 재마운트
-        setRefreshKey((prev) => prev + 1);
-      }, 150);
+      if (typeof response.contentJSON === "string") {
+        try {
+          response.contentJSON = JSON.parse(response.contentJSON);
+        } catch {
+          response.contentJSON = convertHtmlToJson(response.content);
+        }
+      }
+      // 기존 방식: 재조회 후 refreshKey 증가 → 변경: setComments로 바로 업데이트
+      const commentData = await ForumApi.getCommentsByPostId(post.id);
+      const sortedComments = commentData.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      setComments(sortedComments);
       editor.commands.clearContent();
       setReplyingTo(null);
       toast.success("댓글이 성공적으로 추가되었습니다.");

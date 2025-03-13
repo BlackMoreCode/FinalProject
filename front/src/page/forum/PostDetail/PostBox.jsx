@@ -101,10 +101,10 @@ const PostBox = ({
         ) : (
           <InlineBlockContainer>
             <div>
-              {/* 수정된 코드: key prop 추가 */}
               {shouldUseTipTap ? (
+                // post.updatedAt 값을 포함하여 key를 구성하면, 내용 변경 시마다 컴포넌트가 재마운트됩니다.
                 <ReadOnlyEditor
-                  key={JSON.stringify(parsedJSON)} // parsedJSON의 문자열값을 key로 사용하여 재마운트 강제
+                  key={`${JSON.stringify(parsedJSON)}-${post.updatedAt}`}
                   contentJSON={parsedJSON}
                 />
               ) : (
