@@ -7,3 +7,8 @@ export interface MyInfo {
   reportedRecipes: Set<string>; // 신고한 레시피 ID 목록
 }
 
+export interface AccessTokenDto {
+  grantType: string;
+  accessToken: string;
+  accessTokenExpires: number;
+}
