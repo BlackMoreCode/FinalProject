@@ -9,6 +9,8 @@ import com.kh.back.repository.CommentRepository;
 import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,38 +70,15 @@ public class CommentService {
     }
 
     // 레시피 아이디로 댓글 가져오기
-    public List<CommentResDto> getCommentsByRecipeId(String recipeId) {
-        List<Comment> comments = commentRepository.findByRecipeId(recipeId);  // 레시피 아이디로 댓글을 조회
+    public Page<CommentResDto> getCommentsByRecipeId(String recipeId, Pageable pageable) {
+        // 레시피 아이디로 부모 댓글만 조회하고 페이지네이션을 적용
+        Page<Comment> commentsPage = commentRepository.findByRecipeIdAndParentCommentIsNull(recipeId, pageable);
 
         // 댓글과 대댓글을 포함하는 방식으로 변환
-        return comments.stream()
-                .filter(comment -> comment.getParentComment() == null)  // 부모 댓글만 필터링
-                .map(comment -> {
-                    // 부모 댓글에 대댓글을 포함시켜 반환
-                    CommentResDto parentCommentDto = CommentResDto.fromEntity(comment);
-                    return parentCommentDto;
-                })
-                .collect(Collectors.toList());   // 리스트로 반환
+        return commentsPage.map(comment -> {
+            // 부모 댓글에 대댓글을 포함시켜 반환
+            return CommentResDto.fromEntity(comment);
+        });
     }
-
-
-
-
-    public Comment createReply(Long parentCommentId, CommentReqDto replyDto) {
-        Comment parentComment = commentRepository.findById(parentCommentId)
-                .orElseThrow(() -> new RuntimeException("부모 댓글을 찾을 수 없습니다."));
-
-        Comment reply = new Comment();
-        reply.setContent(replyDto.getContent());
-        reply.setMember(new Member()); // 작성자 설정 (실제 작성자를 지정해야 합니다)
-        reply.setParentComment(parentComment); // 부모 댓글 설정
-
-        // 부모 댓글의 대댓글 목록에 추가
-        parentComment.getReplies().add(reply);
-
-        // 부모 댓글과 대댓글 모두 저장
-        return commentRepository.save(parentComment); // 부모 댓글을 저장하면서 대댓글도 저장됨
-    }
-
 
 }

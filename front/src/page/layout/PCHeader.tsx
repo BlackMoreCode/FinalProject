@@ -29,6 +29,7 @@ const PCHeader = () => {
   const recipeList = [
     { name: "cocktail", fn: () => navigate("/recipe/cocktail") },
     { name: "food", fn: () => navigate("/recipe/food") },
+    { name: "Add a cocktail", fn: () => navigate("/recipe/typeselect") },
   ];
 
   return (

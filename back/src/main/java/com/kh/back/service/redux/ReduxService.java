@@ -13,6 +13,7 @@ import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,8 @@ public class ReduxService {
 	private final MemberRepository memberRepository;
 	private final ObjectMapper objectMapper;
 	private final MemberService memberService;
-	private final ReactionRepository reactionRepository;
+	@Autowired
+	private ReactionRepository reactionRepository;
 
 	public MemberPublicResDto getMemberPublicResDto(Long id) {
 		Member member = memberRepository.findById(id)
@@ -37,6 +39,7 @@ public class ReduxService {
 
 	public ReduxResDto getMyInfo(Authentication auth) {
 		try {
+			// 인증된 사용자 정보를 가져옴
 			Member member = memberService.convertAuthToEntity(auth);
 			if (member == null || member.getAuthority() == Authority.REST_USER) {
 				return null;
@@ -73,5 +76,6 @@ public class ReduxService {
 			return null;
 		}
 	}
+
 
 }

@@ -11,17 +11,17 @@ public class AddCocktailRecipeDto {
     private String name;
     private String glass;
     private String category;
-    private List<Ingredient> ingredients;
+    private List<Ingredients> Ingredients;
     private String garnish;
     private String preparation;
     private Float abv;
     private MultipartFile image;
 
     @Data
-    public static class Ingredient {
+    public static class Ingredients {
         private String ingredient;
         private Float amount;  // String -> Float로 변경
         private String unit;
-        private String special;
+
     }
 }

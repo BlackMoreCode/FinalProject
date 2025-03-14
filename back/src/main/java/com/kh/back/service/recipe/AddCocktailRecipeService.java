@@ -24,34 +24,23 @@ public class AddCocktailRecipeService {
 
     public String saveCocktailRecipe(Long memberId, AddCocktailRecipeDto recipeRequest) {
         try {
-            String mainImageUrl = firebaseService.uploadImage(recipeRequest.getImage(),recipeRequest.getName());
+            String image = firebaseService.uploadImage(recipeRequest.getImage(),recipeRequest.getName());
 
-            List<Map<String, Object>> ingredients = recipeRequest.getIngredients().stream()
-                    .map(ingredient -> {
-                        Map<String, Object> ingredientMap = new HashMap<>();
 
-                        ingredientMap.put("unit", ingredient.getUnit());
-                        ingredientMap.put("amount", ingredient.getAmount());
-                        ingredientMap.put("ingredient", ingredient.getIngredient());
-                        ingredientMap.put("special", ingredient.getSpecial());
-                        return ingredientMap;
-                    })
-                    .collect(Collectors.toList());
-
-            // JSON 데이터 생성
+            // JSON 데이터 생성\
             Map<String, Object> recipeData = new HashMap<>();
             recipeData.put("type", recipeRequest.getType());
             recipeData.put("name", recipeRequest.getName());
             recipeData.put("glass", recipeRequest.getGlass());
             recipeData.put("category", recipeRequest.getCategory());
-            recipeData.put("ingredients", ingredients);
+            recipeData.put("ingredients", recipeRequest.getIngredients());
             recipeData.put("garnish", recipeRequest.getGarnish());
             recipeData.put("preparation", recipeRequest.getPreparation());
             recipeData.put("abv", recipeRequest.getAbv());
             recipeData.put("like", 0L); // 기본값 설정
             recipeData.put("report", 0L); // 기본값 설정
             recipeData.put("author", memberId);
-            recipeData.put("image", mainImageUrl);
+            recipeData.put("image", image);
 
             // JSON 문자열로 변환 후 업로드
             String data = objectMapper.writeValueAsString(recipeData);

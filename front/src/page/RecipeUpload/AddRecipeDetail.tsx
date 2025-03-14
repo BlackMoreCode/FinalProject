@@ -1,7 +1,7 @@
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent } from "react";
 import { Upload } from "lucide-react"; // 설치 필요
 import React from "react";
-import RecipeApi from "../api/RecipeApi";
+import RecipeApi from "../../api/RecipeApi";
 
 // 재료와 조리법의 타입 정의
 interface Ingredient {
@@ -11,31 +11,22 @@ interface Ingredient {
 
 interface Step {
   text: string;
-  image: string | null;
+  image: File | null;
 }
 
-interface RecipeData {
-  type: string;
-  name: string;
-  rcpWay2: string;
-  rcpPat2: string;
-  attFileNoMain: string | null;
-  rcpNaTip: string;
-  rcpPartsDtls: Ingredient[];
-  manuals: { text: string; imageUrl: string | null }[];
-  authory: number; 
-}
 
-export default function RecipeUploader() {
+const AddRecipeDetail = () => {
   const [title, setTitle] = useState<string>("");
   const [cookingMethod, setCookingMethod] = useState<string>("");
   const [recipeTip, setRecipeTip] = useState<string>("");
   const [cuisineType, setCuisineType] = useState<string>("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ ingredient: "", amount: "" }]);
   const [steps, setSteps] = useState<Step[]>([{ text: "", image: null }]);
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
 
   const handleAddIngredient = () => setIngredients([...ingredients, { ingredient: "", amount: "" }]);
+
+
   const handleIngredientChange = (index: number, field: "ingredient" | "amount", value: string) => {
     const newIngredients = [...ingredients];
     newIngredients[index][field] = value;
@@ -52,22 +43,16 @@ export default function RecipeUploader() {
   const handleStepImageUpload = (index: number, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newSteps = [...steps];
-        newSteps[index].image = reader.result as string; // base64 문자열로 변환
-        setSteps(newSteps);
-      };
-      reader.readAsDataURL(file);
+      const newSteps = [...steps];
+      newSteps[index].image = file; // 파일을 직접 저장
+      setSteps(newSteps);
     }
   };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setImage(reader.result as string); // base64 문자열로 변환
-      reader.readAsDataURL(file);
+      setImage(file); // 메인 이미지를 파일로 저장
     }
   };
 
@@ -82,34 +67,54 @@ export default function RecipeUploader() {
   };
 
   const handleSaveRecipe = async () => {
-    const recipeData: RecipeData = {
-      type: "food",
-      name: title,
-      rcpWay2: cookingMethod,
-      rcpPat2: cuisineType,
-      attFileNoMain: image,
-      rcpNaTip: recipeTip,
-      rcpPartsDtls: ingredients,
-      manuals: steps.map((step) => ({
-        text: step.text,
-        imageUrl: step.image,
-      })),
-      authory: 1, 
-    };
+    const formData = new FormData();
+
+    // 텍스트 데이터 추가
+    formData.append("type", "food");
+    formData.append("name", title);
+    formData.append("rcpWay2", cookingMethod);
+    formData.append("rcpPat2", cuisineType);
+    formData.append("rcpNaTip", recipeTip);
+    formData.append("authory", "1"); // 예시로 1을 사용
+
+    // 재료 데이터 추가
+    ingredients.forEach((ingredient, index) => {
+        formData.append(`ingredients[${index}].ingredient`, ingredient.ingredient);
+        formData.append(`ingredients[${index}].amount`, ingredient.amount);
+
+        ingredients.forEach((ingredient, index) => {
+          formData.append(`ingredients[${index}].ingredient`, ingredient.ingredient);
+          formData.append(`ingredients[${index}].amount`, ingredient.amount);
+        });
+    });
+
+    // 조리 과정 데이터 추가
+    steps.forEach((step, index) => {
+        formData.append(`manuals[${index}].text`, step.text);
+        if (step.image) {
+            // 파일을 FormData에 추가
+            formData.append(`manuals[${index}].imageUrl`, step.image);
+        }
+    });
+
+    // 메인 이미지 추가
+    if (image) {
+        formData.append("attFileNoMain", image); // 파일을 FormData에 추가
+    }
 
     try {
-      const result = await RecipeApi.saveRecipe(recipeData);
-      console.log("레시피 저장 성공:", result);
-      alert("레시피가 성공적으로 저장되었습니다.");
+        const result = await RecipeApi.saveRecipe(formData);
+        console.log("레시피 저장 성공:", result);
+        alert("레시피가 성공적으로 저장되었습니다.");
     } catch (error) {
-      console.error("레시피 저장 실패:", error);
-      alert("레시피 저장 중 오류가 발생했습니다.");
-    };
-  };
+        console.error("레시피 저장 실패:", error);
+        alert("레시피 저장 중 오류가 발생했습니다.");
+    }
+};
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-4">
-       <div>
+      <div>
         <h2 className="text-lg font-semibold">음식 사진</h2>
         <input
           type="file"
@@ -118,16 +123,19 @@ export default function RecipeUploader() {
           className="hidden"
           id="upload"
         />
-        <label htmlFor="upload" className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
+     
+        {image && (
+          <div className="border rounded-lg p-4">
+            <img src={URL.createObjectURL(image)} alt="레시피 사진" className="w-full h-auto" />
+          </div>
+          
+        )}
+           <label htmlFor="upload" className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
           <Upload />
           <span>사진 업로드</span>
         </label>
-        {image && (
-          <div className="border rounded-lg p-4">
-            <img src={image} alt="레시피 사진" className="w-full h-auto" />
-          </div>
-        )}
       </div>
+
       <input
         type="text"
         placeholder="레시피 제목"
@@ -190,10 +198,12 @@ export default function RecipeUploader() {
         <h2 className="text-lg font-semibold">조리법</h2>
         {steps.map((step, index) => (
           <div key={index} className="space-y-2">
-              <label htmlFor={`step-upload-${index}`} className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
-              <Upload />
-              <span>조리 단계 사진 업로드</span>
-            </label>
+                
+                {step.image && (
+              <div className="border rounded-lg p-4">
+                <img src={URL.createObjectURL(step.image)} alt={`조리 단계 ${index + 1}`} className="w-full h-auto" />
+              </div>
+            )}
             <textarea
               placeholder={`조리 단계 ${index + 1}`}
               value={step.text}
@@ -207,12 +217,11 @@ export default function RecipeUploader() {
               className="hidden"
               id={`step-upload-${index}`}
             />
-          
-            {step.image && (
-              <div className="border rounded-lg p-4">
-                <img src={step.image} alt={`조리 단계 ${index + 1}`} className="w-full h-auto" />
-              </div>
-            )}
+      
+              <label htmlFor={`step-upload-${index}`} className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
+              <Upload />
+              <span>조리 단계 사진 업로드</span>
+            </label>
           </div>
         ))}
         <button
@@ -251,3 +260,4 @@ export default function RecipeUploader() {
     </div>
   );
 }
+export default AddRecipeDetail;

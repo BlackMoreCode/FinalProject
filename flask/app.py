@@ -1,3 +1,5 @@
+import traceback
+
 from flask import Flask, request, jsonify
 from elasticsearch import Elasticsearch
 import json
@@ -87,6 +89,69 @@ def upload_one():
         return jsonify({"message": "Data uploaded successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route("/update/likes-reports", methods=["POST"])
+def update_likes_reports():
+    """
+    Redis에서 받은 좋아요(like) 및 신고(report) 데이터를
+    Elasticsearch 문서에 추가하는 엔드포인트
+    """
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        like_report_data = data.get("like_report_data", [])  # Redis에서 받은 데이터 리스트
+        if not like_report_data:
+            return jsonify({"error": "No like or report data provided"}), 400
+
+        for entry in like_report_data:
+            post_id = entry.get("postId")  # Elasticsearch의 _id
+            content_type = entry.get("type")  # "cocktail" 또는 "food"
+            value = entry.get("value")  # Redis에서 받은 증가값
+            key_type = entry.get("keyType")  # "like" 또는 "report"
+
+            if not post_id or not content_type or value is None or not key_type:
+                app.logger.warning(f"Skipping entry due to missing fields: {entry}")
+                continue  # 필수 정보가 없으면 넘어감
+
+            # type에 따라 적절한 Elasticsearch 인덱스 찾기
+            index_name, mapping_file = get_index_and_mapping(content_type)
+            if not index_name:
+                app.logger.error(f"Invalid content type: {content_type}")
+                continue  # 유효한 인덱스가 없으면 건너뜀
+
+            try:
+                app.logger.info(f"Fetching document {post_id} from index {index_name}")
+                doc = es.get(index=index_name, id=post_id, ignore=404)
+
+                # 'found' 키를 안전하게 확인하고, 문서가 존재하는지 확인
+                if doc.get("found", False):
+                    current_like = doc["_source"].get("like", 0)
+                    current_report = doc["_source"].get("report", 0)
+
+                    # 기존 값에 Redis에서 받은 값 추가
+                    update_data = {}
+                    if key_type == "like":
+                        update_data["like"] = current_like + value
+                    elif key_type == "report":
+                        update_data["report"] = current_report + value
+
+                    if update_data:
+                        app.logger.info(f"Updating document {post_id} in index {index_name} with {update_data}")
+                        es.update(index=index_name, id=post_id, body={"doc": update_data})
+                else:
+                    app.logger.error(f"Document with ID {post_id} not found in index {index_name}")
+            except Exception as e:
+                error_message = traceback.format_exc()  # 전체 에러 스택 트레이스
+                app.logger.error(
+                    f"Elasticsearch update error for document {post_id} in index {index_name}:\n{error_message}")
+
+        return jsonify({"message": "Likes and Reports updated successfully"}), 200
+    except Exception as e:
+        error_message = traceback.format_exc()  # 전체 에러 스택 트레이스
+        app.logger.error(f"Unhandled error in /update/likes-reports:\n{error_message}")
+        return jsonify({"error": str(e)}), 500
+
 
 # JSON 파일 업로드 (여러 개의 데이터 한 번에)
 @app.route("/upload/json", methods=["POST"])
@@ -899,52 +964,40 @@ def predict_machine_learning():
         print(e)
         return jsonify({"message": index_type + " 모델 사용중 에러 : " + str(e)}), 500
 
-
-def get_posts_by_author_multi_index(member_id, indices):
-    """
-    여러 인덱스에서 특정 회원(member_id)이 작성한 게시글을 조회하는 함수
-    """
-    query = {
-        "query": {
-            "term": {
-                "author": member_id  # match 쿼리를 사용하여 검색 (정확한 타입 맞춰야 함)
-            }
-        },
-        "size": 100  # 가져올 최대 문서 수
-    }
-
-
-    try:
-        result = es.search(index=",".join(indices), body=query)
-        return result["hits"]["hits"]
-    except Exception as e:
-        app.logger.error(f"Elasticsearch 검색 오류: {str(e)}")
-        return []
-
-
-@app.route("/user/recipes", methods=["GET"])
+@app.route("/api/profile/recipes", methods=["GET"])
 def get_user_recipes():
-    user_id = request.args.get("userId")
-    recipe_type = request.args.get("type")
-    page = int(request.args.get("page", 1))
-    size = int(request.args.get("size", 10))
+    member_id = request.args.get("memberId")
+    page = int(request.args.get("page", 0))  # 기본값 0
+    size = int(request.args.get("size", 10))  # 기본값 10
 
-    # Elasticsearch에서 해당 사용자의 레시피 검색
+    if not member_id:
+        return jsonify({"error": "memberId is required"}), 400
+
+    from_offset = page * size  # 페이지네이션을 위한 from 값 설정
+
     query = {
         "query": {
-            "bool": {
-                "must": [
-                    {"match": {"user_id": user_id}},
-                    {"match": {"type": recipe_type}}
-                ]
-            }
+            "term": {"memberId": member_id}  # 해당 유저가 작성한 글만 조회
         },
-        "from": (page - 1) * size,
-        "size": size
+        "from": from_offset,
+        "size": size,
+        "_source": ["id", "title", "createdAt"]  # 필요한 필드만 가져옴
     }
 
     response = es.search(index="recipes", body=query)
-    return jsonify([hit["_source"] for hit in response["hits"]["hits"]])
+    hits = response.get("hits", {}).get("hits", [])
+
+    results = [
+        {
+            "id": hit["_source"].get("id"),
+            "title": hit["_source"].get("title"),
+            "createdAt": hit["_source"].get("createdAt", "N/A"),
+        }
+        for hit in hits
+    ]
+
+    return jsonify(results)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
