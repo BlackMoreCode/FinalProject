@@ -82,7 +82,7 @@ public class RedisService {
 				String value = Optional.ofNullable((String) redisTemplate.opsForValue().get(key)).orElse("0");
 				redisTemplate.opsForValue().set(key, value); // null일 경우 0으로 설정
 				redisTemplate.opsForValue().decrement(key, 1); // -1 감소
-				reActionService.updateAction(authentication, action, postId);
+				reActionService.deleteAction(authentication, action, postId);
 			}
 			return true;  // 성공
 		} catch (Exception e) {
