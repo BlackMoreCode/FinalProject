@@ -140,8 +140,8 @@ const ConfirmationModal = ({
     content: "",
     onUpdate: ({ editor }) => {
       if (type === "editPostContent" || type === "editComment") {
-        // 에디터의 JSON 내용을 문자열로 저장
-        setInputValue(JSON.stringify(editor.getJSON()));
+        // Save the raw JSON object
+        setInputValue(editor.getJSON());
       } else {
         setInputValue(editor.getHTML());
       }
