@@ -80,7 +80,12 @@ const Profile = ({ userId, customStyle }) => {
   const finalStyle = { ...userStyle, ...customStyle };
 
   return (
-    <ProfileCard style={{ backgroundColor: finalStyle.bgColor }}>
+    <ProfileCard
+      style={{
+        backgroundColor: finalStyle.bgColor,
+        boxShadow: finalStyle.boxShadow,
+      }}
+    >
       <ProfileHeaderContainer>
         <ProfileImageWrapper>
           {user.profileImg ? (
