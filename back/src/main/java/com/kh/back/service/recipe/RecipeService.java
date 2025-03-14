@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -72,22 +73,24 @@ public class RecipeService {
         }
     }
 
-    public List<?> getUserRecipes(Long userId, String type, int page, int size) {
-        List<SearchListResDto> rawList = elasticService.getUserRecipes(userId, type, page, size);
-        if (rawList == null) {
-            return Collections.emptyList();
-        }
-        if ("food".equalsIgnoreCase(type)) {
-            return rawList.stream()
-                    .map(item -> (FoodListResDto) item)
-                    .collect(Collectors.toList());
-        } else if ("cocktail".equalsIgnoreCase(type)) {
-            return rawList.stream()
-                    .map(item -> (CocktailListResDto) item)
-                    .collect(Collectors.toList());
-        } else {
-            return rawList;
-        }
+    /**
+     * 특정 유저가 작성한 레시피 목록 조회
+     *
+     * @param memberId 유저 ID
+     * @param page     페이지 번호
+     * @param size     페이지 당 항목 수
+     * @return 레시피 목록 (id, title, createdAt)
+     */
+    public List<Map<String, Object>> getUserRecipes(Long memberId, int page, int size) {
+        List<Map<String, Object>> rawList = elasticService.getUserRecipes(memberId, page, size);
+
+        return rawList.stream()
+                .map(recipe -> Map.of(
+                        "id", recipe.get("id"),
+                        "title", recipe.get("title"),
+                        "createdAt", recipe.getOrDefault("createdAt", "N/A")  // createdAt이 없을 경우 "N/A" 처리
+                ))
+                .collect(Collectors.toList());
     }
 
 }

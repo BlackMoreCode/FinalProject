@@ -210,24 +210,28 @@ public class ElasticService {
 	}
 
 
-	public List<SearchListResDto> getUserRecipes(Long userId, String type, int page, int size) {
+	/**
+	 * 특정 유저가 작성한 레시피 목록 조회 (Elasticsearch에서 가져옴)
+	 *
+	 * @param memberId 유저 ID
+	 * @param page     페이지 번호
+	 * @param size     페이지 당 항목 수
+	 * @return 레시피 목록 (id, title, createdAt)
+	 */
+	public List<Map<String, Object>> getUserRecipes(Long memberId, int page, int size) {
 		try {
-			URI uri = new URI(flaskBaseUrl + "/user-recipes?userId=" + userId
-					+ "&type=" + URLEncoder.encode(type, StandardCharsets.UTF_8)
-					+ "&page=" + page
-					+ "&size=" + size);
+			String encodedMemberId = URLEncoder.encode(String.valueOf(memberId), StandardCharsets.UTF_8);
+			URI uri = new URI(flaskBaseUrl + "/api/profile/recipes?memberId=" + encodedMemberId + "&page=" + page + "&size=" + size);
 
 			log.info("[getUserRecipes] Calling Flask with URI: {}", uri);
 
-			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
+			List<Map<String, Object>> response = restTemplate.getForObject(uri, List.class);
 			log.info("[getUserRecipes] Flask response: {}", response);
 
-			return convertResToList(response.getBody(), type);
-
+			return response;
 		} catch (Exception e) {
-			log.error("사용자 레시피 조회 중 에러 발생 (userId={}, type={}, page={}, size={}): {}",
-					userId, type, page, size, e.getMessage());
-			return null;
+			log.error("[getUserRecipes] Error fetching user recipes: {}", e.getMessage());
+			return List.of();
 		}
 	}
 }

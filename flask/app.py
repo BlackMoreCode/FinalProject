@@ -964,52 +964,40 @@ def predict_machine_learning():
         print(e)
         return jsonify({"message": index_type + " 모델 사용중 에러 : " + str(e)}), 500
 
-
-def get_posts_by_author_multi_index(member_id, indices):
-    """
-    여러 인덱스에서 특정 회원(member_id)이 작성한 게시글을 조회하는 함수
-    """
-    query = {
-        "query": {
-            "term": {
-                "author": member_id  # match 쿼리를 사용하여 검색 (정확한 타입 맞춰야 함)
-            }
-        },
-        "size": 100  # 가져올 최대 문서 수
-    }
-
-
-    try:
-        result = es.search(index=",".join(indices), body=query)
-        return result["hits"]["hits"]
-    except Exception as e:
-        app.logger.error(f"Elasticsearch 검색 오류: {str(e)}")
-        return []
-
-
-@app.route("/user/recipes", methods=["GET"])
+@app.route("/api/profile/recipes", methods=["GET"])
 def get_user_recipes():
-    user_id = request.args.get("userId")
-    recipe_type = request.args.get("type")
-    page = int(request.args.get("page", 1))
-    size = int(request.args.get("size", 10))
+    member_id = request.args.get("memberId")
+    page = int(request.args.get("page", 0))  # 기본값 0
+    size = int(request.args.get("size", 10))  # 기본값 10
 
-    # Elasticsearch에서 해당 사용자의 레시피 검색
+    if not member_id:
+        return jsonify({"error": "memberId is required"}), 400
+
+    from_offset = page * size  # 페이지네이션을 위한 from 값 설정
+
     query = {
         "query": {
-            "bool": {
-                "must": [
-                    {"match": {"user_id": user_id}},
-                    {"match": {"type": recipe_type}}
-                ]
-            }
+            "term": {"memberId": member_id}  # 해당 유저가 작성한 글만 조회
         },
-        "from": (page - 1) * size,
-        "size": size
+        "from": from_offset,
+        "size": size,
+        "_source": ["id", "title", "createdAt"]  # 필요한 필드만 가져옴
     }
 
     response = es.search(index="recipes", body=query)
-    return jsonify([hit["_source"] for hit in response["hits"]["hits"]])
+    hits = response.get("hits", {}).get("hits", [])
+
+    results = [
+        {
+            "id": hit["_source"].get("id"),
+            "title": hit["_source"].get("title"),
+            "createdAt": hit["_source"].get("createdAt", "N/A"),
+        }
+        for hit in hits
+    ]
+
+    return jsonify(results)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

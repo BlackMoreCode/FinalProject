@@ -101,11 +101,21 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-//    public ResponseEntity<List<Map<String, Object>>> getUserRecipes(@PathVariable Long memberId) {
-//        log.info("유저 {}의 작성 레시피 조회 요청", memberId);
-//
-//        List<Map<String, Object>> recipes = recipeService.getUserRecipes(memberId);
-//
-//        return ResponseEntity.ok(recipes);
-//    }
+    /**
+     * 특정 유저가 작성한 레시피 조회 (페이지네이션 및 무한 스크롤 지원)
+     *
+     * @param memberId 유저 ID
+     * @param page     페이지 번호 (기본값: 0)
+     * @param size     페이지 당 항목 수 (기본값: 10)
+     * @return 레시피 리스트 (id, title, createdAt)
+     */
+    @GetMapping("/recipes")
+    public List<Map<String, Object>> getUserRecipes(
+            @RequestParam Long memberId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        log.info("레시피 조회 요청: memberId={}, page={}, size={}", memberId, page, size);
+        return recipeService.getUserRecipes(memberId, page, size);
+    }
 }
