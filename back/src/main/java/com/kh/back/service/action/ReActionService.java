@@ -34,13 +34,13 @@ public class ReActionService {
         reactionRepository.save(newReaction);
     }
     @Transactional
-    public void deleteAction(Authentication authentication, String postId) {
+    public void deleteAction(Authentication authentication, String postId,String action) {
         // 인증 정보를 통해 현재 로그인한 사용자 정보 가져오기
         Long memberId = Long.parseLong(authentication.getName());
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보가 존재하지 않습니다."));
-        // 해당 사용자가 해당 게시물에 남긴 Reaction 조회
-        Optional<Reaction> reaction = reactionRepository.findByMemberAndPostId(member, postId);
+        Action reactionAction = Action.valueOf(action);
+        Optional<Reaction> reaction = reactionRepository.findByMemberAndPostIdAndAction(member, postId,reactionAction);
         if (reaction.isPresent()) {
             reactionRepository.delete(reaction.get());
         } else {

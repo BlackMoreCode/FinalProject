@@ -1,14 +1,14 @@
 package com.kh.back.dto.recipe.request;
 
-
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class ActionReqDto {
     private String action;
     private String postId;

@@ -209,6 +209,7 @@ public class ElasticService {
 		}
 	}
 
+
 	public List<SearchListResDto> getUserRecipes(Long userId, String type, int page, int size) {
 		try {
 			URI uri = new URI(flaskBaseUrl + "/user-recipes?userId=" + userId
@@ -229,5 +230,4 @@ public class ElasticService {
 			return null;
 		}
 	}
-
 }
