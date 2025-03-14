@@ -1,3 +1,4 @@
+// PostDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ForumApi from "../../../api/ForumApi";
@@ -9,15 +10,14 @@ import {
   GlobalKeyframes,
   PostTitle,
   HiddenCommentNotice,
-  AdminEditIndicator,
-  EditButton,
-  DisabledEditButton,
 } from "../style/PostDetailStyles";
 import PostBox from "./PostBox";
 import CommentsContainer from "./CommentsContainer";
 import Commons from "../../../util/Common";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
+import ConfirmationModal from "../ConfirmationModal";
+import { createReplyBlock } from "./replyUtils";
 
 const Divider = styled.hr`
   border: none;
@@ -32,8 +32,71 @@ const PostDetail = () => {
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  // 모달 관련 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState({
+    type: "",
+    id: null,
+    content: "",
+  });
+  // 게시글 인용 요청을 위한 상태 (PostDetail → CommentsContainer)
+  const [postToReply, setPostToReply] = useState(null);
 
-  // KR: 항상 최상단에서 useEffect를 선언해, 훅이 매 렌더마다 동일한 순서로 호출되도록 합니다.
+  // 좋아요 처리 함수 (추후 API 로직 추가)
+  const handleLikePost = async (postId) => {
+    console.log("좋아요 처리:", postId);
+    // 좋아요 API 호출 로직 추가
+  };
+
+  // 게시글 인용(답글) 처리 함수
+  const handleReply = (target, type) => {
+    if (type === "post") {
+      // 게시글 인용 요청 상태를 업데이트
+      setPostToReply(target);
+    } else {
+      // 댓글 인용은 기존처럼 바로 처리 (CommentsContainer 내의 handleReply 사용)
+      console.log("댓글 인용 처리:", target);
+    }
+    toast.info(`${target.authorName}님의 내용을 인용합니다.`);
+  };
+
+  // 모달 열기 함수
+  const openModal = (type, id, content) => {
+    setModalData({ type, id, content });
+    setIsModalOpen(true);
+  };
+
+  // 모달 확인 버튼 클릭 시 처리 함수
+  const handleModalConfirm = async (inputVal) => {
+    switch (modalData.type) {
+      case "deletePost":
+        console.log("게시글 삭제:", modalData.id);
+        // 예: await ForumApi.deletePost(modalData.id, user.id, ...);
+        toast.success("게시글이 삭제되었습니다.");
+        navigate("/forum");
+        break;
+      case "editPostContent":
+        console.log("게시글 내용 수정:", modalData.id, "새 내용:", inputVal);
+        // 예: await ForumApi.updatePostContent(modalData.id, { contentJSON: inputVal }, user.id, user.admin);
+        toast.success("게시글 내용이 수정되었습니다.");
+        break;
+      case "reportPost":
+        console.log("게시글 신고:", modalData.id, "신고 사유:", inputVal);
+        // 예: await ForumApi.reportPost(modalData.id, user.id, inputVal);
+        toast.success("게시글 신고가 접수되었습니다.");
+        break;
+      default:
+        console.log("모달 액션:", modalData.type, "입력값:", inputVal);
+    }
+    setIsModalOpen(false);
+  };
+
+  // 모달 취소 함수
+  const handleModalCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  // 게시글 데이터 불러오기
   useEffect(() => {
     const fetchPostData = async () => {
       try {
@@ -49,14 +112,11 @@ const PostDetail = () => {
     fetchPostData();
   }, [postId, navigate]);
 
-  // KR: 훅을 선언한 뒤에, 로딩 상태와 post가 없을 때의 렌더링을 최종 return 문 안에서 조건부로 처리합니다.
-
   return (
     <PostDetailContainer>
       <ReplyQuoteGlobalStyle />
       <GlobalKeyframes />
 
-      {/* 조건부 렌더링을 여기에 배치 */}
       {loading ? (
         <div>로딩 중...</div>
       ) : !post ? (
@@ -78,20 +138,44 @@ const PostDetail = () => {
 
           <PostBox
             post={post}
-            memberId={user?.id}
-            isAdmin={user?.admin}
+            memberId={user.id}
+            isAdmin={user.admin}
             loading={loading}
-            // ...other props...
+            onDeletePost={(pid) => openModal("deletePost", pid, "")}
+            onEditPostContent={(pid, cJSON) =>
+              openModal("editPostContent", pid, cJSON)
+            }
+            onReportPost={(pid, content) =>
+              openModal("reportPost", pid, content)
+            }
+            onRestorePost={(pid) => openModal("restorePost", pid, "")}
+            onLikePost={handleLikePost}
+            onReplyPost={handleReply} // 게시글 인용 요청 처리 함수 전달
           />
 
           <Divider />
 
-          {/* 댓글 영역을 별도 컨테이너로 분리한 경우 */}
-          <CommentsContainer postId={postId} user={user} />
+          {/* CommentsContainer에 postToReply와 setPostToReply를 전달 */}
+          <CommentsContainer
+            postId={postId}
+            user={user}
+            postToReply={postToReply}
+            setPostToReply={setPostToReply}
+          />
         </>
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
+      {/* ConfirmationModal 렌더링 */}
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        type={modalData.type}
+        content={modalData.content}
+        message="진행 하시겠습니까?"
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
     </PostDetailContainer>
   );
 };
