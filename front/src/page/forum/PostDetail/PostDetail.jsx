@@ -83,7 +83,7 @@ const PostDetail = () => {
   // 주요 상태값 선언
   const [post, setPost] = useState(null); // 게시글 데이터
   const [comments, setComments] = useState([]); // 댓글 목록
-  const [refreshKey, setRefreshKey] = useState(0); // 댓글 업데이트 시 재마운트를 유도하는 refreshKey
+  // refreshKey 상태 제거 (더 이상 강제 재마운트 하지 않음)
   const [replyingTo, setReplyingTo] = useState(null); // 인용(답글) 대상 정보
   const [memberId, setMemberId] = useState(null); // 로그인 사용자 ID
   const [isAdmin, setIsAdmin] = useState(false); // 관리자 여부
@@ -164,9 +164,16 @@ const PostDetail = () => {
           } else if (comment.content) {
             comment.contentJSON = convertHtmlToJson(comment.content);
           }
+
+          console.log(
+            "Final JSON for comment #",
+            comment.id,
+            comment.contentJSON
+          );
         });
         setPost(postData);
-        setComments(sortedComments);
+        // setComments(new Array(...)) ensures a new array reference
+        setComments([...sortedComments]);
       } catch (error) {
         console.error("게시글 로딩 중 오류:", error);
         toast.error("게시글 데이터를 불러오는 중 오류가 발생했습니다.");
@@ -247,15 +254,14 @@ const PostDetail = () => {
           );
           // 업데이트 후, 백엔드에서 최신 데이터를 재조회
           const refreshedPost = await ForumApi.getPostById(id);
-          // 최신 데이터를 파싱하여 상태를 업데이트합니다.
-          setPost((prev) => ({
-            ...prev,
+          setPost({
+            ...refreshedPost,
             contentJSON:
               typeof refreshedPost.contentJSON === "string"
                 ? JSON.parse(refreshedPost.contentJSON)
                 : refreshedPost.contentJSON,
             editedContentByAdmin: refreshedPost.editedContentByAdmin,
-          }));
+          });
           toast.success("게시글 내용이 수정되었습니다.");
           break;
         }
@@ -285,6 +291,7 @@ const PostDetail = () => {
               );
             }
           }
+          // 직접 상태 업데이트: 새로운 배열을 생성하여 변경 감지
           setComments((prev) =>
             prev.map((c) => (c.id === id ? { ...c, ...updatedComment } : c))
           );
@@ -293,6 +300,7 @@ const PostDetail = () => {
         }
         case "deleteComment": {
           await ForumApi.deleteComment(id, memberId, isAdmin);
+          // 바로 업데이트: 댓글 배열의 객체를 새로 복사하여 변경 감지
           setComments((prev) =>
             prev.map((c) =>
               c.id === id
@@ -334,23 +342,22 @@ const PostDetail = () => {
         }
         case "restoreComment": {
           await ForumApi.restoreComment(id);
-          setTimeout(async () => {
-            const commentData = await ForumApi.getCommentsByPostId(postId);
-            const sorted = commentData.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-            );
-            sorted.forEach((com) => {
-              if (com.contentJSON && typeof com.contentJSON === "string") {
-                try {
-                  com.contentJSON = JSON.parse(com.contentJSON);
-                } catch {
-                  com.contentJSON = convertHtmlToJson(com.content);
-                }
+          // 바로 재조회 및 업데이트
+          const commentData = await ForumApi.getCommentsByPostId(postId);
+          const sorted = commentData.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+          sorted.forEach((com) => {
+            if (com.contentJSON && typeof com.contentJSON === "string") {
+              try {
+                com.contentJSON = JSON.parse(com.contentJSON);
+              } catch {
+                com.contentJSON = convertHtmlToJson(com.content);
               }
-            });
-            setComments(sorted);
-            toast.success("댓글이 복원되었습니다.");
-          }, 250);
+            }
+          });
+          setComments([...sorted]);
+          toast.success("댓글이 복원되었습니다.");
           break;
         }
         case "reportPost": {
@@ -425,6 +432,16 @@ const PostDetail = () => {
     });
   };
 
+  // 기존 필터링 함수 (중첩된 paragraph를 평탄화하는 함수 추가)
+  const flattenContent = (nodes) => {
+    return nodes.reduce((acc, node) => {
+      if (node.type === "paragraph" && Array.isArray(node.content)) {
+        return acc.concat(flattenContent(node.content)); // 재귀적으로 평탄화
+      }
+      return acc.concat(node);
+    }, []);
+  };
+
   const handleReply = (target, type) => {
     if (type === "post") {
       setReplyingTo({
@@ -456,9 +473,20 @@ const PostDetail = () => {
     }
 
     const rawBody = (parsedJson && parsedJson.content) || [];
-    const filteredBody = filterEmptyParagraphs(rawBody);
+    const filteredBody = rawBody.filter((node) => {
+      if (node.type === "paragraph") {
+        const text = (node.content || [])
+          .map((n) => n.text || "")
+          .join("")
+          .trim();
+        return text !== "";
+      }
+      return true;
+    });
+    // 평탄화 처리하여 중첩된 paragraph 제거
+    const flattenedBody = flattenContent(filteredBody);
 
-    // 인용 헤더와 본문 생성
+    // 인용(답글) 생성 시, 중첩된 paragraph를 제거하는 코드
     const headerParagraph = {
       type: "paragraph",
       attrs: { class: "reply-quote-header" },
@@ -467,22 +495,23 @@ const PostDetail = () => {
       ],
     };
 
+    // 수정된 코드: 평탄화된 content를 바로 사용
     const bodyParagraph = {
       type: "paragraph",
-      attrs: { class: "reply-quote-body" },
       content:
-        filteredBody.length > 0
-          ? filteredBody
+        flattenedBody.length > 0
+          ? flattenedBody
           : [{ type: "text", text: "(내용이 없습니다.)" }],
     };
 
-    // 인용 블록 생성
+    // 최종 인용 블록 구성
     const quotedContent = {
       type: "blockquote",
       attrs: { class: "reply-quote" },
       content: [headerParagraph, bodyParagraph],
     };
 
+    // 현재 에디터 내용을 가져와 새 인용 블록을 prepend합니다.
     const current = editor.getJSON();
     const newContent =
       !current.content || current.content.length === 0
@@ -499,7 +528,8 @@ const PostDetail = () => {
 
   /**
    * 새 댓글 추가 함수
-   * KR: 댓글 추가 후 전체 댓글 목록을 재조회하여 최신 상태로 업데이트합니다.
+   * - 댓글 추가 후 전체 댓글 목록을 재조회하여 최신 상태로 업데이트합니다.
+   *   (refreshKey 없이 새 배열을 생성해 상태를 업데이트합니다.)
    */
   const handleAddComment = async () => {
     const jsonData = editor.getJSON();
@@ -509,7 +539,7 @@ const PostDetail = () => {
       return;
     }
     try {
-      await ForumApi.addComment({
+      const response = await ForumApi.addComment({
         postId: post.id,
         memberId,
         content: htmlData,
@@ -518,16 +548,19 @@ const PostDetail = () => {
         opAuthorName: replyingTo?.opAuthorName || null,
         opContent: replyingTo?.opContent || null,
       });
-      // 댓글 추가 후 약간의 지연 후 전체 댓글 목록 재조회 및 refreshKey 증가
-      setTimeout(async () => {
-        const commentData = await ForumApi.getCommentsByPostId(post.id);
-        const sortedComments = commentData.sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        );
-        setComments(sortedComments);
-        // refreshKey를 증가시켜 모든 댓글 컴포넌트를 강제 재마운트
-        setRefreshKey((prev) => prev + 1);
-      }, 150);
+      if (typeof response.contentJSON === "string") {
+        try {
+          response.contentJSON = JSON.parse(response.contentJSON);
+        } catch {
+          response.contentJSON = convertHtmlToJson(response.content);
+        }
+      }
+      // 댓글 목록을 새 배열로 업데이트하여 re-render 유도 (refreshKey 제거)
+      const commentData = await ForumApi.getCommentsByPostId(post.id);
+      const sortedComments = commentData.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      setComments([...sortedComments]);
       editor.commands.clearContent();
       setReplyingTo(null);
       toast.success("댓글이 성공적으로 추가되었습니다.");
@@ -678,7 +711,6 @@ const PostDetail = () => {
         onLikeComment={handleLikeComment}
         onReply={handleReply}
         onRestoreComment={(cid) => openModal("restoreComment", cid, "")}
-        refreshKey={refreshKey}
       />
 
       {/* (F) 댓글 입력 영역 */}

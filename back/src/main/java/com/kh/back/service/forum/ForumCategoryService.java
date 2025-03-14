@@ -34,7 +34,7 @@ public class ForumCategoryService {
         List<ForumCategoryDto> predefinedCategories = List.of(
                 new ForumCategoryDto(null, "자유게시판", "자유롭게 이야기하는 공간입니다.", 0, 0, null, null, null, null),
                 new ForumCategoryDto(null, "만남 게시판", "만남을 어레인지 하는 공간입니다.", 0, 0, null, null, null, null),
-                new ForumCategoryDto(null, "레시피 리뷰/토론 게시판", "올라온 레시피들을 리뷰 및 토론하는 공간입니다.", 0, 0, null, null, null, null)
+                new ForumCategoryDto(null, "레시피 리뷰 및 토론 게시판", "올라온 레시피들을 리뷰 및 토론하는 공간입니다.", 0, 0, null, null, null, null)
         );
 
         // KR: 각 카테고리에 대해 Elasticsearch에 존재하는지 확인 후 생성

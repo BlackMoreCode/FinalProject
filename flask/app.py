@@ -848,10 +848,10 @@ def search_forum_category():
             return jsonify({"error": "title 파라미터가 필요합니다."}), 400
 
         index_name, _ = get_index_and_mapping("forum_category")
-        # Elasticsearch에서 제목 매칭 쿼리 구성 (필요에 따라 필드명을 수정할 수 있습니다)
+        # Use a term query on the keyword sub-field for an exact match.
         body = {
             "query": {
-                "match": {"title": title}
+                "term": {"title.keyword": title}
             }
         }
         res = es.search(index=index_name, body=body)
