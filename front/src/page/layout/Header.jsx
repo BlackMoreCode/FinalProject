@@ -69,6 +69,9 @@ export default function Header() {
                 <DropdownItem>
                   <NavLink to="/cocktail-recipe">Cocktail Recipe</NavLink>
                 </DropdownItem>
+                <DropdownItem>
+                  <NavLink to="/typeselect">Add a Recipe</NavLink>
+                </DropdownItem>
               </DropdownMenu>
             </DropdownContainer>
           </NavLinks>
