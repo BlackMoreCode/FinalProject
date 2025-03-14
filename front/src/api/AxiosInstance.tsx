@@ -39,10 +39,10 @@ axiosInstance.interceptors.response.use(
         if (refreshToken) {
           // refreshToken을 사용하여 토큰 갱신
           const rsp = await ReduxApi.refresh(refreshToken);
-          store.dispatch(
-            setToken({ accessToken: rsp.data, refreshToken: null })
-          );
-
+          console.log("refreshToken", rsp);
+          if (rsp.data.grantType === "Bearer") {
+            store.dispatch(setToken({accessToken: rsp.data.accessToken, refreshToken: null}));
+          }
           // 토큰 갱신 후 다시 요청을 보냄
           error.config.headers["Authorization"] = `Bearer ${rsp.data}`;
           return axiosInstance(error.config); // 재요청
