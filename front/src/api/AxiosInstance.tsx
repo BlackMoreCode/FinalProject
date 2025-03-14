@@ -1,14 +1,14 @@
 // src/api/axiosInstance.ts
-import axios from 'axios';
+import axios from "axios";
 
 import ReduxApi from "./ReduxApi";
-import store from '../context/Store';
-import {setToken } from '../context/redux/TokenReducer';
-import {handleLogout} from "../context/redux/CommonAction";
+import store from "../context/Store";
+import { setToken } from "../context/redux/TokenReducer";
+import { handleLogout } from "../context/redux/CommonAction";
 
 // axios 인스턴스를 생성합니다.
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8111',  // 서버 URL
+  baseURL: "http://localhost:8111", // 서버 URL
 });
 
 // 요청 인터셉터 설정: 요청 전 설정할 부분
@@ -17,7 +17,7 @@ axiosInstance.interceptors.request.use(
     const state = store.getState();
     const token = state.token.accessToken;
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`; // 토큰을 헤더에 추가
+      config.headers["Authorization"] = `Bearer ${token}`; // 토큰을 헤더에 추가
     }
     return config;
   },
@@ -39,14 +39,16 @@ axiosInstance.interceptors.response.use(
         if (refreshToken) {
           // refreshToken을 사용하여 토큰 갱신
           const rsp = await ReduxApi.refresh(refreshToken);
-          store.dispatch(setToken({ accessToken: rsp.data, refreshToken : null }));
-
+          console.log("refreshToken", rsp);
+          if (rsp.data.grantType === "Bearer") {
+            store.dispatch(setToken({accessToken: rsp.data.accessToken, refreshToken: null}));
+          }
           // 토큰 갱신 후 다시 요청을 보냄
-          error.config.headers['Authorization'] = `Bearer ${rsp.data}`;
+          error.config.headers["Authorization"] = `Bearer ${rsp.data}`;
           return axiosInstance(error.config); // 재요청
         }
       } catch (e) {
-        console.error('토큰 갱신 실패:', e);
+        console.error("토큰 갱신 실패:", e);
         store.dispatch(handleLogout()); // 갱신 실패 시 로그아웃 처리
         return Promise.reject(error); // 에러 반환
       }

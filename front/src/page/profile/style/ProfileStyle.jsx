@@ -18,6 +18,10 @@ export const ProfileImageWrapper = styled.div`
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white; // 기본 배경색 추가
 
   @media (max-width: 768px) {
     width: 60px;
