@@ -1,3 +1,5 @@
+import traceback
+
 from flask import Flask, request, jsonify
 from elasticsearch import Elasticsearch
 import json
@@ -87,6 +89,69 @@ def upload_one():
         return jsonify({"message": "Data uploaded successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route("/update/likes-reports", methods=["POST"])
+def update_likes_reports():
+    """
+    Redis에서 받은 좋아요(like) 및 신고(report) 데이터를
+    Elasticsearch 문서에 추가하는 엔드포인트
+    """
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        like_report_data = data.get("like_report_data", [])  # Redis에서 받은 데이터 리스트
+        if not like_report_data:
+            return jsonify({"error": "No like or report data provided"}), 400
+
+        for entry in like_report_data:
+            post_id = entry.get("postId")  # Elasticsearch의 _id
+            content_type = entry.get("type")  # "cocktail" 또는 "food"
+            value = entry.get("value")  # Redis에서 받은 증가값
+            key_type = entry.get("keyType")  # "like" 또는 "report"
+
+            if not post_id or not content_type or value is None or not key_type:
+                app.logger.warning(f"Skipping entry due to missing fields: {entry}")
+                continue  # 필수 정보가 없으면 넘어감
+
+            # type에 따라 적절한 Elasticsearch 인덱스 찾기
+            index_name, mapping_file = get_index_and_mapping(content_type)
+            if not index_name:
+                app.logger.error(f"Invalid content type: {content_type}")
+                continue  # 유효한 인덱스가 없으면 건너뜀
+
+            try:
+                app.logger.info(f"Fetching document {post_id} from index {index_name}")
+                doc = es.get(index=index_name, id=post_id, ignore=404)
+
+                # 'found' 키를 안전하게 확인하고, 문서가 존재하는지 확인
+                if doc.get("found", False):
+                    current_like = doc["_source"].get("like", 0)
+                    current_report = doc["_source"].get("report", 0)
+
+                    # 기존 값에 Redis에서 받은 값 추가
+                    update_data = {}
+                    if key_type == "like":
+                        update_data["like"] = current_like + value
+                    elif key_type == "report":
+                        update_data["report"] = current_report + value
+
+                    if update_data:
+                        app.logger.info(f"Updating document {post_id} in index {index_name} with {update_data}")
+                        es.update(index=index_name, id=post_id, body={"doc": update_data})
+                else:
+                    app.logger.error(f"Document with ID {post_id} not found in index {index_name}")
+            except Exception as e:
+                error_message = traceback.format_exc()  # 전체 에러 스택 트레이스
+                app.logger.error(
+                    f"Elasticsearch update error for document {post_id} in index {index_name}:\n{error_message}")
+
+        return jsonify({"message": "Likes and Reports updated successfully"}), 200
+    except Exception as e:
+        error_message = traceback.format_exc()  # 전체 에러 스택 트레이스
+        app.logger.error(f"Unhandled error in /update/likes-reports:\n{error_message}")
+        return jsonify({"error": str(e)}), 500
+
 
 # JSON 파일 업로드 (여러 개의 데이터 한 번에)
 @app.route("/upload/json", methods=["POST"])
