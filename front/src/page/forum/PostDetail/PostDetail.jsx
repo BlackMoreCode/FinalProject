@@ -42,10 +42,38 @@ const PostDetail = () => {
   // 게시글 인용 요청을 위한 상태 (PostDetail → CommentsContainer)
   const [postToReply, setPostToReply] = useState(null);
 
-  // 좋아요 처리 함수 (추후 API 로직 추가)
+  // 좋아요 처리 함수 (게시글 좋아요 토글)
   const handleLikePost = async (postId) => {
-    console.log("좋아요 처리:", postId);
-    // 좋아요 API 호출 로직 추가
+    try {
+      // 게시글 좋아요 토글 API 호출 (user.id 사용)
+      const updatedPost = await ForumApi.toggleLikePost(postId, user.id);
+      // API 응답으로 받은 총 좋아요 개수와 좋아요 상태로 post 상태 업데이트
+      setPost((prev) => ({
+        ...prev,
+        likesCount: updatedPost.totalLikes,
+        liked: updatedPost.liked,
+      }));
+      toast.success("게시글 좋아요 상태가 변경되었습니다.");
+    } catch (error) {
+      console.error("게시글 좋아요 처리 중 오류:", error);
+      toast.error("좋아요 처리에 실패했습니다.");
+    }
+  };
+
+  // 좋아요 처리 함수 (댓글 좋아요 토글)
+  const handleLikeComment = async (commentId) => {
+    try {
+      // 댓글 좋아요 토글 API 호출 (user.id 사용)
+      const updatedComment = await ForumApi.toggleLikeComment(
+        commentId,
+        user.id
+      );
+      // 댓글 좋아요 상태는 CommentsContainer 내부에서 개별적으로 처리할 수 있습니다.
+      toast.success("댓글 좋아요 상태가 변경되었습니다.");
+    } catch (error) {
+      console.error("댓글 좋아요 처리 중 오류:", error);
+      toast.error("좋아요 처리에 실패했습니다.");
+    }
   };
 
   // 게시글 인용(답글) 처리 함수
@@ -141,6 +169,7 @@ const PostDetail = () => {
             memberId={user.id}
             isAdmin={user.admin}
             loading={loading}
+            // 게시글 삭제, 수정, 신고, 복원, 좋아요, 인용 등 처리 함수 전달
             onDeletePost={(pid) => openModal("deletePost", pid, "")}
             onEditPostContent={(pid, cJSON) =>
               openModal("editPostContent", pid, cJSON)
@@ -150,17 +179,18 @@ const PostDetail = () => {
             }
             onRestorePost={(pid) => openModal("restorePost", pid, "")}
             onLikePost={handleLikePost}
-            onReplyPost={handleReply} // 게시글 인용 요청 처리 함수 전달
+            onReplyPost={handleReply}
           />
 
           <Divider />
 
-          {/* CommentsContainer에 postToReply와 setPostToReply를 전달 */}
+          {/* CommentsContainer에 게시글 인용과 댓글 좋아요 처리 함수 전달 */}
           <CommentsContainer
             postId={postId}
             user={user}
             postToReply={postToReply}
             setPostToReply={setPostToReply}
+            onLikeComment={handleLikeComment} // 댓글 좋아요 처리 함수 전달
           />
         </>
       )}

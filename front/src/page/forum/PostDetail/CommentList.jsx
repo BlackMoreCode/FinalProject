@@ -148,7 +148,7 @@ const CommentList = ({
                 </div>
                 <div className="right">
                   <button onClick={() => onLikeComment(comment.id)}>
-                    <FontAwesomeIcon icon={faThumbsUp} /> {comment.likesCount}
+                    <FontAwesomeIcon icon={faThumbsUp} /> {comment.totalLikes}
                   </button>
                   <button onClick={() => onReply(comment, "comment")}>
                     <FontAwesomeIcon icon={faReply} />
