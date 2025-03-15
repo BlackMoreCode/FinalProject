@@ -40,7 +40,7 @@ public class ForumPostLikeController {
      * 댓글 좋아요 토글
      *
      * @param commentId 댓글 ID
-     * loggedInMemberId 요청 사용자 ID
+     * @param requestDto 좋아요 요청 정보 (memberId, postId 포함)
      * @return 좋아요 토글 결과 DTO
      * @apiNote 댓글에 대해 사용자가 좋아요/좋아요 취소를 수행합니다.
      */
@@ -49,8 +49,10 @@ public class ForumPostLikeController {
             @PathVariable Integer commentId,
             @RequestBody ForumPostLikeRequestDto requestDto) {
         Long memberId = requestDto.getMemberId();
-        ForumPostLikeResponseDto response = likeService.toggleCommentLike(commentId, memberId);
+        String postId = requestDto.getPostId(); // 이제 postId는 String 타입입니다.
+        ForumPostLikeResponseDto response = likeService.toggleCommentLike(commentId, memberId, postId);
         return ResponseEntity.ok(response);
     }
+
 }
 

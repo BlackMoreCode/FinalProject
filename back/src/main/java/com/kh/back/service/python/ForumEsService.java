@@ -576,11 +576,11 @@ public class ForumEsService {
     /**
      * 댓글 좋아요 토글 (commentId는 Integer 그대로)
      */
-    public ForumPostLikeResponseDto toggleCommentLike(Integer commentId, Long memberId) {
+    public ForumPostLikeResponseDto toggleCommentLike(Integer commentId, Long memberId, String postId) {
         try {
             URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/like");
-            String jsonBody = "{\"memberId\": " + memberId + ", \"postId\": \"<해당_게시글_ID>\"}";
-            // 주의: 댓글 좋아요의 경우, 어느 게시글의 댓글인지도 필요하므로 postId를 함께 보내야 합니다.
+            String jsonBody = "{\"memberId\": " + memberId + ", \"postId\": \"" + postId + "\"}";
+            // 주의: 댓글 좋아요의 경우, 어느 게시글의 댓글인지도 필요하므로 postId를 함께 보냅니다.
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -595,4 +595,5 @@ public class ForumEsService {
             return null;
         }
     }
+
 }
