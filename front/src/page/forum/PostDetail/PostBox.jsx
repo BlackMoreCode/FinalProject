@@ -165,7 +165,7 @@ const PostBox = ({
 
           <div className="right">
             <button onClick={() => onLikePost(post.id)}>
-              <FontAwesomeIcon icon={faThumbsUp} /> {post.totalLikes}
+              <FontAwesomeIcon icon={faThumbsUp} /> {post.likesCount}
             </button>
             <button onClick={() => onReplyPost(post, "post")}>
               <FontAwesomeIcon icon={faReply} />

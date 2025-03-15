@@ -86,9 +86,9 @@ const ForumApi = {
     ),
 
   toggleLikePost: (postId, loggedInMemberId) =>
-    AxiosInstance.post(
-      `/api/forums/posts/${postId}/like?loggedInMemberId=${loggedInMemberId}`
-    ).then((response) => response.data),
+    AxiosInstance.post(`/api/forums/posts/${postId}/like`, {
+      memberId: loggedInMemberId,
+    }).then((response) => response.data),
 
   // ------------------ 댓글(Comment) 관련 ------------------
   getCommentsByPostId: (postId) =>
@@ -132,10 +132,12 @@ const ForumApi = {
       (response) => response.data
     ),
 
-  toggleLikeComment: (commentId, loggedInMemberId) =>
-    AxiosInstance.post(
-      `/api/forums/comments/${commentId}/like?loggedInMemberId=${loggedInMemberId}`
-    ).then((response) => response.data),
+  // 수정된 ForumApi.js의 toggleLikeComment: 이제 postId를 함께 전달합니다.
+  toggleLikeComment: (commentId, loggedInMemberId, postId) =>
+    AxiosInstance.post(`/api/forums/comments/${commentId}/like`, {
+      memberId: loggedInMemberId,
+      postId: postId, // 댓글이 속한 게시글의 ID를 함께 보냄
+    }).then((response) => response.data),
 
   // ------------------ 검색 및 상세 조회 ------------------
   search: (q, category, page, size) => {

@@ -45,12 +45,12 @@ const PostDetail = () => {
   // 좋아요 처리 함수 (게시글 좋아요 토글)
   const handleLikePost = async (postId) => {
     try {
-      // 게시글 좋아요 토글 API 호출 (user.id 사용)
       const updatedPost = await ForumApi.toggleLikePost(postId, user.id);
-      // API 응답으로 받은 총 좋아요 개수와 좋아요 상태로 post 상태 업데이트
+      // updatedPost가 { liked: true/false, totalLikes: number }로 오는데,
+      // 만약 백엔드에서 totalLikes 대신 likesCount를 보내면 아래처럼 변경:
       setPost((prev) => ({
         ...prev,
-        likesCount: updatedPost.totalLikes,
+        likesCount: updatedPost.likesCount, // 변경: totalLikes -> likesCount
         liked: updatedPost.liked,
       }));
       toast.success("게시글 좋아요 상태가 변경되었습니다.");

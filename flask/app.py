@@ -481,7 +481,7 @@ def toggle_forum_post_like(doc_id):
         # **여기서 핵심: liked + totalLikes로 JSON 응답**
         return jsonify({
             "liked": liked,
-            "totalLikes": post_data["likesCount"]
+            "likesCount": post_data["likesCount"]
         }), 200
 
     except Exception as e:
@@ -974,7 +974,7 @@ def search_forum_category():
         # Use a term query on the keyword sub-field for an exact match.
         body = {
             "query": {
-                "term": {"title.keyword": title}
+                "match_phrase": {"title": title}
             }
         }
         res = es.search(index=index_name, body=body)

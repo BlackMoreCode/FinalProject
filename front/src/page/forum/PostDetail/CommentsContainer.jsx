@@ -187,11 +187,16 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
   // 댓글 좋아요 함수
   const handleLikeComment = async (commentId) => {
     try {
-      const updated = await ForumApi.toggleLikeComment(commentId, user.id);
+      // 여기서 postId는 해당 댓글이 속한 게시글의 ID를 의미합니다.
+      const updated = await ForumApi.toggleLikeComment(
+        commentId,
+        user.id,
+        postId
+      );
       setComments((prev) =>
         prev.map((c) =>
           c.id === commentId
-            ? { ...c, likesCount: updated.totalLikes, liked: updated.liked }
+            ? { ...c, likesCount: updated.likesCount, liked: updated.liked }
             : c
         )
       );
