@@ -15,13 +15,11 @@ import RecipeDetail from "./page/food/FoodRecipeDetail";
 import AddRecipeDetail from "./page/RecipeUpload/AddRecipeDetail";
 import AddCockTailDetail from "./page/RecipeUpload/AddCockTailDetail";
 import RecipeTypeSelect from "./page/food/RecipeTypeSelect";
-// import RecipeUploader from "./page/AddRecipeDetail";
+import Forum from "./page/forum/Forum";
+import PostDetail from "./page/forum/PostDetail/PostDetail";
+import CreatePost from "./page/forum/CreatePost";
+import ForumPosts from "./page/forum/ForumPosts";
 
-// import Forum from "./page/forum/Forum";
-
-// import PostDetail from "./page/forum/PostDetail/PostDetail";
-// import CreatePost from "./page/forum/CreatePost";
-// import ForumPosts from "./page/forum/ForumPosts";
 
 function App() {
   return (
