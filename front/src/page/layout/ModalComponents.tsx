@@ -10,6 +10,7 @@ import SubmitModal from "../../component/Modal/SubmitModal";
 import TitleNContentModal from "../../component/Modal/TitleNContentModal";
 import FindPwdModal from "../auth/findPw/FindPwdModal";
 import FindIdModal from "../auth/findId/FindIdModal";
+import CalendarModal from "../profile/calendar/CalendarModal";
 
 
 
@@ -21,6 +22,7 @@ const ModalComponents = () => {
       <LoginModal/>
       <FindIdModal/>
       <FindPwdModal/>
+      <CalendarModal/>
       <ConfirmModal/>
       <CursorModal/>
       <LoadingModal/>

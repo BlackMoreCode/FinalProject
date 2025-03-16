@@ -7,6 +7,7 @@ import { FailPage } from "./component/payments/Fail";
 import CocktailDetail from "./page/cocktail/CocktailDetailPage";
 import FoodListPage from "./page/food/FoodListPage";
 import ProfileCustomization from "./page/profile/cardcustom/ProfileCustomization";
+import ProfileEditPage from "./page/profile/edit/ProfileEditPage";
 import Layout from "./page/layout/Layout";
 import CocktailListPage from "./page/cocktail/CocktailListPage";
 import GlobalStyle from "./page/layout/style/GlobalStyle";
@@ -19,6 +20,11 @@ import Forum from "./page/forum/Forum";
 import PostDetail from "./page/forum/PostDetail/PostDetail";
 import CreatePost from "./page/forum/CreatePost";
 import ForumPosts from "./page/forum/ForumPosts";
+import AdminNav from "./page/admin/AdminNav";
+import AdminMain from "./page/admin/AdminMain";
+import MemberControlMain from "./page/admin/member/list/MemberControlMain";
+import AdminStore from "./context/AdminStore";
+import MemberItemMain from "./page/admin/member/item/MemberItemMain";
 
 function App() {
   return (
@@ -27,7 +33,7 @@ function App() {
       <GlobalStyle />
       <Router>
         <Routes>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<Layout/>}>
             <Route path="main" element={<MainPage />} />
             {/*프로필 페이지*/}
             <Route path="profile/:id?" element={<ProfilePage />} />
@@ -36,26 +42,16 @@ function App() {
               path="profile/cardcustom"
               element={<ProfileCustomization />}
             />
-            <Route
-              path="profile/cardcustom"
-              element={<ProfileCustomization />}
-            />
-            {/* <Route path="profile/edit" element={<ProfileEditPage />} /> */}
+            <Route path="profile/edit" element={<ProfileEditPage />} />
 
             {/* 레시피 페이지 (라우트 경로 수정됨) */}
             <Route path="recipe/:index" element={<CocktailListPage />} />
             {/*컴포넌트를 같은 컴포넌트를 쓰되 index를 다르게 해서 관리하기*/}
             <Route path="recipe/food" element={<FoodListPage />} />
 
-            <Route
-              path="foodrecipe/detail/:id/:type"
-              element={<RecipeDetail />}
-            />
-            <Route
-              path="cocktailrecipe/detail/:id/:type"
-              element={<CocktailDetail />}
-            />
-            <Route path="/recipe/typeselect" element={<RecipeTypeSelect />} />
+            <Route path="foodrecipe/detail/:id/:type" element={<RecipeDetail/>} />
+            <Route path="cocktailrecipe/detail/:id/:type" element={<CocktailDetail />} />
+            <Route path="/recipe/typeselect" element={<RecipeTypeSelect/>}/>
 
             {/* 포럼 게시판 페이지 */}
             <Route path="/forum" element={<Forum />} />
@@ -66,10 +62,14 @@ function App() {
               element={<ForumPosts />}
             />
             <Route path="foodrecipe/upload" element={<AddRecipeDetail />} />
-            <Route
-              path="cocktailrecipe/upload"
-              element={<AddCockTailDetail />}
-            />
+            <Route path="cocktailrecipe/upload" element={< AddCockTailDetail/>} />
+
+            {/*관리자 페이지*/}
+            <Route path="admin" element={<AdminStore><AdminNav/></AdminStore>}>
+              <Route path="" element={<AdminMain/>}/>
+              <Route path="member/:search?" element={<MemberControlMain/>}/>
+              <Route path="member/detail/:id" element={<MemberItemMain/>}/>
+            </Route>
           </Route>
           {/* 결제 페이지 */}
           <Route path="/pay" element={<CheckoutPage />} />

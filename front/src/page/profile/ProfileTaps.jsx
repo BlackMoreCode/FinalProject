@@ -5,13 +5,17 @@ import {
   TabList,
   TabItem,
   TabContent,
-  CalendarSection,
   UserPost,
 } from "./style/ProfileTabsStyle";
+import MiniCalendar from "../../component/MiniCalendar";
+import {useParams} from "react-router-dom";
+import {useSelector} from "react-redux";
 
 const ProfileTabs = () => {
+  const myId = useSelector((state) => state.user.id);
   const [activeTab, setActiveTab] = useState("calendar");
-
+  const {id } = useParams();
+  const memberId = id ? parseInt(id, 10) : myId
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
   };
@@ -49,9 +53,7 @@ const ProfileTabs = () => {
 
       <TabContent>
         {activeTab === "calendar" && (
-          <CalendarSection>
-            <p>캘린더/출석/이벤트 정보 표시 영역</p>
-          </CalendarSection>
+            <MiniCalendar memberId={memberId}/>
         )}
 
         {activeTab === "posts" && (

@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ForumPostResponseDto implements SearchResDto {
+public class ForumPostResponseDto extends SearchResDto {
     @JsonProperty("id")
     private String id; // 게시글 ID
     private String title; // 게시글 제목

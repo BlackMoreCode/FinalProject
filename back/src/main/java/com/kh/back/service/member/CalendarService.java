@@ -38,7 +38,7 @@ public class CalendarService {
 			Long memberId = reqDto.getMemberId();
 			if (memberId == null) {
 				log.warn("Member ID가 없습니다.");
-				return List.of();
+				return null;
 			}
 			
 			// 멤버 정보 가져오기
@@ -51,11 +51,11 @@ public class CalendarService {
 			// DTO 값에 따라 적절한 Repository 메서드 선택
 			List<Calendar> calendars;
 			
-			if (reqDto.getStart() != null && reqDto.getEnd() != null && reqDto.getRecipeId() != null) {
+			if (reqDto.getStart() != null && reqDto.getEnd() != null  && reqDto.getRecipe() != null) {
 				// ✅ 특정 멤버 + 특정 레시피 + 날짜 범위
 				calendars = calendarRepository.findByMemberAndRecipeAndDateBetween(
 					member,
-					Recipe.valueOf(reqDto.getRecipeId()),
+					Recipe.valueOf(reqDto.getRecipe()),
 					reqDto.getStart(),
 					reqDto.getEnd()
 				);
@@ -68,11 +68,11 @@ public class CalendarService {
 					reqDto.getEnd()
 				);
 				
-			} else if (reqDto.getRecipeId() != null) {
+			} else if (reqDto.getRecipe() != null) {
 				// ✅ 특정 멤버 + 특정 레시피
 				calendars = calendarRepository.findByMemberAndRecipe(
 					member,
-					Recipe.valueOf(reqDto.getRecipeId())
+					Recipe.valueOf(reqDto.getRecipe())
 				);
 				
 			} else {
@@ -108,6 +108,7 @@ public class CalendarService {
 			calendar.setMemo(reqDto.getMemo());
 			calendar.setAmount(reqDto.getAmount());
 			calendar.setRecipe(Recipe.valueOf(reqDto.getCategory()));
+			calendar.setRecipeName(searchResDto.getName());
 			calendar.setDate(reqDto.getDate() != null ? reqDto.getDate() : LocalDate.now());
 			log.warn("저장한 캘린더 : {}", calendar);
 			calendarRepository.save(calendar);
@@ -139,6 +140,7 @@ public class CalendarService {
 			calendar.setAmount(reqDto.getAmount());
 			calendar.setDate(reqDto.getDate());
 			calendar.setRecipeId(reqDto.getRecipeId());
+			calendar.setRecipeName(searchResDto.getName());
 			calendar.setMemo(reqDto.getMemo());
 			calendar.setRecipe(Recipe.valueOf(reqDto.getCategory()));
 			log.warn("수정된 캘린더 : {}", calendar);
@@ -146,6 +148,24 @@ public class CalendarService {
 			return true;
 		} catch (Exception e) {
 			log.error("캘린더 수정중 에러 : {}", e.getMessage());
+			return false;
+		}
+	}
+	
+	public boolean deleteCalendar(Long id, Authentication auth) {
+		try {
+			Member member = memberService.convertAuthToEntity(auth);
+			Calendar calendar = calendarRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("해당 캘린더가 존재하지 않습니다."));
+			if (!calendar.getMember().equals(member)) {
+				log.error("해당 회원은 캘린더의 주인이 아닙니다. {}-{}", calendar, member);
+				return false;
+			}
+			calendarRepository.delete(calendar);
+			return true;
+			
+		} catch (Exception e) {
+			log.error("{}의 이유로 캘린더 삭제에 실패했습니다.",e.getMessage());
 			return false;
 		}
 	}
@@ -181,6 +201,22 @@ public class CalendarService {
 		}
 	}
 	
+	public CalendarResDto getCalendar(Long calendarId, Authentication auth) {
+		try{
+			Calendar calendar = calendarRepository.findById(calendarId)
+				.orElseThrow(() -> new RuntimeException("해당 캘린더가 없습니다."));
+			Member member = memberService.convertAuthToEntity(auth);
+			if(!calendar.getMember().equals(member)){
+				log.error("Calendar의 주인이 아닌 사람이 캘린더를 조회하고 있습니다.");
+				return null;
+			}
+			return convertCalendarToDto(calendar);
+		} catch (Exception e) {
+			log.error("캘린더 단일 조회중 에러");
+			return null;
+		}
+	}
+	
 	// ✅ Calendar → CalendarResDto 변환
 	private CalendarResDto convertCalendarToDto(Calendar calendar) {
 		return CalendarResDto.builder()
@@ -190,6 +226,8 @@ public class CalendarService {
 			.date(calendar.getDate())
 			.recipeId(calendar.getRecipeId())
 			.memberId(calendar.getMember().getMemberId())
+			.recipe(calendar.getRecipe())
+			.recipeName(calendar.getRecipeName())
 			.build();
 	}
 }

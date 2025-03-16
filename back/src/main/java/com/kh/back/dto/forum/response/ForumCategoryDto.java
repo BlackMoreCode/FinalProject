@@ -2,6 +2,7 @@ package com.kh.back.dto.forum.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -12,6 +13,7 @@ import java.time.OffsetDateTime;
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ForumCategoryDto {
     private String id; // 카테고리 ID (변경: Integer -> String)
     private String title; // 카테고리 제목

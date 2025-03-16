@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {ModalState, Option, Position} from "../types";
-import {RootState} from "../Store";
 import {logout} from "./CommonAction";
 
 // 초기 상태 설정
@@ -9,6 +8,12 @@ const initialState: ModalState = {
   signupModal: false,
   findIdModal: false,
   findPwModal: false,
+  calendarModal: {
+    open: false,
+    message: "",
+    date: "",
+    memberId: null,
+  },
   loadingModal: null,
   rejectModal: {
     open: false,
@@ -81,6 +86,15 @@ const ModalReducer = createSlice({
         default:
           break;
       }
+    },
+    setCalendarModal: (
+      state,
+      action: PayloadAction<{
+      message: string;
+      date: string;
+      memberId: number;
+    }>) => {
+      state.calendarModal = {...action.payload, open: true};
     },
 
     openLoadingModal: (
@@ -184,6 +198,9 @@ const ModalReducer = createSlice({
           break;
       }
     },
+    closeCalendarModal: (state) => {
+      state.calendarModal = {open: false, message: "", memberId: null, date: ""};
+    },
     closeLoadingModal: (state) => {
       state.loadingModal = null;
     },
@@ -212,6 +229,7 @@ const ModalReducer = createSlice({
       state.signupModal = false;
       state.findPwModal = false;
       state.findIdModal = false;
+      state.calendarModal = {open: false, message: "", memberId: null, date: ""};
       state.loadingModal = null;
       state.rejectModal = { open: false, message: "", onCancel: null };
       state.confirmModal = { open: false, message: "", onConfirm: null, onCancel: null };
@@ -231,6 +249,7 @@ const ModalReducer = createSlice({
 
 export const {
   openModal,
+  setCalendarModal,
   openLoadingModal,
   setRejectModal,
   setConfirmModal,
@@ -240,6 +259,7 @@ export const {
   setTitleNContentModal,
   closeLoadingModal,
   closeModal,
+  closeCalendarModal,
   closeRejectModal,
   closeConfirmModal,
   closeOptionModal,

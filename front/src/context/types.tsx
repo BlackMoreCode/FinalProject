@@ -1,5 +1,6 @@
 import React from "react";
 import {MyInfo} from "../api/dto/ReduxDto";
+import {CalendarResDto} from "../api/dto/CalendarDto";
 
 // 토큰에 들어가는 데이터 타입
 export interface TokenState{
@@ -21,6 +22,12 @@ export interface ModalState {
   signupModal: boolean;
   findIdModal: boolean;
   findPwModal: boolean;
+  calendarModal: {
+    open: boolean;
+    message: string;
+    date: string;
+    memberId: number | null;
+  };
   loadingModal: {
     open: boolean;
     message: string;
@@ -130,3 +137,5 @@ export interface RecipeData {
   report: number;
   author: number;
 }
+
+

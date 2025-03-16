@@ -3,6 +3,8 @@ package com.kh.back.dto.forum.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
@@ -13,6 +15,7 @@ import java.time.OffsetDateTime;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class ForumPostCommentResponseDto {
     private Integer id;             // 댓글 ID
     private String content;         // 댓글 내용 (HTML)

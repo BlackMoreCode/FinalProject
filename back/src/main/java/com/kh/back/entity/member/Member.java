@@ -26,21 +26,18 @@ public class Member {
     // length = 50 : 최대 길이(바이트)
     @Column(unique = true)
     private String userId; // 고유 사용자 ID (소셜 또는 직접 가입)
-    @Column(name = "nick_name")
+    @Column(name = "nick_name", unique = true)
     private String nickName;
     @Column(unique = true)
     private String email;
     @Column
     private String pwd;
-    @Column(length = 50)
-    private String name;
 
     @Column(name = "member_img")
     private String memberImg;
 
     @Column(length = 50)
     private String type; // 가입 방식 (예: "kakao", "naver", "direct")
-
     
     @Column(name = "refresh_token")
     private String refreshToken;
@@ -68,7 +65,6 @@ public class Member {
         this.nickName = nickName;
         this.email = email;
         this.pwd = pwd;
-        this.name = name;
         this.phone = phone;
         this.regDate = regDate;
         this.authority = authority;
@@ -80,7 +76,6 @@ public class Member {
     public Member(String userId, String email, String type, String phone, String name, String nickName, LocalDateTime regDate) {
         this.userId = userId;
         this.phone = phone;
-        this.name = name;
         this.nickName = nickName;
         this.pwd = "password";
         this.email = email;

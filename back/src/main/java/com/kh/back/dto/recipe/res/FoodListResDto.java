@@ -15,12 +15,7 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class FoodListResDto implements SearchListResDto {
-    private String id;
-
-    // "name" 필드는 JSON과 동일하게 사용 (출력: name)
-    private String name;
-
+public class FoodListResDto extends SearchListResDto {
     // 입력은 "ATT_FILE_NO_MAIN"을 받지만, 출력은 "image"로 보냄
     @JsonProperty("image")
     @JsonAlias("ATT_FILE_NO_MAIN")

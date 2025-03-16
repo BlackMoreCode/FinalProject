@@ -32,6 +32,11 @@ public class CalendarController {
 		return ResponseEntity.ok(calendarService.existsCalendar(recipeId, date, authentication ));
 	}
 	
+	@GetMapping("/id/{calendarId}")
+	public ResponseEntity<CalendarResDto> getCalendarById(@PathVariable Long calendarId, Authentication authentication) {
+		return ResponseEntity.ok(calendarService.getCalendar(calendarId, authentication ));
+	}
+	
 	@PostMapping("/create")
 	public ResponseEntity<Boolean> createCalendar(@RequestBody CalendarCreateReqDto calendarCreateReqDto, Authentication authentication) {
 		return ResponseEntity.ok(calendarService.createCalendar(calendarCreateReqDto, authentication));
@@ -40,6 +45,11 @@ public class CalendarController {
 	@PostMapping("/update")
 	public ResponseEntity<Boolean> updateCalendar(@RequestBody CalendarUpdateReqDto calendarUpdateReqDto, Authentication authentication) {
 		return ResponseEntity.ok(calendarService.updateCalendar(calendarUpdateReqDto, authentication));
+	}
+	
+	@DeleteMapping("/delete/{id}")
+	public ResponseEntity<Boolean> deleteCalendar(@PathVariable Long id, Authentication authentication) {
+		return ResponseEntity.ok(calendarService.deleteCalendar(id, authentication));
 	}
 	
 	@GetMapping("/public/top/{type}")

@@ -16,7 +16,7 @@ public class ReduxController {
 	private final ReduxService reduxService;
 	
 	@GetMapping("/myinfo")
-	public ResponseEntity<ReduxResDto> myinfo(Authentication auth) {
+	public ResponseEntity<ReduxResDto> myInfo(Authentication auth) {
 		return ResponseEntity.ok(reduxService.getMyInfo(auth));
 	}
 }

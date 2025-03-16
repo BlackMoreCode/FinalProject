@@ -52,7 +52,6 @@ public class MemberService {
 			member.setAuthority(Authority.REST_USER);
 			member.setEmail(memberId + "deleted" + UUID.randomUUID());
 			member.setPwd( memberId + "password" + UUID.randomUUID());
-			member.setName(null);
 			member.setPhone(null);
 			member.setRegDate(null);
 			member.setAuthority(null);
@@ -177,7 +176,6 @@ public class MemberService {
 		// MemberInfoDto로 변환
 		MemberInfoDto memberInfoDto = new MemberInfoDto();
 		memberInfoDto.setMemberId(member.getMemberId());
-		memberInfoDto.setName(member.getName());
 		memberInfoDto.setNickName(member.getNickName());
 		memberInfoDto.setEmail(member.getEmail());
 		memberInfoDto.setPhone(member.getPhone());

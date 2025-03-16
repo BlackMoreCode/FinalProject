@@ -7,9 +7,7 @@ import java.util.List;
 
 @Getter @Setter @ToString
 @NoArgsConstructor @AllArgsConstructor
-public class CocktailResDto implements SearchResDto {
-	private String id;              // Elasticsearch에서 문서 ID를 받을 필드
-	private String name;            // 이름
+public class CocktailResDto extends SearchResDto {
 	private String glass;
 	private String preparation;     // 설명 (혹은 preparation, garnishing을 위한 필드로 확장 가능)
 	private String image;           // 이미지 (keyword 필드)

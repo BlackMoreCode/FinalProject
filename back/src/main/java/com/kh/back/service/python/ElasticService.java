@@ -3,7 +3,6 @@ package com.kh.back.service.python;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.dto.python.SearchResDto;
-import com.kh.back.dto.recipe.res.CocktailIngListResDto;
 import com.kh.back.dto.recipe.res.CocktailListResDto;
 import com.kh.back.dto.recipe.res.CocktailResDto;
 import com.kh.back.dto.recipe.res.FoodListResDto;
@@ -144,11 +143,6 @@ public class ElasticService {
 						response,
 						objectMapper.getTypeFactory().constructCollectionType(List.class, FoodListResDto.class)
 				);
-			case "cocktail_ingredient":
-				return objectMapper.readValue(
-						response,
-						objectMapper.getTypeFactory().constructCollectionType(List.class, CocktailIngListResDto.class)
-				);
 			// 다른 타입은 필요 시 추가
 			default:
 				return null;
@@ -160,15 +154,12 @@ public class ElasticService {
 	 * - JSON 응답 문자열을 DTO 형태로 변환
 	 */
 	public SearchResDto convertResToDto(String response, String type) throws IOException {
-		switch (type) {
-			case "cocktail":
-				return objectMapper.readValue(response, CocktailResDto.class);
-			case "food":
-				return objectMapper.readValue(response, FoodResDto.class);
+		return switch (type) {
+			case "cocktail" -> objectMapper.readValue(response, CocktailResDto.class);
+			case "food" -> objectMapper.readValue(response, FoodResDto.class);
 			// 다른 타입은 필요 시 추가
-			default:
-				return null;
-		}
+			default -> null;
+		};
 	}
 
 	/**
