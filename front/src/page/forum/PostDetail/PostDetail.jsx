@@ -18,6 +18,8 @@ import styled from "styled-components";
 import { useSelector } from "react-redux";
 import ConfirmationModal from "../ConfirmationModal";
 import { createReplyBlock } from "./replyUtils";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit } from "@fortawesome/free-solid-svg-icons";
 
 const Divider = styled.hr`
   border: none;
@@ -37,21 +39,21 @@ const PostDetail = () => {
   const [modalData, setModalData] = useState({
     type: "",
     id: null,
-    content: "",
+    content: "", // 모달에서 편집할 데이터(문자열 또는 객체)
   });
-  // 게시글 인용 요청을 위한 상태 (PostDetail → CommentsContainer)
+  // 게시글 인용 요청(CommentsContainer에서 처리)
   const [postToReply, setPostToReply] = useState(null);
 
-  // 좋아요 처리 함수 (게시글 좋아요 토글)
-  const handleLikePost = async (postId) => {
+  // 게시글 좋아요 토글
+  const handleLikePost = async (pid) => {
     try {
-      const updatedPost = await ForumApi.toggleLikePost(postId, user.id);
-      // updatedPost가 { liked: true/false, totalLikes: number }로 오는데,
-      // 만약 백엔드에서 totalLikes 대신 likesCount를 보내면 아래처럼 변경:
+      const updatedPost = await ForumApi.toggleLikePost(pid, user.id);
       setPost((prev) => ({
         ...prev,
-        likesCount: updatedPost.likesCount, // 변경: totalLikes -> likesCount
+        likesCount: updatedPost.likesCount,
         liked: updatedPost.liked,
+        // updatedAt 값이 변경되었으면 key가 바뀌어 재마운트됨
+        updatedAt: updatedPost.updatedAt || new Date().toISOString(),
       }));
       toast.success("게시글 좋아요 상태가 변경되었습니다.");
     } catch (error) {
@@ -60,15 +62,13 @@ const PostDetail = () => {
     }
   };
 
-  // 좋아요 처리 함수 (댓글 좋아요 토글)
+  // (선택) 댓글 좋아요 처리 예시
   const handleLikeComment = async (commentId) => {
     try {
-      // 댓글 좋아요 토글 API 호출 (user.id 사용)
       const updatedComment = await ForumApi.toggleLikeComment(
         commentId,
         user.id
       );
-      // 댓글 좋아요 상태는 CommentsContainer 내부에서 개별적으로 처리할 수 있습니다.
       toast.success("댓글 좋아요 상태가 변경되었습니다.");
     } catch (error) {
       console.error("댓글 좋아요 처리 중 오류:", error);
@@ -76,13 +76,11 @@ const PostDetail = () => {
     }
   };
 
-  // 게시글 인용(답글) 처리 함수
+  // 게시글 인용(답글)
   const handleReply = (target, type) => {
     if (type === "post") {
-      // 게시글 인용 요청 상태를 업데이트
       setPostToReply(target);
     } else {
-      // 댓글 인용은 기존처럼 바로 처리 (CommentsContainer 내의 handleReply 사용)
       console.log("댓글 인용 처리:", target);
     }
     toast.info(`${target.authorName}님의 내용을 인용합니다.`);
@@ -94,29 +92,87 @@ const PostDetail = () => {
     setIsModalOpen(true);
   };
 
-  // 모달 확인 버튼 클릭 시 처리 함수
+  // 모달 확인 버튼 클릭 시 처리
   const handleModalConfirm = async (inputVal) => {
-    switch (modalData.type) {
-      case "deletePost":
-        console.log("게시글 삭제:", modalData.id);
-        // 예: await ForumApi.deletePost(modalData.id, user.id, ...);
-        toast.success("게시글이 삭제되었습니다.");
-        navigate("/forum");
-        break;
-      case "editPostContent":
-        console.log("게시글 내용 수정:", modalData.id, "새 내용:", inputVal);
-        // 예: await ForumApi.updatePostContent(modalData.id, { contentJSON: inputVal }, user.id, user.admin);
-        toast.success("게시글 내용이 수정되었습니다.");
-        break;
-      case "reportPost":
-        console.log("게시글 신고:", modalData.id, "신고 사유:", inputVal);
-        // 예: await ForumApi.reportPost(modalData.id, user.id, inputVal);
-        toast.success("게시글 신고가 접수되었습니다.");
-        break;
-      default:
-        console.log("모달 액션:", modalData.type, "입력값:", inputVal);
+    try {
+      switch (modalData.type) {
+        case "deletePost": {
+          await ForumApi.deletePost(
+            modalData.id,
+            user.id,
+            user.admin ? "ADMIN" : user.name,
+            user.admin
+          );
+          toast.success("게시글이 삭제되었습니다.");
+          navigate("/forum");
+          break;
+        }
+        case "editPostContent": {
+          const payload = {
+            contentJSON:
+              typeof inputVal === "object"
+                ? JSON.stringify(inputVal)
+                : inputVal,
+            editedBy: user.admin ? "ADMIN" : String(user.id),
+            // 백엔드가 isAdmin을 문자열로 기대하므로 변환
+            isAdmin: user.admin ? "true" : "false",
+          };
+          const updated = await ForumApi.updatePostContent(
+            modalData.id,
+            payload,
+            user.id,
+            user.admin
+          );
+          setPost((prev) => ({
+            ...prev,
+            contentJSON: updated.contentJSON,
+            updatedAt: updated.updatedAt || new Date().toISOString(),
+          }));
+          toast.success("게시글 내용이 수정되었습니다.");
+          break;
+        }
+        case "editPostTitle": {
+          if (!inputVal.trim()) {
+            toast.warning("제목을 입력해주세요.");
+            return;
+          }
+          const payload = {
+            title: inputVal,
+            editedBy: user.admin ? "ADMIN" : String(user.id),
+            isAdmin: user.admin ? "true" : "false",
+          };
+          const updated = await ForumApi.updatePostTitle(
+            modalData.id,
+            payload,
+            user.id,
+            user.admin
+          );
+          setPost((prev) => ({
+            ...prev,
+            title: updated.title,
+            updatedAt: updated.updatedAt || new Date().toISOString(),
+          }));
+          toast.success("게시글 제목이 수정되었습니다.");
+          break;
+        }
+        case "reportPost": {
+          if (!inputVal.trim()) {
+            toast.warning("신고 사유를 입력해주세요.");
+            return;
+          }
+          await ForumApi.reportPost(modalData.id, user.id, inputVal);
+          toast.success("게시글 신고가 접수되었습니다.");
+          break;
+        }
+        default:
+          console.log("모달 액션:", modalData.type, "입력값:", inputVal);
+      }
+    } catch (error) {
+      console.error("모달 액션 처리 중 오류:", error);
+      toast.error("작업 처리에 실패했습니다.");
+    } finally {
+      setIsModalOpen(false);
     }
-    setIsModalOpen(false);
   };
 
   // 모달 취소 함수
@@ -157,9 +213,26 @@ const PostDetail = () => {
                 NOTICE: 해당 게시글은 삭제되거나 숨김 처리되었습니다.
               </HiddenCommentNotice>
             ) : (
-              <span>{post.title}</span>
+              <>
+                <span>{post.title}</span>
+                {/* Show edit icon next to title if the current user is the author */}
+                {user.id === post.memberId && (
+                  <FontAwesomeIcon
+                    icon={faEdit}
+                    style={{
+                      cursor: "pointer",
+                      marginLeft: "8px",
+                      color: "#007bff",
+                    }}
+                    onClick={() =>
+                      openModal("editPostTitle", post.id, post.title)
+                    }
+                  />
+                )}
+              </>
             )}
           </PostTitle>
+
           <div style={{ color: "#777", marginBottom: "1rem" }}>
             생성일: {Commons.formatDateAndTime(post.createdAt)}
           </div>
@@ -169,7 +242,6 @@ const PostDetail = () => {
             memberId={user.id}
             isAdmin={user.admin}
             loading={loading}
-            // 게시글 삭제, 수정, 신고, 복원, 좋아요, 인용 등 처리 함수 전달
             onDeletePost={(pid) => openModal("deletePost", pid, "")}
             onEditPostContent={(pid, cJSON) =>
               openModal("editPostContent", pid, cJSON)
@@ -184,20 +256,18 @@ const PostDetail = () => {
 
           <Divider />
 
-          {/* CommentsContainer에 게시글 인용과 댓글 좋아요 처리 함수 전달 */}
           <CommentsContainer
             postId={postId}
             user={user}
             postToReply={postToReply}
             setPostToReply={setPostToReply}
-            onLikeComment={handleLikeComment} // 댓글 좋아요 처리 함수 전달
+            onLikeComment={handleLikeComment}
           />
         </>
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
-      {/* ConfirmationModal 렌더링 */}
       <ConfirmationModal
         isOpen={isModalOpen}
         type={modalData.type}

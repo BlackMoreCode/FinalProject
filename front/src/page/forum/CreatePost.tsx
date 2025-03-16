@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -23,10 +22,10 @@ interface FormDataType {
   contentJSON: string;
 }
 
-// interface Category {
-//   id: string;
-//   title: string;
-// }
+interface Category {
+  id: string;
+  title: string;
+}
 
 const stripHTML = (html: string): string => {
   const tempDiv = document.createElement("div");
@@ -126,11 +125,11 @@ const CreatePost: React.FC = () => {
     const currentJSON = editor
       ? JSON.stringify(editor.getJSON())
       : formData.contentJSON || JSON.stringify({ type: "doc", content: [] });
-//     if (!formData.content || formData.content === "<p></p>") {
-//       toast.error("내용을 입력해주세요.");
-//       setUploading(false);
-//       return;
-//     }
+    //     if (!formData.content || formData.content === "<p></p>") {
+    //       toast.error("내용을 입력해주세요.");
+    //       setUploading(false);
+    //       return;
+    //     }
 
     // Construct the post data with the user info from Redux
     const postData = {
