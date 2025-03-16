@@ -38,6 +38,8 @@ function App() {
               path="profile/cardcustom"
               element={<ProfileCustomization />}
             />
+            <Route path="profile/edit" element={<ProfileEditPage />} />
+
             {/* 레시피 페이지 (라우트 경로 수정됨) */}
             <Route path="recipe/:index" element={<CocktailListPage />} />
             {/*컴포넌트를 같은 컴포넌트를 쓰되 index를 다르게 해서 관리하기*/}
@@ -54,6 +56,7 @@ function App() {
             {/* <Route
               path="/forum/category/:categoryId"
               element={<ForumPosts />}
+            />
             /> */}
             <Route path="foodrecipe/upload" element={<AddRecipeDetail />} /> 
             <Route path="cocktailrecipe/upload" element={< AddCockTailDetail/>} /> 
