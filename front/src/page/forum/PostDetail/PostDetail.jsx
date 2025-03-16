@@ -18,6 +18,8 @@ import styled from "styled-components";
 import { useSelector } from "react-redux";
 import ConfirmationModal from "../ConfirmationModal";
 import { createReplyBlock } from "./replyUtils";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit } from "@fortawesome/free-solid-svg-icons";
 
 const Divider = styled.hr`
   border: none;
@@ -84,13 +86,13 @@ const PostDetail = () => {
     toast.info(`${target.authorName}님의 내용을 인용합니다.`);
   };
 
-  // 모달 열기
+  // 모달 열기 함수
   const openModal = (type, id, content) => {
     setModalData({ type, id, content });
     setIsModalOpen(true);
   };
 
-  // 모달 확인 버튼 클릭 시 처리 (수정된 부분)
+  // 모달 확인 버튼 클릭 시 처리
   const handleModalConfirm = async (inputVal) => {
     try {
       switch (modalData.type) {
@@ -106,7 +108,6 @@ const PostDetail = () => {
           break;
         }
         case "editPostContent": {
-          // 게시글 내용 수정
           const payload = {
             contentJSON:
               typeof inputVal === "object"
@@ -124,7 +125,6 @@ const PostDetail = () => {
           );
           setPost((prev) => ({
             ...prev,
-            // 최신 updatedAt 값을 key에 반영하기 위해 업데이트
             contentJSON: updated.contentJSON,
             updatedAt: updated.updatedAt || new Date().toISOString(),
           }));
@@ -175,7 +175,7 @@ const PostDetail = () => {
     }
   };
 
-  // 모달 취소
+  // 모달 취소 함수
   const handleModalCancel = () => {
     setIsModalOpen(false);
   };
@@ -213,7 +213,23 @@ const PostDetail = () => {
                 NOTICE: 해당 게시글은 삭제되거나 숨김 처리되었습니다.
               </HiddenCommentNotice>
             ) : (
-              <span>{post.title}</span>
+              <>
+                <span>{post.title}</span>
+                {/* Show edit icon next to title if the current user is the author */}
+                {user.id === post.memberId && (
+                  <FontAwesomeIcon
+                    icon={faEdit}
+                    style={{
+                      cursor: "pointer",
+                      marginLeft: "8px",
+                      color: "#007bff",
+                    }}
+                    onClick={() =>
+                      openModal("editPostTitle", post.id, post.title)
+                    }
+                  />
+                )}
+              </>
             )}
           </PostTitle>
 
