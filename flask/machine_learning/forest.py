@@ -79,32 +79,39 @@ def train_tfidf_model(df, category, name_path='_name.pkl', ingredient_path='_ing
                       minor_path='_minor.pkl', abv_path='_abv.pkl'):
     """ 재료(ingredients), 조리법(major), 음식 종류(minor)를 각각 벡터화하고 저장, abv는 칵테일에만 처리 """
 
+    # 절대경로로 저장할 디렉토리 설정 (현재 파일 위치에서 'machine_learning' 폴더로)
+    base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'machine_learning')
+
+    # 디렉토리가 없으면 생성
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+
     # 1️⃣ 이름(name) 벡터화
     df['name_str'] = df['name'].fillna("")
     name_vectorizer = TfidfVectorizer(max_features=1000)
     name_vectorizer.fit(df['name_str'])
-    with open(category + name_path, 'wb') as file:
+    with open(os.path.join(base_dir, category + name_path), 'wb') as file:
         pickle.dump(name_vectorizer, file)
 
     # 2️⃣ 재료 (ingredients) 벡터화
     df['ingredients_str'] = df['ingredients'].apply(lambda x: ' '.join(x))
     ingredient_vectorizer = TfidfVectorizer(max_features=1000)
     ingredient_vectorizer.fit(df['ingredients_str'])
-    with open(category + ingredient_path, 'wb') as f:
+    with open(os.path.join(base_dir, category + ingredient_path), 'wb') as f:
         pickle.dump(ingredient_vectorizer, f)
 
     # 3️⃣ 조리법 (major) 벡터화
     df['major_str'] = df['major'].fillna('')
     major_vectorizer = TfidfVectorizer(max_features=100)
     major_vectorizer.fit(df['major_str'])
-    with open(category + major_path, 'wb') as f:
+    with open(os.path.join(base_dir, category + major_path), 'wb') as f:
         pickle.dump(major_vectorizer, f)
 
     # 4️⃣ 음식 종류 (minor) 벡터화
     df['minor_str'] = df['minor'].fillna('')
     minor_vectorizer = TfidfVectorizer(max_features=100)
     minor_vectorizer.fit(df['minor_str'])
-    with open(category + minor_path, 'wb') as f:
+    with open(os.path.join(base_dir, category + minor_path), 'wb') as f:
         pickle.dump(minor_vectorizer, f)
 
     # 5️⃣ abv 처리 (칼럼이 'cocktail'일 때만 처리)
@@ -112,34 +119,42 @@ def train_tfidf_model(df, category, name_path='_name.pkl', ingredient_path='_ing
         abv_data = df['abv'].apply(lambda x: float(x) if x else 0).values.reshape(-1, 1)  # 수치형으로 변환
         abv_scaler = StandardScaler()  # 정규화
         abv_scaler.fit(abv_data)
-        with open(category + abv_path, 'wb') as f:
+        with open(os.path.join(base_dir, category + abv_path), 'wb') as f:
             pickle.dump(abv_scaler, f)
 
 def load_tfidf_models(category, name_path='_name.pkl', ingredient_path='_ingredient.pkl', major_path='_major.pkl',
                       minor_path='_minor.pkl', abv_path='_abv.pkl'):
     """ 저장된 TF-IDF 및 정규화 모델을 불러오는 함수 """
 
-    with open(category + name_path, 'rb') as f:
+    # 절대경로로 저장된 모델 파일 위치
+    base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'machine_learning')
+
+    # 1️⃣ 이름(name) 벡터화 모델 로드
+    with open(os.path.join(base_dir, category + name_path), 'rb') as f:
         name_vectorizer = pickle.load(f)
 
-    with open(category + ingredient_path, 'rb') as f:
+    # 2️⃣ 재료 (ingredients) 벡터화 모델 로드
+    with open(os.path.join(base_dir, category + ingredient_path), 'rb') as f:
         ingredient_vectorizer = pickle.load(f)
 
-    with open(category + major_path, 'rb') as f:
+    # 3️⃣ 조리법 (major) 벡터화 모델 로드
+    with open(os.path.join(base_dir, category + major_path), 'rb') as f:
         major_vectorizer = pickle.load(f)
 
-    with open(category + minor_path, 'rb') as f:
+    # 4️⃣ 음식 종류 (minor) 벡터화 모델 로드
+    with open(os.path.join(base_dir, category + minor_path), 'rb') as f:
         minor_vectorizer = pickle.load(f)
 
-    # 'cocktail' 타입일 때만 abv 모델을 불러옴
+    # 5️⃣ abv 처리 (칼럼이 'cocktail'일 때만 처리)
     if category == "cocktail":
-        with open(category + abv_path, 'rb') as f:
+        with open(os.path.join(base_dir, category + abv_path), 'rb') as f:
             abv_scaler = pickle.load(f)
         return name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer, abv_scaler
     else:
         return name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer, None
 
-def save_weights(index, weight_name, weight_ingredients, weight_major, weight_minor, weight_abv=None,):
+
+def save_weights(index, weight_name, weight_ingredients, weight_major, weight_minor, weight_abv=None):
     weights = {
         "weight_name": weight_name,
         "weight_ingredients": weight_ingredients,
@@ -147,9 +162,18 @@ def save_weights(index, weight_name, weight_ingredients, weight_major, weight_mi
         "weight_minor": weight_minor,
         "weight_abv": weight_abv if weight_abv is not None else None
     }
+
+    # 절대경로로 저장할 디렉토리 경로 설정
+    base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'machine_learning')
+
+    # 저장할 파일 이름 설정
     filename = "cocktail_weights.json" if index == "cocktail" else "food_weights.json"
 
-    with open(filename, "w", encoding="utf-8") as f:
+    # 파일 절대경로 설정
+    file_path = os.path.join(base_dir, filename)
+
+    # json 파일 저장
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(weights, f, indent=4)
 
 def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer,
@@ -394,6 +418,25 @@ def recommend_recipe(user_likes, df, name_vectorizer, ingredient_vectorizer, maj
 
     return recommendations[:top_n]  # 상위 N개 추천
 
+
+def load_weights_from_json(index):
+    """weights.json 파일에서 가중치 데이터를 로드하는 함수"""
+    try:
+        # 절대경로로 파일 경로 설정
+        base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'machine_learning')
+
+        # 파일 경로 설정
+        filename = f"{index}_weights.json"
+        file_path = os.path.join(base_dir, filename)
+
+        # JSON 파일 읽기
+        with open(file_path, "r", encoding="utf-8") as f:
+            result = json.load(f)
+
+        return result
+    except Exception as e:
+        print(f"Error loading weights from JSON: {e}")
+        return []
 
 # 현재 파일에서만 실행되도록 조건 추가
 if __name__ == "__main__":

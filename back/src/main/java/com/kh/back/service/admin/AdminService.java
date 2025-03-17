@@ -2,6 +2,7 @@ package com.kh.back.service.admin;
 
 
 
+import com.kh.back.config.MultipartInputStreamFileResource;
 import com.kh.back.constant.Authority;
 import com.kh.back.dto.admin.res.AdminMemberListResDto;
 import com.kh.back.dto.admin.res.AdminMemberResDto;
@@ -10,11 +11,17 @@ import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import com.kh.back.entity.member.Member;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +31,8 @@ import java.util.List;
 public class AdminService {
 	private final MemberRepository memberRepository;
 	private final MemberService memberService;
+	private final String FLASK_URL = "http://localhost:5001";
+	private final RestTemplate restTemplate;
 	
 	public List<AdminMemberListResDto> getMemberList(String searchValue, Authentication auth ) {
 		try {
@@ -93,16 +102,45 @@ public class AdminService {
 		}
 	}
 	
-//	public List<SearchListResDto> getInActiveTextBoardList(String category, int page) {
-//		PageRequest pageable = PageRequest.of(page, 10);
-//		List<TextBoard> textBoardList = textBoardRepository.findByActiveAndTextCategory(Active.INACTIVE, TextCategory.fromString(category), pageable).getContent();
-//		log.warn("비활성 찾기 : {} - {}", textBoardList.size(), textBoardList);
-//		return textBoardService.boardToBoardListResDto(textBoardList);
-//	}
-//	public int getInActiveTextBoardPage(String category) {
-//		PageRequest pageable = PageRequest.of(0, 10);
-//		return textBoardRepository.findByActiveAndTextCategory(Active.INACTIVE, TextCategory.fromString(category), pageable).getTotalPages();
-//	}
+	public boolean uploadJson(String type, MultipartFile file, Authentication auth) {
+		try {
+			Member member = memberService.convertAuthToEntity(auth);
+			if (!member.getAuthority().equals(Authority.ROLE_ADMIN)) {
+				log.error("관리자가 아닌 회원이 JSON 데이터를 업로드하고 있습니다. : {}", member);
+				return false;
+			}
+			
+			// Flask 서버 URL
+			URI uri = new URI(FLASK_URL + "/upload/json");
+			
+			// HTTP 요청 헤더 설정
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+			
+			// 파일 및 추가 데이터 구성
+			MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+			body.add("file", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
+			body.add("type", type);
+			
+			HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+			
+			// Flask 서버로 요청 전송
+			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
+			
+			if (response.getStatusCode() == HttpStatus.OK) {
+				log.info("JSON 업로드 성공: {}", response.getBody());
+				return true;
+			} else {
+				log.error("JSON 업로드 실패: {}", response.getBody());
+				return false;
+			}
+		} catch (Exception e) {
+			log.error("JSON 데이터 업로드 중 에러 : {}", e.getMessage());
+			return false;
+		}
+	}
+	
+	
 	
 	private List<AdminMemberListResDto> convertMemberListToDtoList(List<Member> memberList) {
 		List<AdminMemberListResDto> list = new ArrayList<>();
