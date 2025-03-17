@@ -5,7 +5,8 @@ from elasticsearch import Elasticsearch
 import json
 import os
 from datetime import datetime, timezone
-from machine_learning.forest import fetch_data_from_es, load_tfidf_models, recommend_recipe
+from machine_learning.forest import fetch_data_from_es, load_tfidf_models, recommend_recipe, load_weights_from_json, \
+    train_tfidf_model, save_weights, train_weight
 
 app = Flask(__name__)
 es_host = os.getenv("ELASTICSEARCH_HOST", "elasticsearch")
@@ -153,7 +154,6 @@ def update_likes_reports():
         return jsonify({"error": str(e)}), 500
 
 
-# JSON 파일 업로드 (여러 개의 데이터 한 번에)
 @app.route("/upload/json", methods=["POST"])
 def upload_json():
     try:
@@ -166,10 +166,14 @@ def upload_json():
             return jsonify({"error": "Type is required"}), 400
 
         index_name, mapping_file = get_index_and_mapping(file_type)
+        if not index_name:
+            return jsonify({"error": "Invalid type"}), 400
 
+        # 인덱스가 존재하지 않으면 생성
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
+        # JSON 데이터 읽기
         data = json.load(file)
         for item in data:
             es.index(index=index_name, body=item)
@@ -990,16 +994,47 @@ def search_forum_category():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/model/train", methods=["POST"])
 def train_machine_learning():
     try:
         index_type = request.args.get("type", "")
         if not index_type:
-            return jsonify({"message": "type이 비어있습니다. "})
+            return jsonify({"message": "type이 비어있습니다."})
+
+        # 인덱스 이름을 가져옴
         index_name, _ = get_index_and_mapping(index_type)
+
+        # 데이터 가져오기
         df = fetch_data_from_es(index_name)
-        train_machine_learning(df, index_type)
-        return jsonify({"message": index_type + " 모델 생성에 성공했습니다."}),200
+
+        # TF-IDF 모델 학습
+        train_tfidf_model(df, index_type)
+        name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)
+
+        # weights.json 파일에서 가중치 로드
+        weight_configs = load_weights_from_json(index_type)
+
+        if not weight_configs:
+            return jsonify({"message": "weights.json 파일이 비어있거나 로딩 오류가 발생했습니다."}), 500
+
+        # 가중치 기반으로 추천 수행
+        best_weights = weight_configs[0]  # weight_configs에서 첫 번째 가중치 조합을 선택
+        name_weight = best_weights["weight_name"]
+        ing_weight = best_weights["weight_ingredients"]
+        major_weight = best_weights["weight_major"]
+        minor_weight = best_weights["weight_minor"]
+        abv_weight = best_weights.get("weight_abv")  # 'weight_abv'가 없는 경우 None 처리
+
+        # train_weight 함수 호출하여 모델 학습
+        # 여기서는 기존의 데이터와 벡터를 사용하여 학습을 진행
+        train_weight(index_type, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca,
+                     name_weight, ing_weight, major_weight, minor_weight, abv_weight, 20, 0.005)
+
+        # 가중치 저장
+        save_weights(index_type, name_weight, ing_weight, major_weight, minor_weight, abv_weight)
+
+        return jsonify({"message": index_type + " 모델 생성에 성공했습니다."}), 200
     except Exception as e:
         print(e)
         return jsonify({"message": index_type + " 모델 생성중 에러 : " + str(e)}), 500
@@ -1015,8 +1050,23 @@ def predict_machine_learning():
             return jsonify({"message": "데이터가 비었습니다."})
         index_name, _ = get_index_and_mapping(index_type)
         df = fetch_data_from_es(index_name)
-        ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)
-        recommendation = recommend_recipe(data, df, ing_vec, major_vec, minor_vec, abv_sca)
+        name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)
+
+        # weights.json 파일에서 가중치 로드
+        weight_configs = load_weights_from_json(index_type)
+
+        if not weight_configs:
+            return jsonify({"message": "weights.json 파일이 비어있거나 로딩 오류가 발생했습니다."}), 500
+
+        # 가중치 기반으로 추천 수행
+        best_weights = weight_configs[0]  # weight_configs에서 첫 번째 가중치 조합을 선택
+        name_weight = best_weights["weight_name"]
+        ing_weight = best_weights["weight_ingredients"]
+        major_weight = best_weights["weight_major"]
+        minor_weight = best_weights["weight_minor"]
+        abv_weight = best_weights.get("weight_abv")  # 'weight_abv'가 없는 경우 None 처리
+
+        recommendation = recommend_recipe(data, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca, 3, name_weight, ing_weight, major_weight, minor_weight, abv_weight )
         return jsonify(recommendation), 200
     except Exception as e:
         print(e)

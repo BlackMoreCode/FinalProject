@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -43,18 +44,10 @@ public class AdminController {
 		return ResponseEntity.ok(adminMemberResDto);
 	}
 	
-//	@GetMapping("/board/{category}/{page}")
-//	public ResponseEntity<List<SearchListResDto>> getSearchList(@PathVariable String category, @PathVariable int page, Authentication authentication) {
-//		List<SearchListResDto> rst = adminService.getInActiveTextBoardList(category, page, authentication);
-//		return ResponseEntity.ok(rst);
-//	}
-//
-//	@GetMapping("/page/{category}")
-//	public ResponseEntity<Integer> getPage(@PathVariable String category, Authentication authentication) {
-//		int page = adminService.getInActiveTextBoardPage(category, authentication);
-//		return ResponseEntity.ok(page);
-//	}
-	
+	@PostMapping("/upload/{type}")
+	public ResponseEntity<Boolean> uploadFile(@PathVariable String type, MultipartFile file, Authentication authentication) {
+		return ResponseEntity.ok(adminService.uploadJson(type, file, authentication));
+	}
 	
 	
 	
