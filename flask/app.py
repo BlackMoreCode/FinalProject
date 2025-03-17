@@ -1,16 +1,22 @@
 import traceback
-
+from redis import Redis
+from rq import Queue
 from flask import Flask, request, jsonify
 from elasticsearch import Elasticsearch
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from machine_learning.forest import fetch_data_from_es, load_tfidf_models, recommend_recipe, load_weights_from_json, \
-    train_tfidf_model, save_weights, train_weight
+    train_tfidf_model, train_weight
 
 app = Flask(__name__)
 es_host = os.getenv("ELASTICSEARCH_HOST", "elasticsearch")
 es = Elasticsearch([f"http://{es_host}:9200"])
+
+# Redis 연결
+redis_url = os.getenv('REDIS_URL', 'redis://redis:6379')
+redis = Redis.from_url(redis_url, socket_timeout=180)
+queue = Queue(connection=redis, job_timeout="30m")
 
 # ================================================================
 # Utility Functions (공통 ES 인덱스 및 매핑 관리)
@@ -995,6 +1001,7 @@ def search_forum_category():
         return jsonify({"error": str(e)}), 500
 
 
+# 모델 학습 요청 API
 @app.route("/model/train", methods=["POST"])
 def train_machine_learning():
     try:
@@ -1002,42 +1009,68 @@ def train_machine_learning():
         if not index_type:
             return jsonify({"message": "type이 비어있습니다."})
 
-        # 인덱스 이름을 가져옴
         index_name, _ = get_index_and_mapping(index_type)
 
         # 데이터 가져오기
         df = fetch_data_from_es(index_name)
 
-        # TF-IDF 모델 학습
         train_tfidf_model(df, index_type)
-        name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)
+
+        # 벡터화된 데이터 가져오기
+        name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)  # 이미 학습된 모델 로드
 
         # weights.json 파일에서 가중치 로드
-        weight_configs = load_weights_from_json(index_type)
+        weight_configs = load_weights_from_json(index_type)  # weights.json 파일에서 가중치 로드
 
         if not weight_configs:
-            return jsonify({"message": "weights.json 파일이 비어있거나 로딩 오류가 발생했습니다."}), 500
+            name_weight = 0.1
+            ing_weight = 0.5
+            major_weight = 0.4
+            minor_weight = 0.2
+            abv_weight = 0.1
+        else:
+            name_weight = weight_configs.get("weight_name", 0.1)
+            ing_weight = weight_configs.get("weight_ingredients", 0.5)
+            major_weight = weight_configs.get("weight_major", 0.4)
+            minor_weight = weight_configs.get("weight_minor", 0.2)
+            abv_weight = weight_configs.get("weight_abv", None)
 
-        # 가중치 기반으로 추천 수행
-        best_weights = weight_configs[0]  # weight_configs에서 첫 번째 가중치 조합을 선택
-        name_weight = best_weights["weight_name"]
-        ing_weight = best_weights["weight_ingredients"]
-        major_weight = best_weights["weight_major"]
-        minor_weight = best_weights["weight_minor"]
-        abv_weight = best_weights.get("weight_abv")  # 'weight_abv'가 없는 경우 None 처리
+        task = queue.enqueue(train_weight, index_type, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca,
+                             name_weight, ing_weight, major_weight, minor_weight, abv_weight, 10, 0.005)
 
-        # train_weight 함수 호출하여 모델 학습
-        # 여기서는 기존의 데이터와 벡터를 사용하여 학습을 진행
-        train_weight(index_type, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca,
-                     name_weight, ing_weight, major_weight, minor_weight, abv_weight, 20, 0.005)
+        # 작업 ID를 반환하여 클라이언트가 작업 상태를 추적할 수 있도록 합니다.
+        return jsonify({"message": "모델 학습이 시작되었습니다.", "task_id": task.get_id()}), 202
 
-        # 가중치 저장
-        save_weights(index_type, name_weight, ing_weight, major_weight, minor_weight, abv_weight)
-
-        return jsonify({"message": index_type + " 모델 생성에 성공했습니다."}), 200
     except Exception as e:
         print(e)
         return jsonify({"message": index_type + " 모델 생성중 에러 : " + str(e)}), 500
+
+# 작업 상태 조회 API
+@app.route('/task/status/<task_id>', methods=["GET"])
+def task_status(task_id):
+    job = queue.fetch_job(task_id)
+
+    if job is None:
+        return jsonify({"status": "작업을 찾을 수 없습니다."}), 404
+
+    # job 상태를 갱신
+    job.refresh()
+    print(f"Job Status: {job.get_status()}")  # 상태 로그 추가
+
+    # 상태 설정
+    if job.is_queued:
+        return jsonify({"status": "대기중"})
+    elif job.is_started:
+        return jsonify({"status": "진행 중"})
+    elif job.is_finished:
+        return jsonify({"status": "완료"})
+    elif job.is_failed:
+        error_message = job.meta.get("exception") if job.is_failed else "알 수 없는 오류"
+        return jsonify({"status": "실패", "message": error_message})
+
+    return jsonify({"status": "알 수 없음"})
+
+
 
 @app.route("/model/predict", methods=["POST"])
 def predict_machine_learning():
@@ -1045,31 +1078,39 @@ def predict_machine_learning():
         index_type = request.args.get("type", "")
         if not index_type:
             return jsonify({"message": "type이 비어있습니다. "})
+        
         data = request.json
         if not data:
             return jsonify({"message": "데이터가 비었습니다."})
+
         index_name, _ = get_index_and_mapping(index_type)
+
         df = fetch_data_from_es(index_name)
+
+        # TF-IDF 모델 학습
+        train_tfidf_model(df, index_type)  # 학습용 tf-idf 모델을 학습하는 함수
+        
         name_vec, ing_vec, major_vec, minor_vec, abv_sca = load_tfidf_models(index_type)
 
         # weights.json 파일에서 가중치 로드
         weight_configs = load_weights_from_json(index_type)
-
         if not weight_configs:
-            return jsonify({"message": "weights.json 파일이 비어있거나 로딩 오류가 발생했습니다."}), 500
-
-        # 가중치 기반으로 추천 수행
-        best_weights = weight_configs[0]  # weight_configs에서 첫 번째 가중치 조합을 선택
-        name_weight = best_weights["weight_name"]
-        ing_weight = best_weights["weight_ingredients"]
-        major_weight = best_weights["weight_major"]
-        minor_weight = best_weights["weight_minor"]
-        abv_weight = best_weights.get("weight_abv")  # 'weight_abv'가 없는 경우 None 처리
+            name_weight = 0.1
+            ing_weight = 0.5
+            major_weight = 0.4
+            minor_weight = 0.2
+            abv_weight = 0.1
+        else:
+            name_weight = weight_configs.get("weight_name", 0.1)
+            ing_weight = weight_configs.get("weight_ingredients", 0.5)
+            major_weight = weight_configs.get("weight_major", 0.4)
+            minor_weight = weight_configs.get("weight_minor", 0.2)
+            abv_weight = weight_configs.get("weight_abv", None)  # 'weight_abv'가 없으면 0 처리
 
         recommendation = recommend_recipe(data, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca, 3, name_weight, ing_weight, major_weight, minor_weight, abv_weight )
+        
         return jsonify(recommendation), 200
     except Exception as e:
-        print(e)
         return jsonify({"message": index_type + " 모델 사용중 에러 : " + str(e)}), 500
 
 @app.route("/api/profile/recipes", methods=["GET"])
@@ -1108,4 +1149,5 @@ def get_user_recipes():
 
 
 if __name__ == '__main__':
+    # 수동으로 Redis 연결 확인한 후 Flask 앱 실행
     app.run(host='0.0.0.0', port=5000)
