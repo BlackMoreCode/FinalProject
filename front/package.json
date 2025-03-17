@@ -48,6 +48,7 @@
     "redux-persist": "^6.0.0",
     "source-map-loader": "^5.0.0",
     "styled-components": "^6.1.15",
+    "swiper": "^11.2.5",
     "typescript": "^5.7.3",
     "web-vitals": "^2.1.0",
     "yup": "^1.6.1"
