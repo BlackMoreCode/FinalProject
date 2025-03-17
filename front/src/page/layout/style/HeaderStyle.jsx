@@ -70,10 +70,16 @@ export const NavContainer = styled.div`
 export const TopSection = styled.div`
   display: flex;
   justify-content: flex-start;
-  margin-right: 50px;
   align-items: center;
   color: #6a4e23;
   position: relative;
+
+  img {
+    height: 50px; /* 로고의 높이를 적절히 설정 */
+    width: auto; /* 비율 유지 */
+  }
+
+  margin-right: 50px;
 `;
 
 // 하단 섹션 (PC 뷰용 메뉴)

@@ -32,11 +32,21 @@ const PCHeader = () => {
     { name: "Add a cocktail", fn: () => navigate("/recipe/typeselect") },
   ];
 
+  // 로고 클릭 시 /main으로 이동
+  const handleLogoClick = () => {
+    navigate("/main");
+  };
+
   return (
     <Navbar>
       <NavContainer>
         <TopSection>
-          <h1>Logo</h1>
+          <img
+            src="/Logo317_2.png"
+            alt="Logo"
+            onClick={handleLogoClick}
+            style={{ cursor: "pointer" }}
+          />
         </TopSection>
         <BottomSection>
           <NavLinks>

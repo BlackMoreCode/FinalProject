@@ -1,6 +1,15 @@
 import axiosInstance from "./AxiosInstance";
 
 const ProfileApi = {
+  // 로그인한 유저 ID 가져오기
+  getLoggedInUserId: () => {
+    return axiosInstance.get("/api/profile/getId");
+  },
+
+  // 맴버십 구매 여부 확인
+  checkMembership: () => {
+    return axiosInstance.get("/api/purchase/check");
+  },
   getProfile: () => {
     return axiosInstance.get("/api/profile/get");
   },
