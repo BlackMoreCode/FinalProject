@@ -1,3 +1,4 @@
+// PostBox.jsx
 import React from "react";
 import {
   PostHeader,
@@ -8,10 +9,7 @@ import {
   HiddenCommentNotice,
   AdminEditIndicator,
   ReportCountText,
-  ReportButton,
-  AdminButton,
 } from "../style/PostDetailStyles";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faDeleteLeft,
@@ -22,13 +20,9 @@ import {
   faUndo,
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
-
 import ReadOnlyEditor from "../ReadOnlyEditor";
 
-/**
- * Safely parse JSON. Returns `null` if invalid.
- *
- */
+// (1) JSON 안전 파싱
 function parseJSONSafe(jsonString) {
   try {
     return JSON.parse(jsonString);
@@ -38,10 +32,7 @@ function parseJSONSafe(jsonString) {
   }
 }
 
-/**
- * Checks if the parsed JSON has the shape TipTap expects:
- * { "type": "doc", "content": [...] }
- */
+// (2) TipTap JSON 유효성 검사
 function isValidJSONContent(json) {
   if (!json) return false;
   if (json.type !== "doc") return false;
@@ -49,21 +40,16 @@ function isValidJSONContent(json) {
   return true;
 }
 
-/** Renders HTML directly (fallback) */
+// (3) HTML 렌더링용 컴포넌트
 const HtmlContent = ({ html }) => (
   <div dangerouslySetInnerHTML={{ __html: html }} />
 );
 
-/**
- * PostBox (without the title).
- * Just author info (left), body, action buttons (right).
- */
 const PostBox = ({
   post,
   memberId,
   isAdmin,
   loading,
-  // callbacks
   onDeletePost,
   onEditPostContent,
   onReportPost,
@@ -73,15 +59,13 @@ const PostBox = ({
 }) => {
   if (!post) return null;
 
-  // 1) Parse the JSON *once*
+  // (A) 게시글 contentJSON 파싱
   const parsedJSON = parseJSONSafe(post.contentJSON);
-
-  // 2) Decide which content to render
   const shouldUseTipTap = isValidJSONContent(parsedJSON);
 
   return (
     <PostHeader style={{ marginBottom: "15px" }}>
-      {/* Left side: author info */}
+      {/* (B) 작성자 정보 */}
       <AuthorInfo>
         <p>
           <strong>게시자:</strong> {post.authorName}
@@ -91,9 +75,8 @@ const PostBox = ({
         </p>
       </AuthorInfo>
 
-      {/* Right side: post body + action buttons */}
+      {/* (C) 게시글 내용 + 액션 버튼 */}
       <ContentInfo style={{ width: "100%" }}>
-        {/* Body */}
         {post.hidden ? (
           <HiddenCommentNotice>
             NOTICE: 해당 게시글은 삭제되거나 숨김 처리되었습니다.
@@ -101,8 +84,8 @@ const PostBox = ({
         ) : (
           <InlineBlockContainer>
             <div>
+              {/* TipTap JSON 유효하면 ReadOnlyEditor, 아니면 HTML */}
               {shouldUseTipTap ? (
-                // post.updatedAt 값을 포함하여 key를 구성하면, 내용 변경 시마다 컴포넌트가 재마운트됩니다.
                 <ReadOnlyEditor
                   key={`${JSON.stringify(parsedJSON)}-${post.updatedAt}`}
                   contentJSON={parsedJSON}
@@ -111,6 +94,7 @@ const PostBox = ({
                 <HtmlContent html={post.content} />
               )}
             </div>
+            {/* (C-1) 관리자에 의해 내용이 수정되었다면 표시 */}
             {post.editedByAdminContent && (
               <AdminEditIndicator>
                 [관리자에 의해 내용 수정됨]
@@ -119,32 +103,30 @@ const PostBox = ({
           </InlineBlockContainer>
         )}
 
-        {/* Action Buttons */}
+        {/* (D) 액션 버튼 */}
         <ActionButtons>
           <div className="left">
-            <report-button
-              onClick={() => onReportPost(post.id, post.content)}
-              disabled={post.hasReported}
-            >
+            <report-button onClick={() => onReportPost(post.id, post.content)}>
               <FontAwesomeIcon icon={faCircleExclamation} />
+              {/* 관리자라면 reportCount 표시 */}
               {isAdmin && post.reportCount !== undefined && (
                 <ReportCountText>{post.reportCount}</ReportCountText>
               )}
             </report-button>
 
-            {/* 작성자 본인 & 관리자수정 안 된 경우 => 삭제/수정 */}
+            {/* 원 작성자 && 관리자수정 안 된 경우 => 삭제/수정 */}
             {memberId === post.memberId &&
               !isAdmin &&
               !post.editedByAdminContent && (
                 <>
-                  <report-button onClick={() => onDeletePost(post.id)}>
+                  <button onClick={() => onDeletePost(post.id)}>
                     <FontAwesomeIcon icon={faDeleteLeft} />
-                  </report-button>
-                  <report-button
+                  </button>
+                  <button
                     onClick={() => onEditPostContent(post.id, post.contentJSON)}
                   >
                     <FontAwesomeIcon icon={faEdit} />
-                  </report-button>
+                  </button>
                 </>
               )}
 
@@ -164,12 +146,15 @@ const PostBox = ({
           </div>
 
           <div className="right">
+            {/* 좋아요 / 인용 버튼 */}
             <button onClick={() => onLikePost(post.id)}>
               <FontAwesomeIcon icon={faThumbsUp} /> {post.likesCount}
             </button>
             <button onClick={() => onReplyPost(post, "post")}>
               <FontAwesomeIcon icon={faReply} />
             </button>
+
+            {/* (D-1) 관리자 && 숨김 => 복원 버튼 */}
             {isAdmin && post.hidden && (
               <button onClick={() => onRestorePost(post.id)} disabled={loading}>
                 {loading ? (

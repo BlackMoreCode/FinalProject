@@ -10,6 +10,8 @@ import {
   GlobalKeyframes,
   PostTitle,
   HiddenCommentNotice,
+  DisabledEditButton, // 비활성화 버튼 스타일
+  AdminEditIndicator, // 관리자 수정 표시 스타일
 } from "../style/PostDetailStyles";
 import PostBox from "./PostBox";
 import CommentsContainer from "./CommentsContainer";
@@ -17,7 +19,6 @@ import Commons from "../../../util/Common";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
 import ConfirmationModal from "../ConfirmationModal";
-import { createReplyBlock } from "./replyUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit } from "@fortawesome/free-solid-svg-icons";
 
@@ -34,17 +35,21 @@ const PostDetail = () => {
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  // 모달 관련 상태 (게시글 수정, 삭제 등)
+
+  // 모달 (게시글 수정/삭제/신고 등)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
     type: "",
     id: null,
-    content: "", // 모달에서 편집할 데이터(문자열 또는 객체)
+    content: "",
   });
-  // 게시글 인용 요청(CommentsContainer에서 처리)
+
+  // 게시글 인용(답글) 요청 (CommentsContainer에서 처리)
   const [postToReply, setPostToReply] = useState(null);
 
-  // 게시글 좋아요 토글
+  // ------------------------------
+  // (A) 게시글 좋아요
+  // ------------------------------
   const handleLikePost = async (pid) => {
     try {
       const updatedPost = await ForumApi.toggleLikePost(pid, user.id);
@@ -61,38 +66,40 @@ const PostDetail = () => {
     }
   };
 
-  // (선택) 댓글 좋아요 처리 예시
+  // ------------------------------
+  // (B) 댓글 좋아요 (선택)
+  // ------------------------------
   const handleLikeComment = async (commentId) => {
     try {
-      const updatedComment = await ForumApi.toggleLikeComment(
-        commentId,
-        user.id,
-        postId
-      );
+      await ForumApi.toggleLikeComment(commentId, user.id, postId);
       toast.success("댓글 좋아요 상태가 변경되었습니다.");
     } catch (error) {
       console.error("댓글 좋아요 처리 중 오류:", error);
-      toast.error("좋아요 처리에 실패했습니다.");
+      toast.error("댓글 좋아요에 실패했습니다.");
     }
   };
 
-  // 게시글 인용(답글)
+  // ------------------------------
+  // (C) 게시글 인용(답글)
+  // ------------------------------
   const handleReply = (target, type) => {
     if (type === "post") {
       setPostToReply(target);
-    } else {
-      console.log("댓글 인용 처리:", target);
     }
     toast.info(`${target.authorName}님의 내용을 인용합니다.`);
   };
 
-  // 모달 열기 함수 (게시글 수정/삭제용)
+  // ------------------------------
+  // (D) 모달 열기 (게시글 수정/삭제/신고)
+  // ------------------------------
   const openModal = (type, id, content) => {
     setModalData({ type, id, content });
     setIsModalOpen(true);
   };
 
-  // 모달 확인 버튼 클릭 시 처리 (게시글 수정/삭제, 신고)
+  // ------------------------------
+  // (E) 모달 확인 버튼 처리
+  // ------------------------------
   const handleModalConfirm = async (inputVal) => {
     try {
       switch (modalData.type) {
@@ -108,6 +115,7 @@ const PostDetail = () => {
           break;
         }
         case "editPostContent": {
+          // 게시글 내용 수정
           const payload = {
             contentJSON:
               typeof inputVal === "object"
@@ -131,6 +139,7 @@ const PostDetail = () => {
           break;
         }
         case "editPostTitle": {
+          // 게시글 제목 수정
           if (!inputVal.trim()) {
             toast.warning("제목을 입력해주세요.");
             return;
@@ -155,6 +164,7 @@ const PostDetail = () => {
           break;
         }
         case "reportPost": {
+          // 게시글 신고
           if (!inputVal.trim()) {
             toast.warning("신고 사유를 입력해주세요.");
             return;
@@ -174,12 +184,16 @@ const PostDetail = () => {
     }
   };
 
-  // 모달 취소 함수
+  // ------------------------------
+  // (F) 모달 취소
+  // ------------------------------
   const handleModalCancel = () => {
     setIsModalOpen(false);
   };
 
-  // 게시글 복원을 바로 처리하는 함수 (모달 없이)
+  // ------------------------------
+  // (G) 게시글 복원 (모달 없이)
+  // ------------------------------
   const handleRestorePost = async (pid) => {
     try {
       await ForumApi.restorePost(pid);
@@ -192,11 +206,28 @@ const PostDetail = () => {
     }
   };
 
-  // 게시글 데이터 불러오기
+  // ------------------------------
+  // (H) 게시글 데이터 불러오기
+  // ------------------------------
   useEffect(() => {
     const fetchPostData = async () => {
       try {
         const postData = await ForumApi.getPostById(postId);
+
+        // (H-1) 관리자 수정 여부를 플래그로 세팅 (제목)
+        if (postData.editedByTitle === "ADMIN") {
+          postData.editedByAdminTitle = true;
+        } else {
+          postData.editedByAdminTitle = false;
+        }
+
+        // (H-2) 관리자 수정 여부를 플래그로 세팅 (내용)
+        if (postData.editedByContent === "ADMIN") {
+          postData.editedByAdminContent = true;
+        } else {
+          postData.editedByAdminContent = false;
+        }
+
         setPost(postData);
       } catch (error) {
         console.error("게시글 로딩 중 오류:", error);
@@ -208,6 +239,9 @@ const PostDetail = () => {
     fetchPostData();
   }, [postId, navigate]);
 
+  // ------------------------------
+  // (I) 렌더링
+  // ------------------------------
   return (
     <PostDetailContainer>
       <ReplyQuoteGlobalStyle />
@@ -219,6 +253,7 @@ const PostDetail = () => {
         <div>게시글을 찾을 수 없습니다.</div>
       ) : (
         <>
+          {/* (I-1) 게시글 제목 + (관리자/작성자) 수정 아이콘 */}
           <PostTitle>
             {post.hidden ? (
               <HiddenCommentNotice>
@@ -226,28 +261,62 @@ const PostDetail = () => {
               </HiddenCommentNotice>
             ) : (
               <>
+                {/* 실제 제목 표시 */}
                 <span>{post.title}</span>
-                {user.id === post.memberId && (
+
+                {/* (I-1a) 만약 "제목"이 관리자에 의해 수정된 경우 => 표시 */}
+                {post.editedByAdminTitle && (
+                  <AdminEditIndicator style={{ marginLeft: "8px" }}>
+                    [관리자에 의해 제목 수정됨]
+                  </AdminEditIndicator>
+                )}
+
+                {/* (I-1b) 제목 수정 아이콘: 관리자 or (작성자 && 관리자 미수정) */}
+                {user.admin ? (
                   <FontAwesomeIcon
                     icon={faEdit}
                     style={{
                       cursor: "pointer",
                       marginLeft: "8px",
-                      color: "#007bff",
+                      color: "#ff9900",
                     }}
                     onClick={() =>
                       openModal("editPostTitle", post.id, post.title)
                     }
                   />
+                ) : (
+                  <>
+                    {user.id === post.memberId ? (
+                      post.editedByAdminTitle ? (
+                        <DisabledEditButton>
+                          <FontAwesomeIcon icon={faEdit} />
+                        </DisabledEditButton>
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faEdit}
+                          style={{
+                            cursor: "pointer",
+                            marginLeft: "8px",
+                            color: "#007bff",
+                          }}
+                          onClick={() =>
+                            openModal("editPostTitle", post.id, post.title)
+                          }
+                        />
+                      )
+                    ) : null}
+                  </>
                 )}
               </>
             )}
           </PostTitle>
 
+          {/* (I-2) 생성일 */}
           <div style={{ color: "#777", marginBottom: "1rem" }}>
             생성일: {Commons.formatDateAndTime(post.createdAt)}
           </div>
 
+          {/* (I-3) PostBox에 게시글 데이터 전달 */}
           <PostBox
             post={post}
             memberId={user.id}
@@ -260,7 +329,6 @@ const PostDetail = () => {
             onReportPost={(pid, content) =>
               openModal("reportPost", pid, content)
             }
-            // onRestorePost prop을 직접 복원 처리하는 함수로 전달합니다.
             onRestorePost={handleRestorePost}
             onLikePost={handleLikePost}
             onReplyPost={handleReply}
@@ -268,6 +336,7 @@ const PostDetail = () => {
 
           <Divider />
 
+          {/* (I-4) 댓글 섹션 */}
           <CommentsContainer
             postId={postId}
             user={user}
@@ -278,6 +347,7 @@ const PostDetail = () => {
         </>
       )}
 
+      {/* (I-5) Toast 및 모달 */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
       <ConfirmationModal
