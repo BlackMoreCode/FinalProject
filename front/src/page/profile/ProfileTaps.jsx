@@ -8,14 +8,15 @@ import {
   UserPost,
 } from "./style/ProfileTabsStyle";
 import MiniCalendar from "../../component/MiniCalendar";
-import {useParams} from "react-router-dom";
-import {useSelector} from "react-redux";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import UserRecipesList from "./recipeLists/UserRecipeList";
 
 const ProfileTabs = () => {
   const myId = useSelector((state) => state.user.id);
   const [activeTab, setActiveTab] = useState("calendar");
-  const {id } = useParams();
-  const memberId = id ? parseInt(id, 10) : myId
+  const { id } = useParams();
+  const memberId = id ? parseInt(id, 10) : myId;
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
   };
@@ -37,10 +38,10 @@ const ProfileTabs = () => {
             작성글
           </TabItem>
           <TabItem
-            className={activeTab === "comments" ? "active" : ""}
-            onClick={() => handleTabChange("comments")}
+            className={activeTab === "recipe" ? "active" : ""}
+            onClick={() => handleTabChange("recipe")}
           >
-            댓글
+            레시피
           </TabItem>
           <TabItem
             className={activeTab === "likes" ? "active" : ""}
@@ -52,9 +53,7 @@ const ProfileTabs = () => {
       </TabMenu>
 
       <TabContent>
-        {activeTab === "calendar" && (
-            <MiniCalendar memberId={memberId}/>
-        )}
+        {activeTab === "calendar" && <MiniCalendar memberId={memberId} />}
 
         {activeTab === "posts" && (
           <div className="posts">
@@ -69,9 +68,9 @@ const ProfileTabs = () => {
           </div>
         )}
 
-        {activeTab === "comments" && (
-          <div className="comments">
-            <p>댓글 리스트 예시</p>
+        {activeTab === "recipe" && (
+          <div className="recipe">
+            <UserRecipesList memberId={memberId} />
           </div>
         )}
 
