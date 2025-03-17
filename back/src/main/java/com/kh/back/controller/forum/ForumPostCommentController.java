@@ -92,9 +92,11 @@ public class ForumPostCommentController {
      * @return 복구된 댓글 정보 (Response DTO)
      */
     @PostMapping("/{commentId}/restore")
-    public ResponseEntity<ForumPostCommentResponseDto> restoreComment(@PathVariable Integer commentId) {
-        log.info("댓글 ID: {} 복원 요청", commentId);
-        ForumPostCommentResponseDto restored = commentService.restoreComment(commentId);
+    public ResponseEntity<ForumPostCommentResponseDto> restoreComment(
+            @PathVariable Integer commentId,
+            @RequestParam String postId) {
+        log.info("댓글 ID: {} 복원 요청, postId: {}", commentId, postId);
+        ForumPostCommentResponseDto restored = commentService.restoreComment(commentId, postId);
         return ResponseEntity.ok(restored);
     }
 
@@ -107,10 +109,15 @@ public class ForumPostCommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable Integer commentId,
-            @RequestParam Long loggedInMemberId) {
-        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}", commentId, loggedInMemberId);
-        commentService.deleteComment(commentId, loggedInMemberId);
-        return ResponseEntity.noContent().build();
+            @RequestParam Long loggedInMemberId,
+            @RequestParam String postId) {
+        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}, postId: {}", commentId, loggedInMemberId, postId);
+        boolean success = commentService.deleteComment(commentId, loggedInMemberId, postId);
+        if(success){
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**

@@ -120,7 +120,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
   // 댓글 삭제
   const handleDeleteComment = async (commentId) => {
     try {
-      await ForumApi.deleteComment(commentId, user.id, user.admin);
+      await ForumApi.deleteComment(commentId, postId, user.id, user.admin);
       toast.success("댓글이 삭제되었습니다.");
       await fetchComments();
     } catch (error) {
@@ -254,6 +254,18 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     }
   };
 
+  const handleRestoreComment = async (commentId) => {
+    try {
+      await ForumApi.restoreComment(commentId, postId); // postId를 함께 전달
+      toast.success("댓글이 복원되었습니다.");
+      // 복원 후 다시 댓글 목록을 불러오거나, 상태를 직접 수정
+      await fetchComments();
+    } catch (error) {
+      console.error("댓글 복원 중 오류:", error);
+      toast.error("댓글 복원에 실패했습니다.");
+    }
+  };
+
   if (loading) return <div>댓글 로딩 중...</div>;
 
   return (
@@ -266,6 +278,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
         onEditComment={handleEditComment} // (2) 수정 버튼 클릭 시 호출
         onLikeComment={handleLikeComment}
         onReply={handleReply}
+        onRestoreComment={handleRestoreComment}
       />
 
       <CommentInput

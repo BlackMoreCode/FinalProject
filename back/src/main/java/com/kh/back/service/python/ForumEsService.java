@@ -397,11 +397,13 @@ public class ForumEsService {
     }
 
 
-    public boolean deleteComment(Integer commentId, Long deletedBy) {
+    public boolean deleteComment(Integer commentId, String postId, Long deletedBy) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "?deletedBy=" + deletedBy);
+            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId
+                    + "?postId=" + URLEncoder.encode(postId, StandardCharsets.UTF_8)
+                    + "&deletedBy=" + deletedBy);
             restTemplate.delete(uri);
-            log.info("deleteComment 호출됨, 댓글 ID: {}", commentId);
+            log.info("deleteComment 호출됨, 댓글 ID: {}, postId: {}", commentId, postId);
             return true;
         } catch (Exception e) {
             log.error("댓글 삭제 중 오류: {}", e.getMessage());
@@ -452,12 +454,12 @@ public class ForumEsService {
         }
     }
 
-    public ForumPostCommentResponseDto restoreComment(Integer commentId) {
+    public ForumPostCommentResponseDto restoreComment(Integer commentId, String postId) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/restore");
+            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/restore?postId="
+                    + URLEncoder.encode(postId, StandardCharsets.UTF_8));
             ResponseEntity<String> response = restTemplate.postForEntity(uri, null, String.class);
             log.info("restoreComment 응답: {}", response);
-
             return objectMapper.readValue(response.getBody(), ForumPostCommentResponseDto.class);
         } catch (Exception e) {
             log.error("댓글 복원 중 오류: {}", e.getMessage());

@@ -108,9 +108,9 @@ const ForumApi = {
       data
     ).then((response) => response.data),
 
-  deleteComment: (commentId, loggedInMemberId, isAdmin) =>
+  deleteComment: (commentId, postId, loggedInMemberId, isAdmin) =>
     AxiosInstance.delete(
-      `/api/forums/comments/${commentId}?loggedInMemberId=${loggedInMemberId}&isAdmin=${isAdmin}`
+      `/api/forums/comments/${commentId}?postId=${postId}&loggedInMemberId=${loggedInMemberId}&isAdmin=${isAdmin}`
     ).then((response) => response.data),
 
   hardDeleteComment: (commentId, loggedInMemberId) =>
@@ -127,10 +127,12 @@ const ForumApi = {
       reason,
     }).then((response) => response.data),
 
-  restoreComment: (commentId) =>
-    AxiosInstance.post(`/api/forums/comments/${commentId}/restore`).then(
-      (response) => response.data
-    ),
+  restoreComment: async (commentId, postId) => {
+    // 쿼리 파라미터에 postId를 포함
+    return AxiosInstance.post(
+      `/api/forums/comments/${commentId}/restore?postId=${postId}`
+    ).then((response) => response.data);
+  },
 
   // 수정된 ForumApi.js의 toggleLikeComment: 이제 postId를 함께 전달합니다.
   toggleLikeComment: (commentId, loggedInMemberId, postId) =>

@@ -87,9 +87,9 @@ public class ForumPostCommentService {
      * KR: ElasticService의 DELETE 엔드포인트를 호출하여 댓글을 논리 삭제합니다.
      */
     @Transactional
-    public void deleteComment(Integer commentId, Long loggedInMemberId) {
-        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}", commentId, loggedInMemberId);
-        forumEsService.deleteComment(commentId, loggedInMemberId);
+    public boolean deleteComment(Integer commentId, Long loggedInMemberId, String postId) {
+        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}, postId: {}", commentId, loggedInMemberId, postId);
+        return forumEsService.deleteComment(commentId, postId, loggedInMemberId);
     }
 
     /**
@@ -127,10 +127,11 @@ public class ForumPostCommentService {
      * KR: ElasticService의 복원 엔드포인트를 호출하여 댓글을 복원합니다.
      */
     @Transactional
-    public ForumPostCommentResponseDto restoreComment(Integer commentId) {
-        log.info("댓글 ID: {} 복원 요청", commentId);
-        return forumEsService.restoreComment(commentId);
+    public ForumPostCommentResponseDto restoreComment(Integer commentId, String postId) {
+        log.info("댓글 ID: {} 복원 요청, postId: {}", commentId, postId);
+        return forumEsService.restoreComment(commentId, postId);
     }
+
 
 
 }
