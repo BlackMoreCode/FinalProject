@@ -32,6 +32,12 @@ const ProfileApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  // 특정 유저의 레시피 리스트를 가져오는 메서드
+  getUserRecipes: (memberId: string, page: number, size: number) => {
+    return axiosInstance.get(`/api/profile/recipes`, {
+      params: { memberId, page, size },
+    });
+  },
 };
 
 export default ProfileApi;
