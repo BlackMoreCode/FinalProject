@@ -35,21 +35,17 @@ const PostDetail = () => {
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // 모달 (게시글 수정/삭제/신고 등)
+  // 모달 상태: 게시글 수정/삭제/신고, 댓글 신고 등
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
-    type: "",
-    id: null,
-    content: "",
+    type: "", // "deletePost", "editPostContent", "editPostTitle", "reportPost", "reportComment" 등
+    id: null, // 신고/수정/삭제 대상 ID (게시글 ID 또는 댓글 ID)
+    content: "", // 모달에 표시할 초기 내용 (예: 기존 제목, 신고 사유 등)
   });
-
   // 게시글 인용(답글) 요청 (CommentsContainer에서 처리)
   const [postToReply, setPostToReply] = useState(null);
 
-  // ------------------------------
-  // (A) 게시글 좋아요
-  // ------------------------------
+  // (A) 게시글 좋아요 처리 함수
   const handleLikePost = async (pid) => {
     try {
       const updatedPost = await ForumApi.toggleLikePost(pid, user.id);
@@ -66,9 +62,7 @@ const PostDetail = () => {
     }
   };
 
-  // ------------------------------
-  // (B) 댓글 좋아요 (선택)
-  // ------------------------------
+  // (B) 댓글 좋아요 처리 함수
   const handleLikeComment = async (commentId) => {
     try {
       await ForumApi.toggleLikeComment(commentId, user.id, postId);
@@ -79,9 +73,7 @@ const PostDetail = () => {
     }
   };
 
-  // ------------------------------
-  // (C) 게시글 인용(답글)
-  // ------------------------------
+  // (C) 게시글 인용(답글) 처리 함수
   const handleReply = (target, type) => {
     if (type === "post") {
       setPostToReply(target);
@@ -89,21 +81,28 @@ const PostDetail = () => {
     toast.info(`${target.authorName}님의 내용을 인용합니다.`);
   };
 
-  // ------------------------------
-  // (D) 모달 열기 (게시글 수정/삭제/신고)
-  // ------------------------------
+  // (D) 모달 열기 함수 (수정/삭제/신고 등)
   const openModal = (type, id, content) => {
     setModalData({ type, id, content });
     setIsModalOpen(true);
   };
 
-  // ------------------------------
-  // (E) 모달 확인 버튼 처리
-  // ------------------------------
+  // (E) 신고 관련 핸들러
+  // 게시글 신고: 모달을 통해 신고 사유 입력
+  const handleReportPost = (pid) => {
+    openModal("reportPost", pid, "");
+  };
+  // 댓글 신고: 모달을 통해 신고 사유 입력
+  const handleReportComment = (commentId) => {
+    openModal("reportComment", commentId, "");
+  };
+
+  // (F) 모달 확인 버튼 처리 함수
   const handleModalConfirm = async (inputVal) => {
     try {
       switch (modalData.type) {
         case "deletePost": {
+          // 게시글 삭제 요청
           await ForumApi.deletePost(
             modalData.id,
             user.id,
@@ -115,7 +114,7 @@ const PostDetail = () => {
           break;
         }
         case "editPostContent": {
-          // 게시글 내용 수정
+          // 게시글 내용 수정 요청
           const payload = {
             contentJSON:
               typeof inputVal === "object"
@@ -139,7 +138,7 @@ const PostDetail = () => {
           break;
         }
         case "editPostTitle": {
-          // 게시글 제목 수정
+          // 게시글 제목 수정 요청
           if (!inputVal.trim()) {
             toast.warning("제목을 입력해주세요.");
             return;
@@ -164,13 +163,30 @@ const PostDetail = () => {
           break;
         }
         case "reportPost": {
-          // 게시글 신고
+          // 게시글 신고 요청
           if (!inputVal.trim()) {
             toast.warning("신고 사유를 입력해주세요.");
             return;
           }
           await ForumApi.reportPost(modalData.id, user.id, inputVal);
+          // 신고 후, 게시글 전체 데이터를 다시 불러옴 (modalData.id가 게시글 ID여야 함)
+          const updatedPost = await ForumApi.getPostById(modalData.id);
+          setPost(updatedPost);
           toast.success("게시글 신고가 접수되었습니다.");
+          break;
+        }
+        case "reportComment": {
+          // 댓글 신고 요청
+          if (!inputVal.trim()) {
+            toast.warning("신고 사유를 입력해주세요.");
+            return;
+          }
+          // 신고 요청 시 반드시 { reporterId, reason, postId }를 포함하여 전송
+          await ForumApi.reportComment(modalData.id, user.id, inputVal, postId);
+          // 신고 후, 전체 게시글 데이터를 postId를 이용해 다시 불러옴
+          const updatedPost = await ForumApi.getPostById(postId);
+          setPost(updatedPost);
+          toast.success("댓글 신고가 접수되었습니다.");
           break;
         }
         default:
@@ -184,16 +200,12 @@ const PostDetail = () => {
     }
   };
 
-  // ------------------------------
-  // (F) 모달 취소
-  // ------------------------------
+  // (G) 모달 취소 처리 함수
   const handleModalCancel = () => {
     setIsModalOpen(false);
   };
 
-  // ------------------------------
-  // (G) 게시글 복원 (모달 없이)
-  // ------------------------------
+  // (H) 게시글 복원 처리 (모달 없이)
   const handleRestorePost = async (pid) => {
     try {
       await ForumApi.restorePost(pid);
@@ -206,28 +218,14 @@ const PostDetail = () => {
     }
   };
 
-  // ------------------------------
-  // (H) 게시글 데이터 불러오기
-  // ------------------------------
+  // (I) 게시글 데이터 불러오기
   useEffect(() => {
     const fetchPostData = async () => {
       try {
         const postData = await ForumApi.getPostById(postId);
-
-        // (H-1) 관리자 수정 여부를 플래그로 세팅 (제목)
-        if (postData.editedByTitle === "ADMIN") {
-          postData.editedByAdminTitle = true;
-        } else {
-          postData.editedByAdminTitle = false;
-        }
-
-        // (H-2) 관리자 수정 여부를 플래그로 세팅 (내용)
-        if (postData.editedByContent === "ADMIN") {
-          postData.editedByAdminContent = true;
-        } else {
-          postData.editedByAdminContent = false;
-        }
-
+        // 관리자에 의한 수정 여부 플래그 설정
+        postData.editedByAdminTitle = postData.editedByTitle === "ADMIN";
+        postData.editedByAdminContent = postData.editedByContent === "ADMIN";
         setPost(postData);
       } catch (error) {
         console.error("게시글 로딩 중 오류:", error);
@@ -239,9 +237,7 @@ const PostDetail = () => {
     fetchPostData();
   }, [postId, navigate]);
 
-  // ------------------------------
-  // (I) 렌더링
-  // ------------------------------
+  // (J) 렌더링
   return (
     <PostDetailContainer>
       <ReplyQuoteGlobalStyle />
@@ -253,7 +249,7 @@ const PostDetail = () => {
         <div>게시글을 찾을 수 없습니다.</div>
       ) : (
         <>
-          {/* (I-1) 게시글 제목 + (관리자/작성자) 수정 아이콘 */}
+          {/* (J-1) 게시글 제목 및 수정 아이콘 */}
           <PostTitle>
             {post.hidden ? (
               <HiddenCommentNotice>
@@ -261,17 +257,8 @@ const PostDetail = () => {
               </HiddenCommentNotice>
             ) : (
               <>
-                {/* 실제 제목 표시 */}
                 <span>{post.title}</span>
-
-                {/* (I-1a) 만약 "제목"이 관리자에 의해 수정된 경우 => 표시 */}
-                {post.editedByAdminTitle && (
-                  <AdminEditIndicator style={{ marginLeft: "8px" }}>
-                    [관리자에 의해 제목 수정됨]
-                  </AdminEditIndicator>
-                )}
-
-                {/* (I-1b) 제목 수정 아이콘: 관리자 or (작성자 && 관리자 미수정) */}
+                {/* 관리자 계정이면 무조건 수정 아이콘을 표시, 일반 사용자는 본인 글에 한해 수정 가능 */}
                 {user.admin ? (
                   <FontAwesomeIcon
                     icon={faEdit}
@@ -307,16 +294,22 @@ const PostDetail = () => {
                     ) : null}
                   </>
                 )}
+                {/* 관리자에 의해 제목 수정된 경우 표시 */}
+                {post.editedByAdminTitle && (
+                  <AdminEditIndicator style={{ marginLeft: "8px" }}>
+                    [관리자에 의해 제목 수정됨]
+                  </AdminEditIndicator>
+                )}
               </>
             )}
           </PostTitle>
 
-          {/* (I-2) 생성일 */}
+          {/* (J-2) 생성일 표시 */}
           <div style={{ color: "#777", marginBottom: "1rem" }}>
             생성일: {Commons.formatDateAndTime(post.createdAt)}
           </div>
 
-          {/* (I-3) PostBox에 게시글 데이터 전달 */}
+          {/* (J-3) PostBox 컴포넌트에 게시글 데이터 전달 */}
           <PostBox
             post={post}
             memberId={user.id}
@@ -326,9 +319,7 @@ const PostDetail = () => {
             onEditPostContent={(pid, cJSON) =>
               openModal("editPostContent", pid, cJSON)
             }
-            onReportPost={(pid, content) =>
-              openModal("reportPost", pid, content)
-            }
+            onReportPost={handleReportPost}
             onRestorePost={handleRestorePost}
             onLikePost={handleLikePost}
             onReplyPost={handleReply}
@@ -336,20 +327,20 @@ const PostDetail = () => {
 
           <Divider />
 
-          {/* (I-4) 댓글 섹션 */}
+          {/* (J-4) 댓글 섹션 */}
           <CommentsContainer
             postId={postId}
             user={user}
             postToReply={postToReply}
             setPostToReply={setPostToReply}
             onLikeComment={handleLikeComment}
+            onReportComment={handleReportComment}
           />
         </>
       )}
 
-      {/* (I-5) Toast 및 모달 */}
+      {/* (J-5) Toast 및 ConfirmationModal */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-
       <ConfirmationModal
         isOpen={isModalOpen}
         type={modalData.type}

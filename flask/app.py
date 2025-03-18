@@ -501,10 +501,6 @@ def toggle_forum_post_like(doc_id):
 # Forum 게시글 신고 처리
 @app.route("/forum/post/<doc_id>/report", methods=["POST"])
 def report_forum_post(doc_id):
-    """
-    게시글 신고 처리 (Forum)
-    KR: 신고자 ID와 신고 사유를 받아 해당 게시글의 reportCount를 증가시키고, 신고 임계값 이상이면 게시글을 숨김 처리합니다.
-    """
     try:
         req_data = request.json
         reporter_id = req_data.get("reporterId")
@@ -514,8 +510,12 @@ def report_forum_post(doc_id):
         REPORT_THRESHOLD = 10
         index_name, _ = get_index_and_mapping("forum_post")
         post = es.get(index=index_name, id=doc_id)["_source"]
-        if post["member"]["memberId"] == reporter_id:
+
+        # 기존 코드는 post["member"]["memberId"]로 작성했지만,
+        # 실제 문서에는 최상위에 memberId가 존재하므로 아래와 같이 수정합니다.
+        if post.get("memberId") == reporter_id:
             return jsonify({"error": "자신의 게시글은 신고할 수 없습니다."}), 400
+
         post["reportCount"] = post.get("reportCount", 0) + 1
         if post["reportCount"] >= REPORT_THRESHOLD:
             post["hidden"] = True
@@ -524,6 +524,8 @@ def report_forum_post(doc_id):
         return jsonify({"message": "게시글이 신고되었습니다.", "reportCount": post["reportCount"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 
 # Forum 게시글 삭제 (논리 삭제)
 @app.route("/forum/post/<doc_id>", methods=["DELETE"], endpoint="delete_forum_post")
@@ -854,11 +856,6 @@ def toggle_forum_comment_like(comment_id):
 # Forum 댓글 신고 처리
 @app.route("/forum/comment/<int:comment_id>/report", methods=["POST"])
 def report_forum_comment(comment_id):
-    """
-    댓글 신고 처리 (Forum)
-    KR: 신고자 ID와 신고 사유를 받아 해당 댓글의 reportCount를 증가시키고,
-         신고 임계값 이상이면 댓글을 숨김 처리합니다.
-    """
     try:
         req_data = request.json
         reporter_id = req_data.get("reporterId")

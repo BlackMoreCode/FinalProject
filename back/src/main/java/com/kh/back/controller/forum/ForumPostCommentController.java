@@ -1,6 +1,8 @@
 package com.kh.back.controller.forum;
 
+import com.kh.back.dto.forum.request.CommentReportRequestDto;
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
+import com.kh.back.dto.forum.request.ReportRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
 import com.kh.back.dto.forum.response.ForumPostLikeResponseDto;
 import com.kh.back.service.forum.ForumPostCommentService;
@@ -143,22 +145,22 @@ public class ForumPostCommentController {
     }
 
     /**
-     * 댓글 신고
+     * 댓글 신고 처리 (댓글 신고용 DTO 사용)
      *
-     * @param commentId  신고 대상 댓글 ID
-     * @param reporterId 신고자 ID
-     * @param reason     신고 사유 (본문)
+     * @param commentId 신고 대상 댓글 ID
+     * @param reportRequestDto 댓글 신고 요청 DTO (신고자 ID, 신고 사유, 게시글 ID 포함)
      * @return 신고된 댓글 정보 (Response DTO)
      */
     @PostMapping("/{commentId}/report")
     public ResponseEntity<ForumPostCommentResponseDto> reportComment(
             @PathVariable Integer commentId,
-            @RequestParam Integer reporterId,
-            @RequestBody String reason) {
-        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reporterId);
-        ForumPostCommentResponseDto reported = commentService.reportComment(commentId, reporterId, reason);
+            @RequestBody CommentReportRequestDto reportRequestDto) {
+        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reportRequestDto.getReporterId());
+        ForumPostCommentResponseDto reported = commentService.reportComment(commentId, reportRequestDto);
         return ResponseEntity.ok(reported);
     }
+
+
 
     /**
      * 댓글에 대한 답글 추가 (인용)

@@ -1,6 +1,7 @@
 package com.kh.back.controller.forum;
 
 import com.kh.back.dto.forum.request.ForumPostRequestDto;
+import com.kh.back.dto.forum.request.ReportRequestDto;
 import com.kh.back.dto.forum.response.ForumPostResponseDto;
 import com.kh.back.dto.forum.response.PaginationDto;
 import com.kh.back.service.forum.FileService;
@@ -279,16 +280,20 @@ public class ForumPostController {
      * 게시글 신고 처리
      *
      * @param postId     신고할 게시글 ID (문자열로 변경)
-     * @param reporterId 신고자 ID (정수형)
-     * @param reason     신고 사유 (본문)
+     *  reporterId 신고자 ID (정수형)
+     *  reason     신고 사유 (본문)
      * @return 신고 결과 (업데이트된 게시글 정보 포함)
      */
     @PostMapping("/{postId}/report")
     public ResponseEntity<ForumPostResponseDto> reportPost(
             @PathVariable String postId,
-            @RequestParam Integer reporterId,
-            @RequestBody String reason
+            @RequestBody ReportRequestDto requestDto // <-- JSON 바디로 DTO를 받음
     ) {
+        // 1) DTO에서 reporterId, reason 꺼내기
+        Integer reporterId = requestDto.getReporterId();
+        String reason = requestDto.getReason();
+
+        // 2) Service 호출
         ForumPostResponseDto responseDto = postService.reportPost(postId, reporterId.longValue(), reason);
         return ResponseEntity.ok(responseDto);
     }

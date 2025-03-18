@@ -423,10 +423,14 @@ public class ForumEsService {
         }
     }
 
-    public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason) {
+    public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason, String postId) {
         try {
             URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/report");
-            String jsonBody = String.format("{\"reporterId\": %d, \"reason\": \"%s\"}", reporterId, reason);
+            // reporterId, reason, postId를 모두 포함하는 JSON payload 생성
+            String jsonBody = String.format(
+                    "{\"reporterId\": %d, \"reason\": \"%s\", \"postId\": \"%s\"}",
+                    reporterId, reason, postId
+            );
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -441,6 +445,8 @@ public class ForumEsService {
             return null;
         }
     }
+
+
 
     public boolean hideComment(Integer commentId) {
         try {

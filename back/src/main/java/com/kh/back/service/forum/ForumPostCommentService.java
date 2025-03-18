@@ -1,6 +1,8 @@
 package com.kh.back.service.forum;
 
+import com.kh.back.dto.forum.request.CommentReportRequestDto;
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
+import com.kh.back.dto.forum.request.ReportRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
 import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ForumEsService;
@@ -107,10 +109,18 @@ public class ForumPostCommentService {
      * KR: 신고 요청을 ElasticService에 전달하여 댓글 신고를 처리합니다.
      */
     @Transactional
-    public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason) {
-        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reporterId);
-        return forumEsService.reportComment(commentId, reporterId, reason);
+    public ForumPostCommentResponseDto reportComment(Integer commentId, CommentReportRequestDto reportRequestDto) {
+        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reportRequestDto.getReporterId());
+        return forumEsService.reportComment(
+                commentId,
+                reportRequestDto.getReporterId(),
+                reportRequestDto.getReason(),
+                reportRequestDto.getPostId()
+        );
     }
+
+
+
 
     /**
      * 댓글 숨김 처리

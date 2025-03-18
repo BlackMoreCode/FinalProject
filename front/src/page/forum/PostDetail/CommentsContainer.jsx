@@ -1,9 +1,10 @@
+// CommentsContainer.jsx
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import ForumApi from "../../../api/ForumApi";
 import CommentList from "./CommentList";
 import CommentInput from "./CommentInput";
-import ConfirmationModal from "../ConfirmationModal"; // 댓글 수정용 모달
+import ConfirmationModal from "../ConfirmationModal"; // 댓글 수정/신고용 모달
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Bold from "@tiptap/extension-bold";
@@ -28,10 +29,10 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
   const [comments, setComments] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null);
   const [loading, setLoading] = useState(true);
-  // 모달 상태 (댓글 수정)
+  // 모달 상태 (댓글 수정/신고)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
-    type: "",
+    type: "", // 예: "editComment" 또는 "reportComment"
     commentId: null,
     content: "",
   });
@@ -49,7 +50,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     content: "",
   });
 
-  // 댓글 목록 불러오기 함수
+  // 댓글 목록 불러오기
   const fetchComments = async () => {
     try {
       const data = await ForumApi.getCommentsByPostId(postId);
@@ -82,6 +83,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     fetchComments();
   }, [postId]);
 
+  // 댓글 추가
   const handleAddComment = async () => {
     if (!editor) return;
     const jsonData = editor.getJSON();
@@ -112,17 +114,28 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     }
   };
 
+  // 댓글 삭제
   const handleDeleteComment = async (commentId) => {
     try {
-      await ForumApi.deleteComment(commentId, postId, user.id, user.admin);
-      toast.success("댓글이 삭제되었습니다.");
-      await fetchComments();
+      const success = await ForumApi.deleteComment(
+        commentId,
+        postId,
+        user.id,
+        user.admin
+      );
+      if (success) {
+        toast.success("댓글이 삭제되었습니다.");
+        await fetchComments();
+      } else {
+        toast.error("댓글 삭제에 실패했습니다.");
+      }
     } catch (error) {
       console.error("댓글 삭제 중 오류:", error);
       toast.error("댓글 삭제에 실패했습니다.");
     }
   };
 
+  // 댓글 수정: 모달 열기
   const handleEditComment = (commentId, contentJSON) => {
     setModalData({
       type: "editComment",
@@ -132,11 +145,22 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     setIsModalOpen(true);
   };
 
+  // 신고 기능 추가: 댓글 신고 시 모달 열기
+  const handleReportComment = (commentId) => {
+    setModalData({
+      type: "reportComment",
+      commentId,
+      content: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  // 모달 확인 버튼 처리
   const handleModalConfirm = async (inputVal) => {
     if (modalData.type === "editComment") {
       try {
         const payload = {
-          postId: postId,
+          postId,
           contentJSON:
             typeof inputVal === "object" ? JSON.stringify(inputVal) : inputVal,
           editedBy: user.admin ? "ADMIN" : String(user.id),
@@ -154,6 +178,24 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
         console.error("댓글 수정 중 오류:", error);
         toast.error("댓글 수정에 실패했습니다.");
       }
+    } else if (modalData.type === "reportComment") {
+      try {
+        if (!inputVal.trim()) {
+          toast.warning("신고 사유를 입력해주세요.");
+          return;
+        }
+        await ForumApi.reportComment(
+          modalData.commentId,
+          user.id,
+          inputVal,
+          postId
+        );
+        await fetchComments();
+        toast.success("댓글 신고가 접수되었습니다.");
+      } catch (error) {
+        console.error("댓글 신고 중 오류:", error);
+        toast.error("댓글 신고에 실패했습니다.");
+      }
     }
     setIsModalOpen(false);
   };
@@ -162,6 +204,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     setIsModalOpen(false);
   };
 
+  // 댓글 복원
   const handleRestoreComment = async (commentId) => {
     try {
       await ForumApi.restoreComment(commentId, postId);
@@ -173,6 +216,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     }
   };
 
+  // 댓글 좋아요
   const handleLikeComment = async (commentId) => {
     try {
       const updated = await ForumApi.toggleLikeComment(
@@ -194,6 +238,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
     }
   };
 
+  // 댓글 인용(답글)
   const handleReply = (target, type) => {
     if (!editor) return;
     const quotedBlock = createReplyBlock(target);
@@ -228,6 +273,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
         onLikeComment={handleLikeComment}
         onReply={handleReply}
         onRestoreComment={handleRestoreComment}
+        onReportComment={handleReportComment} // 신고 핸들러 추가
       />
 
       <CommentInput
@@ -242,7 +288,7 @@ const CommentsContainer = ({ postId, user, postToReply, setPostToReply }) => {
         isOpen={isModalOpen}
         type={modalData.type}
         content={modalData.content}
-        message="댓글을 수정하시겠습니까?"
+        message="댓글을 수정하시겠습니까?" // 신고일 경우에도 동일 메시지 대신 변경 가능
         onConfirm={handleModalConfirm}
         onCancel={handleModalCancel}
       />
