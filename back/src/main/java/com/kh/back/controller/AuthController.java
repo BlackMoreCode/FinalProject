@@ -17,8 +17,10 @@
 	import org.springframework.security.crypto.password.PasswordEncoder;
 	import org.springframework.web.bind.annotation.*;
 	import org.springframework.web.multipart.MultipartFile;
-
-
+	
+	import java.util.Map;
+	
+	
 	@Slf4j
 	@CrossOrigin(origins = "http://localhost:3000")
 	@RestController
@@ -104,12 +106,13 @@ public ResponseEntity<String> signup(
 			return ResponseEntity.ok(email);
 		}
 		
-		// 리프레시 토큰으로 새 액세스 토큰 발급
-		@GetMapping("/refresh")
-		public ResponseEntity<AccessTokenDto> newToken(@RequestParam String refreshToken) {
+		@PostMapping("/refresh")
+		public ResponseEntity<AccessTokenDto> newToken(@RequestBody Map<String, String> requestBody) {
+			String refreshToken = requestBody.get("refreshToken");
 			return ResponseEntity.ok(authService.refreshAccessToken(refreshToken));
 		}
-
+		
+		
 		// 로그인
 		@PostMapping("/login")
 		public ResponseEntity<TokenDto> login(@RequestBody LoginDto loginDto) {

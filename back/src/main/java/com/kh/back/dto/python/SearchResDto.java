@@ -1,4 +1,10 @@
 package com.kh.back.dto.python;
 
-public interface SearchResDto {
+import lombok.*;
+
+@Getter @Setter
+@ToString @NoArgsConstructor @AllArgsConstructor
+public class SearchResDto {
+	protected String name;
+	protected String id;
 }

@@ -17,11 +17,7 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class FoodResDto implements SearchResDto {
-    private String id;
-
-    private String name;
-
+public class FoodResDto extends SearchResDto {
     @JsonProperty("description")
     @JsonAlias("RCP_NA_TIP")
     private String description;

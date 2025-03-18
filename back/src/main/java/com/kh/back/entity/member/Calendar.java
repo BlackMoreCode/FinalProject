@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @AllArgsConstructor @Table(name = "calendar")
 public class Calendar {
 	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 	
 	@ManyToOne
@@ -23,6 +24,8 @@ public class Calendar {
 	private Recipe recipe;
 	
 	private String recipeId;
+	
+	private String recipeName;
 	
 	private String amount;
 	

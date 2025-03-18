@@ -12,6 +12,7 @@ public class CalendarResDto {
 	private Long memberId;
 	private String recipeId;
 	private Recipe recipe;
+	private String recipeName;
 	private LocalDate date;
 	private String amount;
 	private String memo;

@@ -131,7 +131,7 @@ public class ProfileService {
             // 파이어베이스에 업로드하고 URL 반환
             String imageUrl = FirebaseService.uploadProfileImage(file);
             log.info("저장하려는 유저 id값 {}", member.getMemberId());
-            log.info("저장하려는 유저 이름 {}", member.getName());
+            log.info("저장하려는 유저 이름 {}", member.getNickName());
             log.info("저장하려는 이미지 url 주소값 : {}", imageUrl);
 
             // DB에 이미지 URL 저장

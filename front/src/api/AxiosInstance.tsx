@@ -45,7 +45,7 @@ axiosInstance.interceptors.response.use(
           }
           // 토큰 갱신 후 다시 요청을 보냄
           error.config.headers["Authorization"] = `Bearer ${rsp.data}`;
-          return axiosInstance(error.config); // 재요청
+          return axios(error.config); // 재요청
         }
       } catch (e) {
         console.error("토큰 갱신 실패:", e);

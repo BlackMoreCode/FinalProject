@@ -1,13 +1,6 @@
-import {
-  EmailTokenVerificationDto,
-  loginReqDto,
-  loginResDto,
-  signupReqDto,
-  SmsTokenVerificationDto,
-} from "./dto/AuthDto";
+import {EmailTokenVerificationDto, loginReqDto, loginResDto, SmsTokenVerificationDto,} from "./dto/AuthDto";
 import axios from "axios";
 import Commons from "../util/Common";
-import { string } from "yup";
 
 const AuthApi = {
   login: async (loginReq: loginReqDto) => {
@@ -30,12 +23,11 @@ const AuthApi = {
 
   signup: async (formData: FormData) => {
     try {
-      const response = await axios.post(Commons.BASE_URL +`/auth/signup`, formData, {
+      return await axios.post(Commons.BASE_URL + `/auth/signup`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      return response;
     } catch (error) {
       console.error("Signup error:", error);
       throw error;

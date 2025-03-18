@@ -8,6 +8,7 @@ import lombok.*;
 @NoArgsConstructor @AllArgsConstructor
 public class AdminMemberListResDto {
 	private Long id;
-	private String name;
+	private String nickname;
 	private Authority authority;
+	private String memberImg;
 }

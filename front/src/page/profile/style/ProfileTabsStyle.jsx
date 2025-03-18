@@ -51,14 +51,6 @@ export const TabContent = styled.div`
   justify-content: center;
 `;
 
-export const CalendarSection = styled.div`
-  margin: 30px auto;
-  text-align: center;
-  width: 90%;
-  height: 400px;
-  background-color: lightgray;
-  border: 1px solid black;
-`;
 
 export const UserPost = styled.article`
   border: 1px solid #eee;

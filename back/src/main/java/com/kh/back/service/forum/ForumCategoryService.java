@@ -60,7 +60,9 @@ public class ForumCategoryService {
      */
     public List<ForumCategoryDto> getAllCategories() {
         log.info("ElasticSearch에서 모든 포럼 카테고리를 조회합니다.");
-        return forumEsService.getAllCategoriesFromElastic();
+        List<ForumCategoryDto> forumCategoryDtoList =  forumEsService.getAllCategoriesFromElastic();
+        log.warn("{}",forumCategoryDtoList);
+        return forumCategoryDtoList;
     }
 
     /**

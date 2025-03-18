@@ -7,9 +7,7 @@ import lombok.*;
 @Getter @Setter @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class CocktailListResDto implements SearchListResDto {
-	private String id;
-	private String name;
+public class CocktailListResDto extends SearchListResDto {
 	private Long like;
 	private Long report;
 	private String category;
