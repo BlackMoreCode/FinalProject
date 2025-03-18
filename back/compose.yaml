@@ -7,20 +7,20 @@ services:
       - "MYSQL_ROOT_PASSWORD=1234"
       - "MYSQL_USER=final"
     ports:
-      - "3307:3306"  # 호스트의 3307 포트를 컨테이너의 3306 포트로 매핑
+      - "3307:3306"
     volumes:
-      - mysql-data:/var/lib/mysql  # 데이터 영속성을 위한 볼륨 추가
+      - mysql-data:/var/lib/mysql
     networks:
-      - app-network
+      - mysql-network
 
   redis:
     image: "redis:alpine"
-    container_name: redis-container
+    container_name: redis
     ports:
       - "6379:6379"
     networks:
-      - app-network
-    mem_limit: 512m  # 메모리 제한을 512MB로 설정
+      - redis-network
+    mem_limit: 512m
 
   flask:
     build:
@@ -30,30 +30,46 @@ services:
       - "5001:5000"
     depends_on:
       - elasticsearch
+      - redis
     environment:
       - ELASTICSEARCH_HOST=elasticsearch
+      - REDIS_URL=redis://redis:6379/0
     networks:
+      - redis-network
       - backend
     volumes:
       - ../flask:/app
+
+  rq-worker:
+    build:
+      context: ../flask  # Flask와 동일한 이미지 사용
+    container_name: rq_worker
+    depends_on:
+      - redis
+      - flask
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    command: rq worker --worker-class rq.SimpleWorker --max-idle-time 3000
+    networks:
+      - redis-network
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.12
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms2g -Xmx2g  # 최소 2GB, 최대 2GB로 JVM 힙 메모리 설정
-      - "xpack.security.enabled=false"  # 보안을 비활성화하여 성능 최적화
-      - "xpack.monitoring.enabled=false"  # 모니터링 비활성화 (불필요한 리소스 사용 방지)
-      - "xpack.ml.enabled=false"  # 머신러닝 기능 비활성화
-      - "indices.fielddata.cache.size=50%"  # 필드 데이터 캐시 크기 제한
-      - "indices.query.bool.max_clause_count=1024"  # 복잡한 쿼리의 최대 클라우드 수 제한
-      - "action.destructive_requires_name=true"  # 중요한 삭제 작업의 실수 방지
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - "xpack.security.enabled=false"
+      - "xpack.monitoring.enabled=false"
+      - "xpack.ml.enabled=false"
+      - "indices.fielddata.cache.size=50%"
+      - "indices.query.bool.max_clause_count=1024"
+      - "action.destructive_requires_name=true"
     ports:
       - "9200:9200"
     networks:
       - backend
-    mem_limit: 4g  # Elasticsearch 메모리 제한 설정
+    mem_limit: 3g
     ulimits:
       memlock:
         soft: -1
@@ -63,7 +79,9 @@ volumes:
   mysql-data:
 
 networks:
-  app-network:
+  redis-network:
     driver: bridge
   backend:
+    driver: bridge
+  mysql-network:
     driver: bridge

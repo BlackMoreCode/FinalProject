@@ -27,7 +27,7 @@ const AdminNavContainer = styled(Paper)`
     justify-content: center;
     align-items: center;
     width: 300px;
-    height: auto;
+		height: 500px;
     margin: 50px 30px;
     padding: 20px;
     border-radius: 16px;

@@ -14,4 +14,5 @@ import java.util.Optional;
 public interface ReactionRepository  extends JpaRepository<Reaction, Long> {
     Optional<Reaction> findByMemberAndPostIdAndAction(Member member, String postId, Action action);
     List<Reaction> findByMember(Member member);
+    List<Reaction> findByMemberAndAction(Member member, Action action);
 }
