@@ -203,23 +203,20 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
-        # KR: 검색어/카테고리/조리방법 등에 따른 query 빌드
+        # 1) 검색어/카테고리/조리방법 등에 따른 query 빌드 (기존 로직 유지)
         if type_filter == "food":
-            category_field = "RCP_PAT2"   # 음식은 ES 매핑에서 RCP_PAT2로 저장됨
-            cooking_field = "RCP_WAY2"    # 음식의 조리방법 필드
+            category_field = "RCP_PAT2"
+            cooking_field = "RCP_WAY2"
             multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
         elif type_filter == "forum_post":
-            # KR: 포럼 게시글 검색을 위한 필드 지정
-            #     -> 실제 검색하려면 title, content, authorName 등에 대해 multi_match 할 수도 있음
             category_field = "category"
-            cooking_field = "cookingMethod"  # (포럼엔 없으니 사용X, 혹은 무시)
+            cooking_field = "cookingMethod"  # 포럼에는 없는 필드
             multi_match_fields = ["title", "content", "authorName", "category"]
         else:
-            category_field = "category"   # 칵테일 등 기본
+            category_field = "category"
             cooking_field = "cookingMethod"
             multi_match_fields = ["name", "ingredients.ingredient", "category"]
 
-        # KR: 검색조건 조합
         if q and category and cooking_method:
             query = {
                 "bool": {
@@ -266,16 +263,14 @@ def search():
         else:
             query = {"match_all": {}}
 
-        # KR: 검색 결과에 포함할 필드 (type_filter별로 다름)
+        # 2) forum_post인 경우, comments 배열도 함께 가져오도록 source_fields에 추가
         if type_filter == "food":
             source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv", "ATT_FILE_NO_MAIN"]
         elif type_filter == "forum_post":
-            # KR: forum_post에 대해서는 우리가 보고 싶은 필드 지정
-            #     (title, content, authorName, createdAt, updatedAt 등등)
             source_fields = [
-                "title", "content", "authorName",
-                "contentJSON", "viewsCount", "likesCount",
-                "createdAt", "updatedAt", "category"
+                "title", "content", "authorName", "contentJSON",
+                "viewsCount", "likesCount", "createdAt", "updatedAt",
+                "category", "comments"  # ←★ 댓글도 함께 가져옴
             ]
         else:
             source_fields = ["name", "category", "like", "abv"]
@@ -287,11 +282,36 @@ def search():
             "query": query
         }
 
+        # 3) Elasticsearch 검색
         res = es.search(index=index_name, body=body)
-        results = [{**hit["_source"], "id": hit["_id"]} for hit in res["hits"]["hits"]]
-        return jsonify(results)
+
+        # 4) 검색 결과 파싱: doc["_source"] + doc["_id"]
+        hits = res["hits"]["hits"]
+        results = []
+        for hit in hits:
+            doc = hit["_source"]
+            doc["id"] = hit["_id"]
+            results.append(doc)
+
+        # 5) forum_post인 경우, comments에서 최신 댓글 추출 → latestComment
+        if type_filter == "forum_post":
+            for doc in results:
+                comments = doc.get("comments", [])
+                if comments:
+                    # createdAt 기준 내림차순 정렬하여 첫 번째를 최신 댓글로
+                    sorted_comments = sorted(
+                        comments,
+                        key=lambda c: c.get("createdAt", ""),
+                        reverse=True
+                    )
+                    doc["latestComment"] = sorted_comments[0]
+                else:
+                    doc["latestComment"] = None
+
+        return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # 검색 알코올 (레시피용; 단 하나만 남김)
 @app.route("/search/alcohol", methods=["GET"], endpoint="unique_search_alcohol")
@@ -377,7 +397,7 @@ def get_forum_post(doc_id):
     """
     게시글 상세 조회 (Forum)
     KR: ES의 'forum_post' 인덱스에서 주어진 문서 ID의 게시글을 조회하여 반환합니다.
-        **변경 사항:** ES가 생성한 _id 값을 별도의 'id' 필드에 할당하여 반환합니다.
+        변경 사항: 댓글 배열이 있을 경우, 최신 댓글(latestComment)을 계산하여 추가합니다.
     """
     try:
         index_name, _ = get_index_and_mapping("forum_post")
@@ -385,6 +405,16 @@ def get_forum_post(doc_id):
         data = res["_source"]
         # ES에서 생성된 문서 id를 JSON 응답에 포함시킵니다.
         data["id"] = res["_id"]
+
+        # 댓글 배열이 존재하면 최신 댓글을 계산하여 latestComment 필드에 추가
+        if "comments" in data and isinstance(data["comments"], list) and len(data["comments"]) > 0:
+            # createdAt 값이 ISO 형식 문자열이라면 정렬이 가능함 (내림차순 정렬)
+            sorted_comments = sorted(data["comments"], key=lambda c: c.get("createdAt", ""), reverse=True)
+            # 가장 최근 댓글을 latestComment에 저장
+            data["latestComment"] = sorted_comments[0]
+        else:
+            data["latestComment"] = None  # 댓글이 없으면 null 처리
+
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
@@ -994,6 +1024,39 @@ def search_forum_category():
             return jsonify(source), 200
         else:
             return jsonify({"error": "Not Found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 조회수 증가 관련
+@app.route("/forum/post/<doc_id>/increment-view", methods=["POST"])
+def increment_view_count(doc_id):
+    """
+    게시글 조회수 증가 엔드포인트
+    - 주어진 게시글(doc_id)의 조회수를 1 증가시키고,
+      업데이트된 조회수를 반환합니다.
+    """
+    try:
+        # "forum_post" 타입에 해당하는 인덱스 이름 가져오기
+        index_name, _ = get_index_and_mapping("forum_post")
+
+        # 게시글 문서 가져오기
+        res = es.get(index=index_name, id=doc_id)
+        data = res["_source"]
+
+        # 조회수 증가 (기존 값이 없으면 0으로 초기화)
+        current_views = data.get("viewsCount", 0)
+        data["viewsCount"] = current_views + 1
+
+        # 업데이트 시간 갱신
+        data["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
+        # 수정된 문서를 재인덱싱
+        es.index(index=index_name, id=doc_id, body=data)
+
+        return jsonify({
+            "message": "조회수가 증가되었습니다.",
+            "viewsCount": data["viewsCount"]
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

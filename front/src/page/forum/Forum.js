@@ -77,11 +77,11 @@ const Forum = () => {
               <p className="text-gray-600 dark:text-gray-300 mb-2">
                 {category.description}
               </p>
-              <p className="text-sm text-right text-gray-500 dark:text-gray-400">
+              {/* <p className="text-sm text-right text-gray-500 dark:text-gray-400">
                 {category.postCount > 0
                   ? `${category.postCount} 개의 게시글이 존재`
                   : "게시글이 아직 없습니다"}
-              </p>
+              </p> */}
             </Link>
           ))}
         </div>
