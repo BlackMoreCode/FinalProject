@@ -58,18 +58,29 @@ public class ForumPostService {
             throw new IllegalArgumentException("카테고리 ID는 null일 수 없습니다.");
         }
 
+        // 추가: sticky가 true이면 관리자만 가능하도록 검증
+        if (Boolean.TRUE.equals(requestDto.getSticky()) && !memberService.isAdmin(requestDto.getMemberId())) {
+            throw new IllegalArgumentException("일반 회원은 고정 게시글을 생성할 수 없습니다.");
+        }
+
         // HTML 콘텐츠 Sanitizing 처리
         String sanitizedContent = sanitizeHtml(requestDto.getContent());
         requestDto.setContent(sanitizedContent);
 
-        // 추가: memberId를 이용해 작성자의 닉네임을 조회하고 authorName 필드에 설정 (memberService에 해당 메서드가 구현되어 있어야 함)
+        // 작성자 닉네임 설정
         String authorName = memberService.getNickname(requestDto.getMemberId());
-        requestDto.setAuthorName(authorName);  // authorName 필드 추가 (DTO에 authorName 필드가 있다고 가정)
+        requestDto.setAuthorName(authorName);
+
+        // 만약 sticky 값이 null이면 false로 설정 (기본값)
+        if(requestDto.getSticky() == null) {
+            requestDto.setSticky(false);
+        }
 
         ForumPostResponseDto createdDto = forumEsService.createPost(requestDto);
         log.info("ES에 게시글 생성됨. ID: {}", createdDto.getId());
         return createdDto;
     }
+
 
     /**
      * 카테고리별 게시글 조회 및 페이지네이션

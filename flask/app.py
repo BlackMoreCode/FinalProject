@@ -270,7 +270,7 @@ def search():
             source_fields = [
                 "title", "content", "authorName", "contentJSON",
                 "viewsCount", "likesCount", "createdAt", "updatedAt",
-                "category", "comments"  # ←★ 댓글도 함께 가져옴
+                "category", "comments", "sticky"
             ]
         else:
             source_fields = ["name", "category", "like", "abv"]
@@ -361,8 +361,7 @@ def create_forum_post():
         if not data:
             return jsonify({"error": "데이터가 제공되지 않았습니다."}), 400
 
-        # 백엔드에서 categoryId가 있으면 category 필드로 복사 (Option B)
-        # 현제 테스트로 제거
+        # 만약 categoryId가 있고 category 필드가 없으면 categoryId 값을 category에 복사
         if "categoryId" in data and "category" not in data:
             data["category"] = data["categoryId"]
 
@@ -370,25 +369,27 @@ def create_forum_post():
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
-        # 기본 필드 설정
+        # 기본 필드 설정 – 이미 값이 전달된 경우 그대로 사용
         data.setdefault("viewsCount", 0)
         data.setdefault("likesCount", 0)
         data.setdefault("likedBy", [])
         data.setdefault("reportCount", 0)
         data.setdefault("comments", [])
+        data.setdefault("sticky", False)  # 새 필드: 고정 게시글 여부 (default: False)
         now = datetime.now(timezone.utc).isoformat()
         data.setdefault("createdAt", now)
         data.setdefault("updatedAt", now)
 
-        # 게시글을 ES에 인덱싱
+        # 요청 데이터에 contentJSON, authorName 등 새로운 필드가 있다면 그대로 저장됩니다.
         res = es.index(index=index_name, body=data)
 
-        # ★ 인덱스 새로고침 추가: 문서가 즉시 검색될 수 있도록 보장합니다.
+        # 인덱스 새로고침 (문서가 즉시 검색될 수 있도록)
         es.indices.refresh(index=index_name)
 
         return jsonify({"message": "게시글이 생성되었습니다.", "id": res["_id"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 # Forum 게시글 상세 조회

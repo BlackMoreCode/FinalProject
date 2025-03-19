@@ -42,6 +42,11 @@ public class ForumEsService {
      */
     public ForumPostResponseDto createPost(ForumPostRequestDto requestDto) {
         try {
+            // sticky 값 기본 처리: null이면 false로 설정
+            if (requestDto.getSticky() == null) {
+                requestDto.setSticky(false);
+            }
+
             URI uri = new URI(flaskBaseUrl + "/forum/post");
             String jsonBody = objectMapper.writeValueAsString(requestDto);
 
