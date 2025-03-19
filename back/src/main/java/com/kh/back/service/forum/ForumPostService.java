@@ -288,4 +288,12 @@ public class ForumPostService {
         log.info("파일 저장 요청, 파일명: {}", file.getOriginalFilename());
         return "http://localhost/files/" + file.getOriginalFilename();
     }
+
+    // 작성 게시글 조회 메서드
+    @Transactional(readOnly = true)
+    public List<ForumPostResponseDto> getPostsByMember(Long memberId, int page, int size) {
+        log.info("memberId {}의 게시글 조회 요청, 페이지: {}, 사이즈: {}", memberId, page, size);
+        // ForumEsService에 새로 추가한 검색 메서드를 호출 (Flask/ES에서 memberId 조건을 포함)
+        return forumEsService.searchPostsByMember(memberId, page, size);
+    }
 }

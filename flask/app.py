@@ -1061,6 +1061,152 @@ def increment_view_count(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+#
+
+# (예시) /forum/searchByMember - 특정 유저가 작성한 게시글만 조회# 게시글/댓글 조회
+# # @app.route("/forum/my", methods=["GET"])
+# # def get_my_content():
+# #     try:
+# #         member_id = request.args.get("memberId")
+# #         if not member_id:
+# #             return jsonify({"error": "memberId 파라미터가 필요합니다."}), 400
+# #
+# #         # 페이지와 사이즈 기본값 설정 (0-based 페이지)
+# #         post_page = int(request.args.get("postPage", 0))
+# #         post_size = int(request.args.get("postSize", 10))
+# #         comment_page = int(request.args.get("commentPage", 0))
+# #         comment_size = int(request.args.get("commentSize", 10))
+# #
+# #         # 'forum_post' 인덱스와 매핑 파일 이름을 가져옵니다.
+# #         index_name, _ = get_index_and_mapping("forum_post")
+# #
+# #         # 1. 해당 회원의 게시글 검색 (memberId 필드를 이용)
+# #         post_query = {
+# #             "query": {
+# #                 "term": {"memberId": member_id}
+# #             },
+# #             "from": post_page * post_size,
+# #             "size": post_size
+# #         }
+# #         post_res = es.search(index=index_name, body=post_query)
+# #         posts = []
+# #         for hit in post_res["hits"]["hits"]:
+# #             post = hit["_source"]
+# #             post["id"] = hit["_id"]
+# #             posts.append(post)
+# #
+# #         # 2. 해당 회원의 댓글 검색
+# #         # (댓글이 nested로 매핑되어 있다고 가정)
+# #         comment_query = {
+# #             "query": {
+# #                 "nested": {
+# #                     "path": "comments",
+# #                     "query": {
+# #                         "term": {"comments.memberId": member_id}
+# #                     },
+# #                     "inner_hits": {
+# #                         "from": comment_page * comment_size,
+# #                         "size": comment_size
+# #                     }
+# #                 }
+# #             },
+# #             "size": 0  # 외부 문서는 필요 없으므로 0으로 설정
+# #         }
+# #         comment_res = es.search(index=index_name, body=comment_query)
+# #         comments = []
+# #         for hit in comment_res["hits"]["hits"]:
+# #             inner = hit.get("inner_hits", {}).get("comments", {})
+# #             for comment_hit in inner.get("hits", {}).get("hits", []):
+# #                 comment = comment_hit["_source"]
+# #                 # (원하는 경우, 해당 댓글이 속한 게시글 id 등 추가 정보도 넣을 수 있습니다.)
+# #                 comments.append(comment)
+# #
+# #         response = {
+# #             "posts": posts,
+# #             "comments": comments
+# #         }
+# #         return jsonify(response), 200
+# #
+# #     except Exception as e:
+# #         app.logger.error("유저 콘텐츠 조회 중 오류: " + str(e))
+# #         return jsonify({"error": str(e)}), 500
+
+@app.route("/forum/searchByMember", methods=["GET"])
+def search_posts_by_member():
+    try:
+        member_id = request.args.get("memberId")
+        page = int(request.args.get("page", 1))  # 1-based
+        size = int(request.args.get("size", 10))
+
+        # 인덱스: forum_post
+        index_name, _ = get_index_and_mapping("forum_post")
+        from_offset = (page - 1) * size
+
+        # memberId로 term 검색
+        body = {
+            "query": {
+                "term": {
+                    "memberId": member_id
+                }
+            },
+            "from": from_offset,
+            "size": size
+        }
+
+        res = es.search(index=index_name, body=body)
+        hits = res["hits"]["hits"]
+        posts = []
+        for hit in hits:
+            doc = hit["_source"]
+            doc["id"] = hit["_id"]
+            posts.append(doc)
+
+        return jsonify(posts), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# (예시) /forum/comments/searchByMember - 특정 유저가 작성한 댓글만 조회
+@app.route("/forum/comments/searchByMember", methods=["GET"])
+def search_comments_by_member():
+    try:
+        member_id = int(request.args.get("memberId"))  # 문자열을 int로 변환
+        page = int(request.args.get("page", 1))
+        size = int(request.args.get("size", 10))
+        from_offset = (page - 1) * size
+
+        index_name, _ = get_index_and_mapping("forum_post")
+
+        # nested 쿼리: "comments.member.memberId" 로 변경
+        body = {
+            "query": {
+                "nested": {
+                    "path": "comments",
+                    "query": {
+                         "match": {"comments.memberId": member_id}
+                    },
+                    "inner_hits": {
+                        "from": from_offset,
+                        "size": size
+                    }
+                }
+            },
+            "size": 0
+        }
+
+        res = es.search(index=index_name, body=body)
+        comments = []
+        for hit in res["hits"]["hits"]:
+            inner = hit.get("inner_hits", {}).get("comments", {})
+            for comment_hit in inner.get("hits", {}).get("hits", []):
+                c = comment_hit["_source"]
+                comments.append(c)
+
+        return jsonify(comments), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 # 모델 학습 요청 API
 @app.route("/model/train", methods=["POST"])

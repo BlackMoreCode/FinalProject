@@ -142,6 +142,13 @@ public class ForumPostCommentService {
         return forumEsService.restoreComment(commentId, postId);
     }
 
+    // 작성 댓글 조회 메서드
+    @Transactional(readOnly = true)
+    public List<ForumPostCommentResponseDto> getCommentsByMember(Long memberId, int page, int size) {
+        log.info("memberId {}의 댓글 조회 요청, 페이지: {}, 사이즈: {}", memberId, page, size);
+        // ForumEsService에 새로 추가한 검색 메서드를 호출 (Flask/ES에서 memberId 조건을 포함)
+        return forumEsService.searchCommentsByMember(memberId, page, size);
+    }
 
 
 }
