@@ -76,7 +76,7 @@ function App() {
             />
             <Route path="foodrecipe/upload" element={<AddRecipeDetail />} />
             <Route path="cocktailrecipe/upload" element={< AddCockTailDetail/>} />
-            /> */}
+        
             <Route path="foodrecipe/upload" element={<AddRecipeDetail />} />
 
             <Route path="cocktailrecipe/upload" element={< AddCockTailDetail/>} />
