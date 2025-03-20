@@ -1130,7 +1130,7 @@ def get_user_recipes():
         },
         "from": from_offset,
         "size": size,
-        "_source": ["id", "title", "createdAt"]  # 필요한 필드만 가져옴
+        "_source": ["id", "title", "createdAt", "content_type"]  # content_type을 포함
     }
 
     response = es.search(index="recipes", body=query)
@@ -1141,6 +1141,7 @@ def get_user_recipes():
             "id": hit["_source"].get("id"),
             "title": hit["_source"].get("title"),
             "createdAt": hit["_source"].get("createdAt", "N/A"),
+            "content_type": hit["_source"].get("content_type", "N/A"),  # content_type 추가
         }
         for hit in hits
     ]

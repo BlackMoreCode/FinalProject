@@ -211,8 +211,7 @@ public class ElasticService {
 	 */
 	public List<Map<String, Object>> getUserRecipes(Long memberId, int page, int size) {
 		try {
-			String encodedMemberId = URLEncoder.encode(String.valueOf(memberId), StandardCharsets.UTF_8);
-			URI uri = new URI(flaskBaseUrl + "/api/profile/recipes?memberId=" + encodedMemberId + "&page=" + page + "&size=" + size);
+			URI uri = new URI(flaskBaseUrl + "/api/profile/recipes?memberId=" + memberId + "&page=" + page + "&size=" + size);
 
 			log.info("[getUserRecipes] Calling Flask with URI: {}", uri);
 

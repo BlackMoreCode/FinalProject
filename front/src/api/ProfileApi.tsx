@@ -1,6 +1,15 @@
 import axiosInstance from "./AxiosInstance";
 
 const ProfileApi = {
+  // 로그인한 유저 ID 가져오기
+  getLoggedInUserId: () => {
+    return axiosInstance.get("/api/profile/getId");
+  },
+
+  // 맴버십 구매 여부 확인
+  checkMembership: () => {
+    return axiosInstance.get("/api/purchase/check");
+  },
   getProfile: () => {
     return axiosInstance.get("/api/profile/get");
   },
@@ -21,6 +30,12 @@ const ProfileApi = {
 
     return axiosInstance.post("/api/profile/image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  // 특정 유저의 레시피 리스트를 가져오는 메서드
+  getUserRecipes: (memberId: string, page: number, size: number) => {
+    return axiosInstance.get(`/api/profile/recipes`, {
+      params: { memberId, page, size },
     });
   },
 };

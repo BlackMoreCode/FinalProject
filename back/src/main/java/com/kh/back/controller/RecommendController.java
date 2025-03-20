@@ -1,6 +1,7 @@
 package com.kh.back.controller;
 
 import com.kh.back.service.PurchaseService;
+import com.kh.back.service.RecommendService;
 import com.kh.back.service.member.CalendarService;
 import com.kh.back.service.python.ElasticService;
 import lombok.RequiredArgsConstructor;

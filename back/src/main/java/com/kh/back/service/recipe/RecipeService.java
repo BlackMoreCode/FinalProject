@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -85,11 +86,14 @@ public class RecipeService {
         List<Map<String, Object>> rawList = elasticService.getUserRecipes(memberId, page, size);
 
         return rawList.stream()
-                .map(recipe -> Map.of(
-                        "id", recipe.get("id"),
-                        "title", recipe.get("title"),
-                        "createdAt", recipe.getOrDefault("createdAt", "N/A")  // createdAt이 없을 경우 "N/A" 처리
-                ))
+                .map(recipe -> {
+                    Map<String, Object> recipeMap = new HashMap<>();
+                    recipeMap.put("id", recipe.get("id"));
+                    recipeMap.put("title", recipe.get("title"));
+                    recipeMap.put("createdAt", recipe.getOrDefault("createdAt", "N/A"));
+                    recipeMap.put("content_type", recipe.getOrDefault("content_type", "N/A"));
+                    return recipeMap;
+                })
                 .collect(Collectors.toList());
     }
 

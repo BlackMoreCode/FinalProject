@@ -33,28 +33,29 @@ public class RecommendService {
 	private final RestTemplate restTemplate;
 	
 	
-	public List<SearchListResDto> recommend(Authentication auth, String type) {
-		Member member = memberService.convertAuthToEntity(auth);
-		List<Reaction> reactions = reactionRepository.findByMemberAndAction(member, Action.likes);
-		List<String> reactionIds = new ArrayList<>();
-		for (Reaction reaction : reactions) {
-			reactionIds.add(reaction.getPostId());
-		}
-		// Python API 호출
-		String pythonApiUrl = "http://localhost:5001/model/predict";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		Map<String, Object> requestBody = new HashMap<>();
-		requestBody.put("reaction_ids", reactionIds);  // reactionIds를 요청 본문에 추가
-		requestBody.put("type", type);  // 예시로 type 추가
-		
-		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-		ResponseEntity<Map> response = restTemplate.exchange(pythonApiUrl, HttpMethod.POST, entity, Map.class);
-		
-		// 응답에서 추천 리스트를 가져오기
-		List<Map<String, Integer>> recommendedList = response.getBody().get("recommendation");
-	}
-	
+//	public List<SearchListResDto> recommend(Authentication auth, String type) {
+//		Member member = memberService.convertAuthToEntity(auth);
+//		List<Reaction> reactions = reactionRepository.findByMemberAndAction(member, Action.likes);
+//		List<String> reactionIds = new ArrayList<>();
+//		for (Reaction reaction : reactions) {
+//			reactionIds.add(reaction.getPostId());
+//		}
+//		// Python API 호출
+//		String pythonApiUrl = "http://localhost:5001/model/predict";
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.setContentType(MediaType.APPLICATION_JSON);
+//		Map<String, Object> requestBody = new HashMap<>();
+//		requestBody.put("reaction_ids", reactionIds);  // reactionIds를 요청 본문에 추가
+//		requestBody.put("type", type);  // 예시로 type 추가
+//
+//		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+//		ResponseEntity<Map> response = restTemplate.exchange(pythonApiUrl, HttpMethod.POST, entity, Map.class);
+//
+//
+//		// 응답에서 추천 리스트를 가져오기
+//		List<Map<String, Integer>> recommendedList = response.getBody().get("recommendation");
+//	}
+//
 	
 	
 }

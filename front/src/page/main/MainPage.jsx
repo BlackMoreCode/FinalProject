@@ -46,8 +46,8 @@ const MainPage = () => {
   return (
     <div>
       <Banner />
-      <Top3Recipes category="일반 음식" recipes={generalRecipes} />
-      <Top3Recipes category="주류 " recipes={alcoholicRecipes} />
+      <Top3Recipes category="일반 음식 레시피" recipes={generalRecipes} />
+      <Top3Recipes category="주류 레시피" recipes={alcoholicRecipes} />
     </div>
   );
 };

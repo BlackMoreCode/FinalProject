@@ -13,6 +13,8 @@ import {
   HeaderUp,
   HeaderDown,
 } from "./style/ProfilePageStyle";
+import { useSelector } from "react-redux";
+import ProfileApi from "../../api/ProfileApi";
 // 리덕스를 추가로 임포트 할 예정
 
 const ProfilePage = () => {
@@ -43,42 +45,35 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    axiosInstance
-      .get("/api/profile/getId")
-      .then((response) => {
-        setLoggedInUserId(response.data); // 로그인한 유저의 ID 설정
-        console.log("Response data:", response.data); // 로그인한 유저 ID
-      })
-      .catch((err) => console.error(err));
-  }, []); // 이 useEffect는 로그인된 ID를 가져오는 역할만 합니다.
+    const fetchProfileData = async () => {
+      try {
+        const [idResponse, purchaseResponse] = await Promise.all([
+          ProfileApi.getLoggedInUserId(),
+          ProfileApi.checkMembership(),
+        ]);
 
-  useEffect(() => {
-    axiosInstance
-      .get("/api/purchase/check")
-      .then((response) => {
-        setIsPaidMember(response.data); // 로그인한 유저의 구매 여부 확인
-        console.log("Response data:", response.data); // 참, 거짓 반환
-      })
-      .catch((err) => console.error(err));
-  }, []); // 이 useEffect는 로그인된 유저의 구매 여부만 확인
+        const userId = idResponse.data;
+        const isPaid = purchaseResponse.data;
+        console.log("접속한 유저 Id:" + userId);
 
-  useEffect(() => {
-    if (id) {
-      // URL의 id 값이 있는 경우
-      if (id === String(loggedInUserId)) {
-        setIsOwnProfile(true); // id와 로그인한 유저 ID가 일치하면 본인 프로필
-      } else {
-        setIsOwnProfile(false); // id와 로그인한 유저 ID가 일치하지 않으면 다른 유저 프로필
+        if (userId === null) {
+          alert("로그인이 필요한 서비스입니다.");
+          navigate("/main");
+          return;
+        }
+
+        setLoggedInUserId(userId);
+        setIsPaidMember(isPaid);
+        setIsOwnProfile(id ? id === String(userId) : true);
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+        alert("로그인이 필요한 서비스입니다.");
+        navigate("/main");
       }
-    } else {
-      // URL id 값이 없는 경우
-      if (loggedInUserId) {
-        setIsOwnProfile(true); // loggedInUserId 값이 있다면 본인 프로필
-      } else {
-        setIsOwnProfile(false); // 로그인된 유저가 없으면 프로필을 못 찾음
-      }
-    }
-  }, [loggedInUserId, id]); // loggedInUserId와 id가 변경될 때마다 실행
+    };
+
+    fetchProfileData();
+  }, [id, navigate]);
 
   const handlePaymentClick = () => {
     navigate("/pay"); // 결제 페이지로 이동
