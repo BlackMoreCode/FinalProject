@@ -7,6 +7,7 @@ import java.util.List;
 
 @Data
 public class AddCocktailRecipeDto {
+    private String postId;
     private String type;
     private String name;
     private String glass;
@@ -16,6 +17,7 @@ public class AddCocktailRecipeDto {
     private String preparation;
     private Float abv;
     private MultipartFile image;
+   private String existingImage;
 
     @Data
     public static class Ingredients {

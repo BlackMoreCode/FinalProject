@@ -7,12 +7,14 @@ import java.util.List;
 
 @Data
 public class AddFoodRecipeDto {
+    private String postId;
     private String type;
     private String name;
     private String rcpWay2;
     private String rcpPat2;
     private String infoWgt;
-    private MultipartFile attFileNoMain;
+    private MultipartFile attFileNoMain; // 새로 추가한 메인 이미지 파일
+    private String existingMainImageUrl; // 기존 메인 이미지 URL
 
     private String rcpNaTip;
     private List<Ingredients> Ingredients;
@@ -28,6 +30,7 @@ public class AddFoodRecipeDto {
     @Data
     public static class Manual {
         private String text;
-        private MultipartFile imageUrl; // 조리법 이미지 파일
+        private MultipartFile newImageFile; // 새로 추가한 조리법 이미지 파일
+        private String existingImageUrl; // 기존 조리법 이미지 URL
     }
 }

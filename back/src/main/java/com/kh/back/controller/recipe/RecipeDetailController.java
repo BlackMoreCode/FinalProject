@@ -36,11 +36,24 @@ public class RecipeDetailController {
         String jsonData = recipeService.saveRecipe(memberId, recipeRequest);
         return ResponseEntity.ok(jsonData);
     }
+    @PostMapping("/update-recipe")
+    public ResponseEntity<String> updateRecipe(Authentication authentication, @ModelAttribute AddFoodRecipeDto recipeRequest) {
+        Long memberId = Long.parseLong(authentication.getName());
+        String jsonData = recipeService.updateRecipe(memberId, recipeRequest);
+        return ResponseEntity.ok(jsonData);
+    }
 
     @PostMapping("/save-cocktail-recipe")
     public ResponseEntity<String> saveCocktailRecipe(Authentication authentication, @ModelAttribute AddCocktailRecipeDto recipeRequest) {
         Long memberId = Long.parseLong(authentication.getName());
         String jsonData = cocktailRecipeService.saveCocktailRecipe(memberId, recipeRequest);
+        return ResponseEntity.ok(jsonData);
+    }
+
+    @PostMapping("/update-cocktail-recipe")
+    public ResponseEntity<String> updateCocktailRecipe(Authentication authentication, @ModelAttribute AddCocktailRecipeDto recipeRequest) {
+        Long memberId = Long.parseLong(authentication.getName());
+        String jsonData = cocktailRecipeService.updateCocktailRecipe(memberId, recipeRequest);
         return ResponseEntity.ok(jsonData);
     }
 
