@@ -135,19 +135,19 @@ const AddRecipeDetail = () => {
       </div>
 
       <input
-        type="text"
-        placeholder="레시피 제목"
-        value={title}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-lg"
-      />
-      <input
-        type="text"
-        placeholder="조리방법"
-        value={cookingMethod}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setCookingMethod(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-lg"
-      />
+  type="text"
+  placeholder="레시피 제목"
+  value={title}
+  onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+  className="w-full p-2 border border-gray-300 rounded-lg "
+/>
+    <input
+  type="text"
+  placeholder="조리방법"
+  value={cookingMethod}
+  onChange={(e: ChangeEvent<HTMLInputElement>) => setCookingMethod(e.target.value)}
+  className="w-full p-2 border border-gray-300 rounded-lg "
+/>
       <input
         type="text"
         placeholder="요리 종류"
@@ -178,14 +178,14 @@ const AddRecipeDetail = () => {
         ))}
         <button
           onClick={handleAddIngredient}
-          className="w-full py-2 bg-blue-500 text-white rounded-lg mt-2"
+          className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-2"
         >
           재료 추가
         </button>
         {ingredients.length > 1 && (
           <button
             onClick={handleRemoveIngredient}
-            className="w-full py-2 bg-red-500 text-white rounded-lg mt-2"
+            className="w-full py-2 bg-[#d1b6a3] text-white rounded-lg mt-2"
           >
             가장 최근 재료 삭제
           </button>
@@ -224,14 +224,14 @@ const AddRecipeDetail = () => {
         ))}
         <button
           onClick={handleAddStep}
-          className="w-full py-2 bg-blue-500 text-white rounded-lg mt-2"
+          className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-2"
         >
           조리법 추가
         </button>
         {steps.length > 1 && (
           <button
             onClick={handleRemoveStep}
-            className="w-full py-2 bg-red-500 text-white rounded-lg mt-2"
+            className="w-full py-2 bg-[#d1b6a3] text-white rounded-lg mt-2"
           >
             가장 최근 조리법 삭제
           </button>
@@ -250,7 +250,7 @@ const AddRecipeDetail = () => {
       
 
       <button
-        className="w-full py-2 bg-blue-500 text-white rounded-lg mt-4"
+        className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-4 hover:bg-[#d1b6a3]"
         onClick={handleSaveRecipe}
       >
         레시피 저장

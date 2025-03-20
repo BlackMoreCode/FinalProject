@@ -1,38 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardMedia, Typography, Grid, Box, CircularProgress, Alert, Divider } from '@mui/material';
 import Comment from '../comment/Comment';
 
+import RecipeApi from '../../api/RecipeApi';
+
+ import { FoodResDto } from '../../api/dto/RecipeDto';
 
 import Profile from '../profile/Profile';
 import LikeReportButtons from '../LikeReportButton'; 
 
-// 재료 DTO 타입 정의
-interface IngredientDto {
-    ingredient: string;
-    amount: string;
-}
 
-// 조리 과정 DTO 타입 정의
-interface ManualDto {
-    text: string;
-    imageUrl: string;
-}
 
-// 레시피 상세 정보 DTO 타입 정의
-interface FoodResDto {
-    name: string;
-    cookingMethod: string;
-    category: string;
-    description: string;
-    ingredients: IngredientDto[];
-    instructions: ManualDto[];
-    image: string;
-    like: number;
-    report: number;
-    author: number;
-}
 
 const RecipeDetail: React.FC = () => {
     const [recipe, setRecipe] = useState<FoodResDto | null>(null);
@@ -40,20 +20,22 @@ const RecipeDetail: React.FC = () => {
     const [error, setError] = useState<string>('');
     const { id, type } = useParams<{ id: string; type: string }>();
 
+
     useEffect(() => {
-        const fetchRecipe = async () => {
+        const getRecipe = async () => {
             try {
-                const response = await axios.get<FoodResDto>(`http://localhost:8111/test/detail/${id}?type=${type}`);
-                setRecipe(response.data);
-                setLoading(false);
+                const data = await RecipeApi.fetchRecipeDetail(id!, type!); // ✅ RecipeApi에서 가져오기
+                setRecipe(data);
             } catch (err) {
                 setError('레시피 상세 정보를 불러오는 데 실패했습니다.');
+            } finally {
                 setLoading(false);
             }
         };
-
-        fetchRecipe();
+    
+        getRecipe();
     }, [id, type]);
+    
 
     if (loading) return <CircularProgress />;
     if (error) return <Alert severity="error">{error}</Alert>;

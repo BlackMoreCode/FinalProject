@@ -1,34 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardMedia, Typography, Grid, Box, CircularProgress, Alert, Divider } from '@mui/material';
 import Comment from '../comment/Comment';
 import LikeReportButtons from '../LikeReportButton';
 import Profile from '../profile/Profile';
-
+import {CocktailResDto} from '../../api/dto/RecipeDto'
+import RecipeApi from '../../api/RecipeApi';
 // 칵테일 재료 DTO 타입 정의
-interface CocktailIngDto {
-    unit: string;
-    amount: number;
-    ingredient: string;
-    special?: string;
-}
 
-// 칵테일 상세 정보 DTO 타입 정의
-interface CocktailResDto {
-    id: string;
-    name: string;
-    preparation: string;
-    image: string;
-    category: string;
-    abv: number;
-    garnish: string;
-    glass: string;
-    like: number;
-    report: number;
-    author: number;
-    ingredients: CocktailIngDto[];
-}
 
 const CocktailDetail: React.FC = () => {
     const [cocktail, setCocktail] = useState<CocktailResDto | null>(null);
@@ -40,23 +19,21 @@ const CocktailDetail: React.FC = () => {
     const { id, type } = useParams<{ id: string; type: string }>();
 
     // 칵테일 정보 불러오기
-    useEffect(() => {
-        const fetchCocktail = async () => {
-            try {
-                const response = await axios.get<CocktailResDto>(`http://localhost:8111/test/detail/${id}?type=${type}`);
-                console.log('Response Data:', response.data);
-                setCocktail(response.data);
-                setLikes(response.data.like);
-                setReports(response.data.report);
-                setLoading(false);
-            } catch (err) {
-                setError('칵테일 상세 정보를 불러오는 데 실패했습니다.');
-                setLoading(false);
-            }
-        };
-
-        fetchCocktail();
-    }, [id, type]);
+        useEffect(() => {
+            const getRecipe = async () => {
+                try {
+                    const data = await RecipeApi.fetchCocktail(id!, type!); // ✅ RecipeApi에서 가져오기
+                    setCocktail(data);
+                } catch (err) {
+                    setError('레시피 상세 정보를 불러오는 데 실패했습니다.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+        
+            getRecipe();
+        }, [id, type]);
+        
 
     // 좋아요/신고 수 업데이트 함수
     const updateCounts = (newLikes: number, newReports: number) => {
@@ -133,8 +110,6 @@ const CocktailDetail: React.FC = () => {
                         </Grid>
                     )}
 
-        
-                    {/* 좋아요/신고 버튼 */}
        
                     <LikeReportButtons
                         postId={cocktail.id}
@@ -143,8 +118,6 @@ const CocktailDetail: React.FC = () => {
                         reports={reports}
                         updateCounts={updateCounts}
                     />
-
-
                     {/* 댓글 섹션 */}
                     <Comment postId={id ?? ''} />
                 </CardContent>

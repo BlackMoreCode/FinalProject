@@ -1356,6 +1356,39 @@ def get_user_recipes():
     return jsonify(results)
 
 
+@app.route("/update/one", methods=["POST"])
+def update_one():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        file_type = data.get("type")
+        if not file_type:
+            return jsonify({"error": "Type is required"}), 400
+
+        # id와 업데이트할 데이터 받기
+        doc_id = request.form.get("updateId")
+        if not doc_id:
+            return jsonify({"error": "ID is required"}), 400
+
+        index_name, mapping_file = get_index_and_mapping(file_type)
+
+        # 인덱스가 없으면 매핑을 적용하여 생성
+        if not es.indices.exists(index=index_name):
+            create_index_if_not_exists(index_name, mapping_file)
+
+        # id로 문서를 찾아서 업데이트
+        es.update(index=index_name, id=doc_id, body={"doc": data})
+
+        return jsonify({"message": "Data updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
 if __name__ == '__main__':
     # 수동으로 Redis 연결 확인한 후 Flask 앱 실행
     app.run(host='0.0.0.0', port=5000)
