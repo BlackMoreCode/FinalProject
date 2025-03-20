@@ -74,6 +74,21 @@ const ForumApi = {
       return response.data;
     }),
 
+  /**
+   * 게시글 신고 처리
+   *
+   * 이 함수는 신고할 게시글의 ID, 신고하는 사용자의 ID, 신고 사유를 포함한
+   * JSON 객체를 백엔드의 '/api/forums/posts/{postId}/report' 엔드포인트로 전송합니다.
+   *
+   * 백엔드에서는 이 데이터를 ReportRequestDto로 매핑하여 처리하며,
+   * 신고 시 게시글의 최상위 memberId와 비교하여 본인의 게시글 신고를 방지하고,
+   * 신고 수가 임계치 이상이면 게시글을 숨기는 로직을 수행합니다.
+   *
+   * @param {string} postId - 신고할 게시글의 ID
+   * @param {number} reporterId - 신고하는 사용자의 ID
+   * @param {string} reason - 신고 사유
+   * @returns {Promise<Object>} - 백엔드에서 처리한 신고 결과 데이터(DTO)
+   */
   reportPost: (postId, reporterId, reason) =>
     AxiosInstance.post(`/api/forums/posts/${postId}/report`, {
       reporterId,
@@ -108,9 +123,9 @@ const ForumApi = {
       data
     ).then((response) => response.data),
 
-  deleteComment: (commentId, loggedInMemberId, isAdmin) =>
+  deleteComment: (commentId, postId, loggedInMemberId, isAdmin) =>
     AxiosInstance.delete(
-      `/api/forums/comments/${commentId}?loggedInMemberId=${loggedInMemberId}&isAdmin=${isAdmin}`
+      `/api/forums/comments/${commentId}?postId=${postId}&loggedInMemberId=${loggedInMemberId}&isAdmin=${isAdmin}`
     ).then((response) => response.data),
 
   hardDeleteComment: (commentId, loggedInMemberId) =>
@@ -121,16 +136,26 @@ const ForumApi = {
       return response.data;
     }),
 
-  reportComment: (commentId, reporterId, reason) =>
+  /**
+   * 댓글 신고 처리
+   * @param {number} commentId - 신고할 댓글의 ID
+   * @param {number} reporterId - 신고하는 사용자의 ID
+   * @param {string} reason - 신고 사유 (본문)
+   * @returns {Promise<Object>} 신고 결과 데이터
+   */
+  reportComment: async (commentId, reporterId, reason, postId) =>
     AxiosInstance.post(`/api/forums/comments/${commentId}/report`, {
       reporterId,
       reason,
+      postId,
     }).then((response) => response.data),
 
-  restoreComment: (commentId) =>
-    AxiosInstance.post(`/api/forums/comments/${commentId}/restore`).then(
-      (response) => response.data
-    ),
+  restoreComment: async (commentId, postId) => {
+    // 쿼리 파라미터에 postId를 포함
+    return AxiosInstance.post(
+      `/api/forums/comments/${commentId}/restore?postId=${postId}`
+    ).then((response) => response.data);
+  },
 
   // 수정된 ForumApi.js의 toggleLikeComment: 이제 postId를 함께 전달합니다.
   toggleLikeComment: (commentId, loggedInMemberId, postId) =>

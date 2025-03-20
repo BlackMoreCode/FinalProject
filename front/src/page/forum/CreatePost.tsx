@@ -14,12 +14,13 @@ import Blockquote from "@tiptap/extension-blockquote";
 import ConfirmationModal from "./ConfirmationModal";
 import { openModal } from "../../context/redux/ModalReducer";
 
-// 타입 정의
+// 인터페이스 확장 (sticky 필드 추가)
 interface FormDataType {
   title: string;
   categoryId: string;
   content: string;
   contentJSON: string;
+  sticky?: boolean;
 }
 
 interface Category {
@@ -47,14 +48,17 @@ const CreatePost: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // 사용자 정보를 Redux 스토어에서 가져옵니다.
+  // Redux 스토어에서 사용자 정보 가져오기
   const user = useSelector((state: any) => state.user);
+  // 관리자 여부 변수 추가
+  const isAdmin = user && user.admin;
 
   const [formData, setFormData] = useState<FormDataType>({
     title: "",
     categoryId: "",
     content: "",
     contentJSON: "",
+    sticky: false,
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -84,7 +88,7 @@ const CreatePost: React.FC = () => {
     },
   });
 
-  // 만약 사용자 정보가 없으면 로그인 모달을 엽니다.
+  // 만약 사용자 정보가 없으면 로그인 모달 열기
   useEffect(() => {
     if (!user || !user.id) {
       toast.error("로그인이 필요합니다.");
@@ -125,13 +129,15 @@ const CreatePost: React.FC = () => {
     const currentJSON = editor
       ? JSON.stringify(editor.getJSON())
       : formData.contentJSON || JSON.stringify({ type: "doc", content: [] });
-    //     if (!formData.content || formData.content === "<p></p>") {
-    //       toast.error("내용을 입력해주세요.");
-    //       setUploading(false);
-    //       return;
-    //     }
 
-    // Construct the post data with the user info from Redux
+    // 콘텐츠 유효성 검증 (필요 시 주석 해제)
+    // if (!formData.content || formData.content === "<p></p>") {
+    //   toast.error("내용을 입력해주세요.");
+    //   setUploading(false);
+    //   return;
+    // }
+
+    // Redux의 사용자 정보와 결합하여 게시글 데이터 구성
     const postData = {
       ...formData,
       memberId: user ? user.id.toString() : "",
@@ -252,6 +258,23 @@ const CreatePost: React.FC = () => {
             className="border border-gray-300 rounded p-2 min-h-[200px] bg-white"
           />
         </div>
+        {/* 관리자용 고정 게시글 옵션 (isAdmin 변수 필요) */}
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="sticky"
+              name="sticky"
+              checked={formData.sticky || false}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, sticky: e.target.checked }))
+              }
+            />
+            <label htmlFor="sticky" className="font-semibold text-gray-700">
+              고정 게시글로 생성
+            </label>
+          </div>
+        )}
         {/* 파일 첨부 (선택 사항) */}
         <div className="flex flex-col gap-1">
           <label htmlFor="file" className="font-semibold text-gray-700">

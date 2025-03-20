@@ -1,6 +1,8 @@
 package com.kh.back.service.forum;
 
+import com.kh.back.dto.forum.request.CommentReportRequestDto;
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
+import com.kh.back.dto.forum.request.ReportRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
 import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ForumEsService;
@@ -87,9 +89,9 @@ public class ForumPostCommentService {
      * KR: ElasticService의 DELETE 엔드포인트를 호출하여 댓글을 논리 삭제합니다.
      */
     @Transactional
-    public void deleteComment(Integer commentId, Long loggedInMemberId) {
-        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}", commentId, loggedInMemberId);
-        forumEsService.deleteComment(commentId, loggedInMemberId);
+    public boolean deleteComment(Integer commentId, Long loggedInMemberId, String postId) {
+        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}, postId: {}", commentId, loggedInMemberId, postId);
+        return forumEsService.deleteComment(commentId, postId, loggedInMemberId);
     }
 
     /**
@@ -107,10 +109,18 @@ public class ForumPostCommentService {
      * KR: 신고 요청을 ElasticService에 전달하여 댓글 신고를 처리합니다.
      */
     @Transactional
-    public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason) {
-        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reporterId);
-        return forumEsService.reportComment(commentId, reporterId, reason);
+    public ForumPostCommentResponseDto reportComment(Integer commentId, CommentReportRequestDto reportRequestDto) {
+        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reportRequestDto.getReporterId());
+        return forumEsService.reportComment(
+                commentId,
+                reportRequestDto.getReporterId(),
+                reportRequestDto.getReason(),
+                reportRequestDto.getPostId()
+        );
     }
+
+
+
 
     /**
      * 댓글 숨김 처리
@@ -127,9 +137,17 @@ public class ForumPostCommentService {
      * KR: ElasticService의 복원 엔드포인트를 호출하여 댓글을 복원합니다.
      */
     @Transactional
-    public ForumPostCommentResponseDto restoreComment(Integer commentId) {
-        log.info("댓글 ID: {} 복원 요청", commentId);
-        return forumEsService.restoreComment(commentId);
+    public ForumPostCommentResponseDto restoreComment(Integer commentId, String postId) {
+        log.info("댓글 ID: {} 복원 요청, postId: {}", commentId, postId);
+        return forumEsService.restoreComment(commentId, postId);
+    }
+
+    // 작성 댓글 조회 메서드
+    @Transactional(readOnly = true)
+    public List<ForumPostCommentResponseDto> getCommentsByMember(Long memberId, int page, int size) {
+        log.info("memberId {}의 댓글 조회 요청, 페이지: {}, 사이즈: {}", memberId, page, size);
+        // ForumEsService에 새로 추가한 검색 메서드를 호출 (Flask/ES에서 memberId 조건을 포함)
+        return forumEsService.searchCommentsByMember(memberId, page, size);
     }
 
 

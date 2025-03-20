@@ -1,6 +1,8 @@
 package com.kh.back.controller.forum;
 
+import com.kh.back.dto.forum.request.CommentReportRequestDto;
 import com.kh.back.dto.forum.request.ForumPostCommentRequestDto;
+import com.kh.back.dto.forum.request.ReportRequestDto;
 import com.kh.back.dto.forum.response.ForumPostCommentResponseDto;
 import com.kh.back.dto.forum.response.ForumPostLikeResponseDto;
 import com.kh.back.service.forum.ForumPostCommentService;
@@ -92,9 +94,11 @@ public class ForumPostCommentController {
      * @return 복구된 댓글 정보 (Response DTO)
      */
     @PostMapping("/{commentId}/restore")
-    public ResponseEntity<ForumPostCommentResponseDto> restoreComment(@PathVariable Integer commentId) {
-        log.info("댓글 ID: {} 복원 요청", commentId);
-        ForumPostCommentResponseDto restored = commentService.restoreComment(commentId);
+    public ResponseEntity<ForumPostCommentResponseDto> restoreComment(
+            @PathVariable Integer commentId,
+            @RequestParam String postId) {
+        log.info("댓글 ID: {} 복원 요청, postId: {}", commentId, postId);
+        ForumPostCommentResponseDto restored = commentService.restoreComment(commentId, postId);
         return ResponseEntity.ok(restored);
     }
 
@@ -107,10 +111,15 @@ public class ForumPostCommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable Integer commentId,
-            @RequestParam Long loggedInMemberId) {
-        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}", commentId, loggedInMemberId);
-        commentService.deleteComment(commentId, loggedInMemberId);
-        return ResponseEntity.noContent().build();
+            @RequestParam Long loggedInMemberId,
+            @RequestParam String postId) {
+        log.info("댓글 ID: {} 삭제 요청, 사용자 ID: {}, postId: {}", commentId, loggedInMemberId, postId);
+        boolean success = commentService.deleteComment(commentId, loggedInMemberId, postId);
+        if(success){
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -136,22 +145,22 @@ public class ForumPostCommentController {
     }
 
     /**
-     * 댓글 신고
+     * 댓글 신고 처리 (댓글 신고용 DTO 사용)
      *
-     * @param commentId  신고 대상 댓글 ID
-     * @param reporterId 신고자 ID
-     * @param reason     신고 사유 (본문)
+     * @param commentId 신고 대상 댓글 ID
+     * @param reportRequestDto 댓글 신고 요청 DTO (신고자 ID, 신고 사유, 게시글 ID 포함)
      * @return 신고된 댓글 정보 (Response DTO)
      */
     @PostMapping("/{commentId}/report")
     public ResponseEntity<ForumPostCommentResponseDto> reportComment(
             @PathVariable Integer commentId,
-            @RequestParam Integer reporterId,
-            @RequestBody String reason) {
-        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reporterId);
-        ForumPostCommentResponseDto reported = commentService.reportComment(commentId, reporterId, reason);
+            @RequestBody CommentReportRequestDto reportRequestDto) {
+        log.info("댓글 ID: {} 신고 요청, 신고자 ID: {}", commentId, reportRequestDto.getReporterId());
+        ForumPostCommentResponseDto reported = commentService.reportComment(commentId, reportRequestDto);
         return ResponseEntity.ok(reported);
     }
+
+
 
     /**
      * 댓글에 대한 답글 추가 (인용)

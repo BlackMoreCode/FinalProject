@@ -53,7 +53,9 @@ const ForumPosts = () => {
       console.log("검색된 게시글 데이터:", data);
 
       // PaginationDto 형식이면 content 배열, 아니면 data 자체 배열을 사용
-      const postList = data.content || data.data || [];
+      const postList = Array.isArray(data)
+        ? data
+        : data.content || data.data || [];
       console.log("게시글 목록:", postList);
 
       // 게시글 목록이 비어 있는 경우 경고 로그 출력
@@ -68,7 +70,7 @@ const ForumPosts = () => {
       // 단순 카테고리 정보 조회: getCategoryById 호출
       const category = await ForumApi.getCategoryById(categoryId);
       console.log("가져온 카테고리 정보:", category);
-      setCategoryName(category.name);
+      setCategoryName(category.title);
     } catch (error) {
       console.error("게시글 데이터를 가져오는데 실패했습니다.", error);
     } finally {

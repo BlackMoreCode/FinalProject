@@ -15,10 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ForumEsService
@@ -42,6 +39,11 @@ public class ForumEsService {
      */
     public ForumPostResponseDto createPost(ForumPostRequestDto requestDto) {
         try {
+            // sticky 값 기본 처리: null이면 false로 설정
+            if (requestDto.getSticky() == null) {
+                requestDto.setSticky(false);
+            }
+
             URI uri = new URI(flaskBaseUrl + "/forum/post");
             String jsonBody = objectMapper.writeValueAsString(requestDto);
 
@@ -397,11 +399,13 @@ public class ForumEsService {
     }
 
 
-    public boolean deleteComment(Integer commentId, Long deletedBy) {
+    public boolean deleteComment(Integer commentId, String postId, Long deletedBy) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "?deletedBy=" + deletedBy);
+            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId
+                    + "?postId=" + URLEncoder.encode(postId, StandardCharsets.UTF_8)
+                    + "&deletedBy=" + deletedBy);
             restTemplate.delete(uri);
-            log.info("deleteComment 호출됨, 댓글 ID: {}", commentId);
+            log.info("deleteComment 호출됨, 댓글 ID: {}, postId: {}", commentId, postId);
             return true;
         } catch (Exception e) {
             log.error("댓글 삭제 중 오류: {}", e.getMessage());
@@ -421,10 +425,14 @@ public class ForumEsService {
         }
     }
 
-    public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason) {
+    public ForumPostCommentResponseDto reportComment(Integer commentId, Integer reporterId, String reason, String postId) {
         try {
             URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/report");
-            String jsonBody = String.format("{\"reporterId\": %d, \"reason\": \"%s\"}", reporterId, reason);
+            // reporterId, reason, postId를 모두 포함하는 JSON payload 생성
+            String jsonBody = String.format(
+                    "{\"reporterId\": %d, \"reason\": \"%s\", \"postId\": \"%s\"}",
+                    reporterId, reason, postId
+            );
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -440,6 +448,8 @@ public class ForumEsService {
         }
     }
 
+
+
     public boolean hideComment(Integer commentId) {
         try {
             URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/hide");
@@ -452,12 +462,12 @@ public class ForumEsService {
         }
     }
 
-    public ForumPostCommentResponseDto restoreComment(Integer commentId) {
+    public ForumPostCommentResponseDto restoreComment(Integer commentId, String postId) {
         try {
-            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/restore");
+            URI uri = new URI(flaskBaseUrl + "/forum/comment/" + commentId + "/restore?postId="
+                    + URLEncoder.encode(postId, StandardCharsets.UTF_8));
             ResponseEntity<String> response = restTemplate.postForEntity(uri, null, String.class);
             log.info("restoreComment 응답: {}", response);
-
             return objectMapper.readValue(response.getBody(), ForumPostCommentResponseDto.class);
         } catch (Exception e) {
             log.error("댓글 복원 중 오류: {}", e.getMessage());
@@ -595,4 +605,54 @@ public class ForumEsService {
         }
     }
 
+    // 멤버가 작성한 게시글 찾기
+    public List<ForumPostResponseDto> searchPostsByMember(Long memberId, int page, int size) {
+        try {
+            // Flask에 새 검색 엔드포인트 호출 (예: /forum/searchByMember)
+            String url = flaskBaseUrl + "/forum/searchByMember?memberId=" + memberId
+                    + "&page=" + (page + 1) + "&size=" + size;
+            URI uri = new URI(url);
+            ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
+            ForumPostResponseDto[] array = objectMapper.readValue(response.getBody(), ForumPostResponseDto[].class);
+            return Arrays.asList(array);
+        } catch(Exception e) {
+            log.error("게시글 member 검색 중 오류: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    // 멤버가 작성한 댓글 찾기
+    public List<ForumPostCommentResponseDto> searchCommentsByMember(Long memberId, int page, int size) {
+        try {
+            // Flask에 새 검색 엔드포인트 호출 (예: /forum/comments/searchByMember)
+            String url = flaskBaseUrl + "/forum/comments/searchByMember?memberId=" + memberId
+                    + "&page=" + (page + 1) + "&size=" + size;
+            URI uri = new URI(url);
+            ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
+            ForumPostCommentResponseDto[] array = objectMapper.readValue(response.getBody(), ForumPostCommentResponseDto[].class);
+            return Arrays.asList(array);
+        } catch(Exception e) {
+            log.error("댓글 member 검색 중 오류: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+//    public MyContentResponseDto getMyContent(Long memberId, int postPage, int postSize, int commentPage, int commentSize) {
+//        try {
+//            // Flask의 /forum/my 엔드포인트와 쿼리 파라미터
+//            String url = flaskBaseUrl + "/forum/my"
+//                    + "?memberId=" + memberId
+//                    + "&postPage=" + postPage
+//                    + "&postSize=" + postSize
+//                    + "&commentPage=" + commentPage
+//                    + "&commentSize=" + commentSize;
+//
+//            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+//            // Flask가 { "posts": [...], "comments": [...] } 형태를 주므로, 이를 MyContentResponseDto로 파싱
+//            return objectMapper.readValue(response.getBody(), MyContentResponseDto.class);
+//        } catch (Exception e) {
+//            log.error("회원별 게시글·댓글 조회 중 오류: {}", e.getMessage());
+//            return new MyContentResponseDto(Collections.emptyList(), Collections.emptyList());
+//        }
+//    }
 }

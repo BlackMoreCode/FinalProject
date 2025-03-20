@@ -203,23 +203,20 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
-        # KR: 검색어/카테고리/조리방법 등에 따른 query 빌드
+        # 1) 검색어/카테고리/조리방법 등에 따른 query 빌드 (기존 로직 유지)
         if type_filter == "food":
-            category_field = "RCP_PAT2"   # 음식은 ES 매핑에서 RCP_PAT2로 저장됨
-            cooking_field = "RCP_WAY2"    # 음식의 조리방법 필드
+            category_field = "RCP_PAT2"
+            cooking_field = "RCP_WAY2"
             multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
         elif type_filter == "forum_post":
-            # KR: 포럼 게시글 검색을 위한 필드 지정
-            #     -> 실제 검색하려면 title, content, authorName 등에 대해 multi_match 할 수도 있음
             category_field = "category"
-            cooking_field = "cookingMethod"  # (포럼엔 없으니 사용X, 혹은 무시)
+            cooking_field = "cookingMethod"  # 포럼에는 없는 필드
             multi_match_fields = ["title", "content", "authorName", "category"]
         else:
-            category_field = "category"   # 칵테일 등 기본
+            category_field = "category"
             cooking_field = "cookingMethod"
             multi_match_fields = ["name", "ingredients.ingredient", "category"]
 
-        # KR: 검색조건 조합
         if q and category and cooking_method:
             query = {
                 "bool": {
@@ -266,16 +263,14 @@ def search():
         else:
             query = {"match_all": {}}
 
-        # KR: 검색 결과에 포함할 필드 (type_filter별로 다름)
+        # 2) forum_post인 경우, comments 배열도 함께 가져오도록 source_fields에 추가
         if type_filter == "food":
             source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv", "ATT_FILE_NO_MAIN"]
         elif type_filter == "forum_post":
-            # KR: forum_post에 대해서는 우리가 보고 싶은 필드 지정
-            #     (title, content, authorName, createdAt, updatedAt 등등)
             source_fields = [
-                "title", "content", "authorName",
-                "contentJSON", "viewsCount", "likesCount",
-                "createdAt", "updatedAt", "category"
+                "title", "content", "authorName", "contentJSON",
+                "viewsCount", "likesCount", "createdAt", "updatedAt",
+                "category", "comments", "sticky"
             ]
         else:
             source_fields = ["name", "category", "like", "abv"]
@@ -287,11 +282,36 @@ def search():
             "query": query
         }
 
+        # 3) Elasticsearch 검색
         res = es.search(index=index_name, body=body)
-        results = [{**hit["_source"], "id": hit["_id"]} for hit in res["hits"]["hits"]]
-        return jsonify(results)
+
+        # 4) 검색 결과 파싱: doc["_source"] + doc["_id"]
+        hits = res["hits"]["hits"]
+        results = []
+        for hit in hits:
+            doc = hit["_source"]
+            doc["id"] = hit["_id"]
+            results.append(doc)
+
+        # 5) forum_post인 경우, comments에서 최신 댓글 추출 → latestComment
+        if type_filter == "forum_post":
+            for doc in results:
+                comments = doc.get("comments", [])
+                if comments:
+                    # createdAt 기준 내림차순 정렬하여 첫 번째를 최신 댓글로
+                    sorted_comments = sorted(
+                        comments,
+                        key=lambda c: c.get("createdAt", ""),
+                        reverse=True
+                    )
+                    doc["latestComment"] = sorted_comments[0]
+                else:
+                    doc["latestComment"] = None
+
+        return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # 검색 알코올 (레시피용; 단 하나만 남김)
 @app.route("/search/alcohol", methods=["GET"], endpoint="unique_search_alcohol")
@@ -341,8 +361,7 @@ def create_forum_post():
         if not data:
             return jsonify({"error": "데이터가 제공되지 않았습니다."}), 400
 
-        # 백엔드에서 categoryId가 있으면 category 필드로 복사 (Option B)
-        # 현제 테스트로 제거
+        # 만약 categoryId가 있고 category 필드가 없으면 categoryId 값을 category에 복사
         if "categoryId" in data and "category" not in data:
             data["category"] = data["categoryId"]
 
@@ -350,25 +369,27 @@ def create_forum_post():
         if not es.indices.exists(index=index_name):
             create_index_if_not_exists(index_name, mapping_file)
 
-        # 기본 필드 설정
+        # 기본 필드 설정 – 이미 값이 전달된 경우 그대로 사용
         data.setdefault("viewsCount", 0)
         data.setdefault("likesCount", 0)
         data.setdefault("likedBy", [])
         data.setdefault("reportCount", 0)
         data.setdefault("comments", [])
+        data.setdefault("sticky", False)  # 새 필드: 고정 게시글 여부 (default: False)
         now = datetime.now(timezone.utc).isoformat()
         data.setdefault("createdAt", now)
         data.setdefault("updatedAt", now)
 
-        # 게시글을 ES에 인덱싱
+        # 요청 데이터에 contentJSON, authorName 등 새로운 필드가 있다면 그대로 저장됩니다.
         res = es.index(index=index_name, body=data)
 
-        # ★ 인덱스 새로고침 추가: 문서가 즉시 검색될 수 있도록 보장합니다.
+        # 인덱스 새로고침 (문서가 즉시 검색될 수 있도록)
         es.indices.refresh(index=index_name)
 
         return jsonify({"message": "게시글이 생성되었습니다.", "id": res["_id"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 # Forum 게시글 상세 조회
@@ -377,7 +398,7 @@ def get_forum_post(doc_id):
     """
     게시글 상세 조회 (Forum)
     KR: ES의 'forum_post' 인덱스에서 주어진 문서 ID의 게시글을 조회하여 반환합니다.
-        **변경 사항:** ES가 생성한 _id 값을 별도의 'id' 필드에 할당하여 반환합니다.
+        변경 사항: 댓글 배열이 있을 경우, 최신 댓글(latestComment)을 계산하여 추가합니다.
     """
     try:
         index_name, _ = get_index_and_mapping("forum_post")
@@ -385,6 +406,16 @@ def get_forum_post(doc_id):
         data = res["_source"]
         # ES에서 생성된 문서 id를 JSON 응답에 포함시킵니다.
         data["id"] = res["_id"]
+
+        # 댓글 배열이 존재하면 최신 댓글을 계산하여 latestComment 필드에 추가
+        if "comments" in data and isinstance(data["comments"], list) and len(data["comments"]) > 0:
+            # createdAt 값이 ISO 형식 문자열이라면 정렬이 가능함 (내림차순 정렬)
+            sorted_comments = sorted(data["comments"], key=lambda c: c.get("createdAt", ""), reverse=True)
+            # 가장 최근 댓글을 latestComment에 저장
+            data["latestComment"] = sorted_comments[0]
+        else:
+            data["latestComment"] = None  # 댓글이 없으면 null 처리
+
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
@@ -501,10 +532,6 @@ def toggle_forum_post_like(doc_id):
 # Forum 게시글 신고 처리
 @app.route("/forum/post/<doc_id>/report", methods=["POST"])
 def report_forum_post(doc_id):
-    """
-    게시글 신고 처리 (Forum)
-    KR: 신고자 ID와 신고 사유를 받아 해당 게시글의 reportCount를 증가시키고, 신고 임계값 이상이면 게시글을 숨김 처리합니다.
-    """
     try:
         req_data = request.json
         reporter_id = req_data.get("reporterId")
@@ -514,8 +541,12 @@ def report_forum_post(doc_id):
         REPORT_THRESHOLD = 10
         index_name, _ = get_index_and_mapping("forum_post")
         post = es.get(index=index_name, id=doc_id)["_source"]
-        if post["member"]["memberId"] == reporter_id:
+
+        # 기존 코드는 post["member"]["memberId"]로 작성했지만,
+        # 실제 문서에는 최상위에 memberId가 존재하므로 아래와 같이 수정합니다.
+        if post.get("memberId") == reporter_id:
             return jsonify({"error": "자신의 게시글은 신고할 수 없습니다."}), 400
+
         post["reportCount"] = post.get("reportCount", 0) + 1
         if post["reportCount"] >= REPORT_THRESHOLD:
             post["hidden"] = True
@@ -524,6 +555,8 @@ def report_forum_post(doc_id):
         return jsonify({"message": "게시글이 신고되었습니다.", "reportCount": post["reportCount"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 
 # Forum 게시글 삭제 (논리 삭제)
 @app.route("/forum/post/<doc_id>", methods=["DELETE"], endpoint="delete_forum_post")
@@ -854,11 +887,6 @@ def toggle_forum_comment_like(comment_id):
 # Forum 댓글 신고 처리
 @app.route("/forum/comment/<int:comment_id>/report", methods=["POST"])
 def report_forum_comment(comment_id):
-    """
-    댓글 신고 처리 (Forum)
-    KR: 신고자 ID와 신고 사유를 받아 해당 댓글의 reportCount를 증가시키고,
-         신고 임계값 이상이면 댓글을 숨김 처리합니다.
-    """
     try:
         req_data = request.json
         reporter_id = req_data.get("reporterId")
@@ -999,6 +1027,185 @@ def search_forum_category():
             return jsonify({"error": "Not Found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# 조회수 증가 관련
+@app.route("/forum/post/<doc_id>/increment-view", methods=["POST"])
+def increment_view_count(doc_id):
+    """
+    게시글 조회수 증가 엔드포인트
+    - 주어진 게시글(doc_id)의 조회수를 1 증가시키고,
+      업데이트된 조회수를 반환합니다.
+    """
+    try:
+        # "forum_post" 타입에 해당하는 인덱스 이름 가져오기
+        index_name, _ = get_index_and_mapping("forum_post")
+
+        # 게시글 문서 가져오기
+        res = es.get(index=index_name, id=doc_id)
+        data = res["_source"]
+
+        # 조회수 증가 (기존 값이 없으면 0으로 초기화)
+        current_views = data.get("viewsCount", 0)
+        data["viewsCount"] = current_views + 1
+
+        # 업데이트 시간 갱신
+        data["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
+        # 수정된 문서를 재인덱싱
+        es.index(index=index_name, id=doc_id, body=data)
+
+        return jsonify({
+            "message": "조회수가 증가되었습니다.",
+            "viewsCount": data["viewsCount"]
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#
+
+# (예시) /forum/searchByMember - 특정 유저가 작성한 게시글만 조회# 게시글/댓글 조회
+# # @app.route("/forum/my", methods=["GET"])
+# # def get_my_content():
+# #     try:
+# #         member_id = request.args.get("memberId")
+# #         if not member_id:
+# #             return jsonify({"error": "memberId 파라미터가 필요합니다."}), 400
+# #
+# #         # 페이지와 사이즈 기본값 설정 (0-based 페이지)
+# #         post_page = int(request.args.get("postPage", 0))
+# #         post_size = int(request.args.get("postSize", 10))
+# #         comment_page = int(request.args.get("commentPage", 0))
+# #         comment_size = int(request.args.get("commentSize", 10))
+# #
+# #         # 'forum_post' 인덱스와 매핑 파일 이름을 가져옵니다.
+# #         index_name, _ = get_index_and_mapping("forum_post")
+# #
+# #         # 1. 해당 회원의 게시글 검색 (memberId 필드를 이용)
+# #         post_query = {
+# #             "query": {
+# #                 "term": {"memberId": member_id}
+# #             },
+# #             "from": post_page * post_size,
+# #             "size": post_size
+# #         }
+# #         post_res = es.search(index=index_name, body=post_query)
+# #         posts = []
+# #         for hit in post_res["hits"]["hits"]:
+# #             post = hit["_source"]
+# #             post["id"] = hit["_id"]
+# #             posts.append(post)
+# #
+# #         # 2. 해당 회원의 댓글 검색
+# #         # (댓글이 nested로 매핑되어 있다고 가정)
+# #         comment_query = {
+# #             "query": {
+# #                 "nested": {
+# #                     "path": "comments",
+# #                     "query": {
+# #                         "term": {"comments.memberId": member_id}
+# #                     },
+# #                     "inner_hits": {
+# #                         "from": comment_page * comment_size,
+# #                         "size": comment_size
+# #                     }
+# #                 }
+# #             },
+# #             "size": 0  # 외부 문서는 필요 없으므로 0으로 설정
+# #         }
+# #         comment_res = es.search(index=index_name, body=comment_query)
+# #         comments = []
+# #         for hit in comment_res["hits"]["hits"]:
+# #             inner = hit.get("inner_hits", {}).get("comments", {})
+# #             for comment_hit in inner.get("hits", {}).get("hits", []):
+# #                 comment = comment_hit["_source"]
+# #                 # (원하는 경우, 해당 댓글이 속한 게시글 id 등 추가 정보도 넣을 수 있습니다.)
+# #                 comments.append(comment)
+# #
+# #         response = {
+# #             "posts": posts,
+# #             "comments": comments
+# #         }
+# #         return jsonify(response), 200
+# #
+# #     except Exception as e:
+# #         app.logger.error("유저 콘텐츠 조회 중 오류: " + str(e))
+# #         return jsonify({"error": str(e)}), 500
+
+@app.route("/forum/searchByMember", methods=["GET"])
+def search_posts_by_member():
+    try:
+        member_id = request.args.get("memberId")
+        page = int(request.args.get("page", 1))  # 1-based
+        size = int(request.args.get("size", 10))
+
+        # 인덱스: forum_post
+        index_name, _ = get_index_and_mapping("forum_post")
+        from_offset = (page - 1) * size
+
+        # memberId로 term 검색
+        body = {
+            "query": {
+                "term": {
+                    "memberId": member_id
+                }
+            },
+            "from": from_offset,
+            "size": size
+        }
+
+        res = es.search(index=index_name, body=body)
+        hits = res["hits"]["hits"]
+        posts = []
+        for hit in hits:
+            doc = hit["_source"]
+            doc["id"] = hit["_id"]
+            posts.append(doc)
+
+        return jsonify(posts), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# (예시) /forum/comments/searchByMember - 특정 유저가 작성한 댓글만 조회
+@app.route("/forum/comments/searchByMember", methods=["GET"])
+def search_comments_by_member():
+    try:
+        member_id = int(request.args.get("memberId"))  # 문자열을 int로 변환
+        page = int(request.args.get("page", 1))
+        size = int(request.args.get("size", 10))
+        from_offset = (page - 1) * size
+
+        index_name, _ = get_index_and_mapping("forum_post")
+
+        # nested 쿼리: "comments.member.memberId" 로 변경
+        body = {
+            "query": {
+                "nested": {
+                    "path": "comments",
+                    "query": {
+                         "match": {"comments.memberId": member_id}
+                    },
+                    "inner_hits": {
+                        "from": from_offset,
+                        "size": size
+                    }
+                }
+            },
+            "size": 0
+        }
+
+        res = es.search(index=index_name, body=body)
+        comments = []
+        for hit in res["hits"]["hits"]:
+            inner = hit.get("inner_hits", {}).get("comments", {})
+            for comment_hit in inner.get("hits", {}).get("hits", []):
+                c = comment_hit["_source"]
+                comments.append(c)
+
+        return jsonify(comments), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 # 모델 학습 요청 API

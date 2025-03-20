@@ -105,8 +105,9 @@ const CommentList = ({
               )}
               <ActionButtons>
                 <div className="left">
+                  {/* 댓글 신고 버튼 클릭 시, onReportComment 핸들러를 호출하여 모달을 열도록 함. */}
                   <report-button
-                    onClick={() => onReportComment(comment.id, "")}
+                    onClick={() => onReportComment(comment.id)}
                     disabled={comment.hasReported}
                   >
                     <FontAwesomeIcon icon={faCircleExclamation} />
