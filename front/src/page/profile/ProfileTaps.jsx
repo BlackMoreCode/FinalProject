@@ -41,7 +41,7 @@ const ProfileTabs = () => {
             className={activeTab === "recipe" ? "active" : ""}
             onClick={() => handleTabChange("recipe")}
           >
-            레시피
+            작성 레시피
           </TabItem>
           <TabItem
             className={activeTab === "likes" ? "active" : ""}
