@@ -14,5 +14,6 @@ public class ReduxResDto {
 	Authority role;
 	private Set<String> likedRecipes; // 좋아요 레시피 ID 리스트
 	private Set<String> reportedRecipes; // 신고 레시피 ID 리스트
+	private boolean premium; // 프리미엄 회원 여부 (추가)
 
 }

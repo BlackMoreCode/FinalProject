@@ -6,6 +6,7 @@ import com.kh.back.dto.forum.response.ForumPostResponseDto;
 import com.kh.back.dto.forum.response.PaginationDto;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.dto.python.SearchResDto;
+import com.kh.back.service.PurchaseService;
 import com.kh.back.service.member.MemberService;
 import com.kh.back.service.python.ForumEsService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ForumPostService {
 
     private final ForumEsService forumEsService;
     private final MemberService memberService;
+    private final PurchaseService purchaseService; // 프리미엄 회원 체크를 위한 서비스 주입
 
     private static final int REPORT_THRESHOLD = 10;
 
@@ -45,12 +47,13 @@ public class ForumPostService {
     }
 
     /**
-     * 게시글 생성
+     * 게시글 생성 메서드
      */
     @Transactional
     public ForumPostResponseDto createPost(ForumPostRequestDto requestDto) {
         log.info("게시글 생성 요청, 제목: {}", requestDto.getTitle());
 
+        // 회원 ID와 카테고리 ID가 반드시 존재해야 합니다.
         if (requestDto.getMemberId() == null) {
             throw new IllegalArgumentException("회원 ID는 null일 수 없습니다.");
         }
@@ -58,24 +61,28 @@ public class ForumPostService {
             throw new IllegalArgumentException("카테고리 ID는 null일 수 없습니다.");
         }
 
-        // 추가: sticky가 true이면 관리자만 가능하도록 검증
-        if (Boolean.TRUE.equals(requestDto.getSticky()) && !memberService.isAdmin(requestDto.getMemberId())) {
-            throw new IllegalArgumentException("일반 회원은 고정 게시글을 생성할 수 없습니다.");
-        }
-
-        // HTML 콘텐츠 Sanitizing 처리
+        // HTML 콘텐츠를 sanitizing 처리하여 안전하게 변환
         String sanitizedContent = sanitizeHtml(requestDto.getContent());
         requestDto.setContent(sanitizedContent);
 
-        // 작성자 닉네임 설정
+        // 회원의 닉네임을 조회하여 작성자 이름(authorName)으로 설정
         String authorName = memberService.getNickname(requestDto.getMemberId());
         requestDto.setAuthorName(authorName);
 
-        // 만약 sticky 값이 null이면 false로 설정 (기본값)
+        // 고정 게시글(sticky)이 true로 요청된 경우 권한 체크:
+        // 관리자이거나 프리미엄 회원이면 허용, 그렇지 않으면 예외 발생
+        if (Boolean.TRUE.equals(requestDto.getSticky()) &&
+                !(memberService.isAdmin(requestDto.getMemberId()) ||
+                        purchaseService.isMemberPremium(requestDto.getMemberId()))) {
+            throw new IllegalArgumentException("일반 회원은 고정 게시글을 생성할 수 없습니다.");
+        }
+
+        // sticky 값이 null이면 false로 기본 설정
         if(requestDto.getSticky() == null) {
             requestDto.setSticky(false);
         }
 
+        // ES(Elasticsearch) 백엔드에 게시글 생성 요청
         ForumPostResponseDto createdDto = forumEsService.createPost(requestDto);
         log.info("ES에 게시글 생성됨. ID: {}", createdDto.getId());
         return createdDto;

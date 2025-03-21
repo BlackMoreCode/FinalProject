@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { UserState } from "../types";
-import { logout } from './CommonAction';
+import { logout } from "./CommonAction";
 import { MyInfo } from "../../api/dto/ReduxDto";
 
 const initialState: UserState = {
@@ -9,6 +9,7 @@ const initialState: UserState = {
   nickname: "",
   guest: false,
   admin: true,
+  premium: false, // 추가된 프리미엄 상태
   likedRecipes: new Set(),
   reportedRecipes: new Set(),
 };
@@ -23,6 +24,7 @@ const UserReducer = createSlice({
       state.nickname = action.payload.nickname;
       state.guest = false;
       state.admin = action.payload.role === "ROLE_ADMIN";
+      state.premium = action.payload.premium; // 프리미엄 상태를 저장합니다.
 
       // 기존 유저의 좋아요 및 신고 리스트 업데이트 (있다면)
       if (action.payload.likedRecipes) {
@@ -65,11 +67,13 @@ const UserReducer = createSlice({
       state.guest = true;
       state.nickname = "";
       state.admin = false;
+      state.premium = false;
       state.likedRecipes.clear();
       state.reportedRecipes.clear();
     });
   },
 });
 
-export const { setUserInfo, setGuest, toggleLikeRecipe, toggleReportRecipe } = UserReducer.actions;
+export const { setUserInfo, setGuest, toggleLikeRecipe, toggleReportRecipe } =
+  UserReducer.actions;
 export default UserReducer.reducer;
