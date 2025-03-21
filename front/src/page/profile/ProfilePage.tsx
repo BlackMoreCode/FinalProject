@@ -112,14 +112,7 @@ const ProfilePage = () => {
           </ProfileButtonContainer>
         </HeaderUp>
         <HeaderDown>
-          <UserStats>
-            <span>
-              게시글 작성수: <strong>{user.postsCount}</strong>
-            </span>
-            <span>
-              받은 추천: <strong>{user.likesCount}</strong>
-            </span>
-          </UserStats>
+          <UserStats></UserStats>
         </HeaderDown>
       </ProfilePageHeader>
       <ProfileTabs />

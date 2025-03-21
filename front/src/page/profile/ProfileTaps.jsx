@@ -11,6 +11,7 @@ import MiniCalendar from "../../component/MiniCalendar";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import UserRecipesList from "./recipeLists/UserRecipeList";
+import UserPostList from "./post/UserPostList";
 
 const ProfileTabs = () => {
   const myId = useSelector((state) => state.user.id);
@@ -43,12 +44,6 @@ const ProfileTabs = () => {
           >
             작성 레시피
           </TabItem>
-          <TabItem
-            className={activeTab === "likes" ? "active" : ""}
-            onClick={() => handleTabChange("likes")}
-          >
-            좋아요
-          </TabItem>
         </TabList>
       </TabMenu>
 
@@ -57,26 +52,13 @@ const ProfileTabs = () => {
 
         {activeTab === "posts" && (
           <div className="posts">
-            <UserPost>
-              <h3>게시글 제목 1</h3>
-              <p>게시글 내용 일부 표시...</p>
-            </UserPost>
-            <UserPost>
-              <h3>게시글 제목 2</h3>
-              <p>게시글 내용 일부 표시...</p>
-            </UserPost>
+            <UserPostList memberId={memberId} />
           </div>
         )}
 
         {activeTab === "recipe" && (
           <div className="recipe">
             <UserRecipesList memberId={memberId} />
-          </div>
-        )}
-
-        {activeTab === "likes" && (
-          <div className="likes">
-            <p>좋아요한 글/댓글 리스트 예시</p>
           </div>
         )}
       </TabContent>
