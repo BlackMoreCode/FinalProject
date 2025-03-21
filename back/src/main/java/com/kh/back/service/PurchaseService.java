@@ -60,4 +60,19 @@ public class PurchaseService {
         // 해당 멤버의 구매 기록이 존재하는지 확인
         return purchaseRecordRepository.existsByMember(member);
     }
+
+    /**
+     * 회원이 프리미엄 회원인지 확인하는 메서드.
+     * 구매 기록이 존재하면 프리미엄 회원으로 간주합니다.
+     *
+     * @param memberId 조회할 회원의 ID
+     * @return 프리미엄 회원이면 true, 아니면 false
+     */
+    public boolean isMemberPremium(Long memberId) {
+        // 회원 정보 조회
+        Member member = memberRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
+        // 해당 회원의 구매 기록이 존재하는지 확인 (구매 기록이 있으면 프리미엄 회원)
+        return purchaseRecordRepository.existsByMember(member);
+    }
 }
