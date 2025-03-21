@@ -143,7 +143,6 @@ export function CheckoutPage() {
         <div id="payment-method" className="w-100" />
         {paymentDetails && (
           <div className="payment-summary">
-            <p>구매자: {paymentDetails.customerName}</p>
             <p>상품명: {paymentDetails.orderName}</p>
             <p>금액: {paymentDetails.amount.value}원</p>
           </div>

@@ -33,8 +33,17 @@ const ProfileApi = {
     });
   },
   // 특정 유저의 레시피 리스트를 가져오는 메서드
-  getUserRecipes: (memberId: string, page: number, size: number) => {
-    return axiosInstance.get(`/api/profile/recipes`, {
+  getUserRecipes: (memberId: number, page: number, size: number) => {
+    return axiosInstance
+      .get(`/api/profile/recipes`, {
+        params: { memberId, page, size },
+      })
+      .then((response) => response.data); // 응답 데이터 구조 맞추기
+  },
+
+  // 특정 유저의 게시글 리스트를 가져오는 메서드
+  getUserPosts: (memberId: number, page: number, size: number) => {
+    return axiosInstance.get(`/api/forums/my/posts`, {
       params: { memberId, page, size },
     });
   },
