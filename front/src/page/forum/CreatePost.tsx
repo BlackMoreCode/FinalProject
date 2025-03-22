@@ -50,8 +50,10 @@ const CreatePost: React.FC = () => {
 
   // Redux 스토어에서 사용자 정보 가져오기
   const user = useSelector((state: any) => state.user);
-  // 관리자 여부 변수 추가
+  // 관리자 여부 변수 (관리자라면 true)
   const isAdmin = user && user.admin;
+  // 프리미엄 회원 여부 변수 (사용자 정보에 premium 플래그가 있다고 가정)
+  const isPremium = user && user.premium;
 
   const [formData, setFormData] = useState<FormDataType>({
     title: "",
@@ -129,13 +131,6 @@ const CreatePost: React.FC = () => {
     const currentJSON = editor
       ? JSON.stringify(editor.getJSON())
       : formData.contentJSON || JSON.stringify({ type: "doc", content: [] });
-
-    // 콘텐츠 유효성 검증 (필요 시 주석 해제)
-    // if (!formData.content || formData.content === "<p></p>") {
-    //   toast.error("내용을 입력해주세요.");
-    //   setUploading(false);
-    //   return;
-    // }
 
     // Redux의 사용자 정보와 결합하여 게시글 데이터 구성
     const postData = {
@@ -258,8 +253,12 @@ const CreatePost: React.FC = () => {
             className="border border-gray-300 rounded p-2 min-h-[200px] bg-white"
           />
         </div>
-        {/* 관리자용 고정 게시글 옵션 (isAdmin 변수 필요) */}
-        {isAdmin && (
+        {/* 관리자 및 프리미엄 회원용 고정 게시글 옵션 */}
+        {/* 
+            고정 게시글 옵션은 관리자인 경우와 프리미엄 회원인 경우에 모두 표시됩니다.
+            (user.premium 값이 true이면 프리미엄 회원으로 간주)
+         */}
+        {(isAdmin || isPremium) && (
           <div className="flex items-center gap-2">
             <input
               type="checkbox"

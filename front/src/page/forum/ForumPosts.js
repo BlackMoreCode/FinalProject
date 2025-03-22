@@ -125,7 +125,10 @@ const ForumPosts = () => {
                         </span>{" "}
                         - "
                         <span className="comment-preview">
-                          {post.latestComment.content.substring(0, 20)}
+                          {stripHtmlTags(post.latestComment.content).substring(
+                            0,
+                            20
+                          )}
                         </span>
                         ..."
                       </>

@@ -1320,40 +1320,54 @@ def predict_machine_learning():
     except Exception as e:
         return jsonify({"message": index_type + " 모델 사용중 에러 : " + str(e)}), 500
 
+
 @app.route("/api/profile/recipes", methods=["GET"])
 def get_user_recipes():
-    member_id = request.args.get("memberId")
-    page = int(request.args.get("page", 0))  # 기본값 0
-    size = int(request.args.get("size", 10))  # 기본값 10
+    try:
+        member_id = request.args.get("memberId")
+        page = int(request.args.get("page", 0))  # 기본값 0
+        size = int(request.args.get("size", 10))  # 기본값 10
 
-    if not member_id:
-        return jsonify({"error": "memberId is required"}), 400
+        if not member_id:
+            return jsonify({"error": "memberId is required"}), 400
 
-    from_offset = page * size  # 페이지네이션을 위한 from 값 설정
+        from_offset = page * size  # 페이지네이션을 위한 from 값 설정
 
-    query = {
-        "query": {
-            "term": {"memberId": member_id}  # 해당 유저가 작성한 글만 조회
-        },
-        "from": from_offset,
-        "size": size,
-        "_source": ["id", "title", "createdAt", "content_type"]  # content_type을 포함
-    }
-
-    response = es.search(index="recipes", body=query)
-    hits = response.get("hits", {}).get("hits", [])
-
-    results = [
-        {
-            "id": hit["_source"].get("id"),
-            "title": hit["_source"].get("title"),
-            "createdAt": hit["_source"].get("createdAt", "N/A"),
-            "content_type": hit["_source"].get("content_type", "N/A"),  # content_type 추가
+        # 쿼리: memberId로 해당 유저가 작성한 레시피를 가져오기
+        query = {
+            "query": {
+                "term": {"author": member_id}  # 해당 유저가 작성한 글만 조회
+            },
+            "from": from_offset,
+            "size": size,
+            "_source": ["id", "title", "createdAt"]  # 필요한 필드만 포함
         }
-        for hit in hits
-    ]
 
-    return jsonify(results)
+        response = es.search(index=["cocktail", "food"], body=query)
+        hits = response.get("hits", {}).get("hits", [])
+
+        if not hits:
+            return jsonify({"message": "No recipes found for this user"}), 404
+
+        # 결과에 content_type을 칵테일 또는 푸드로 설정
+        results = []
+        for hit in hits:
+            doc = hit["_source"]
+            doc["id"] = hit["_id"]
+
+            # 칵테일 레시피인 경우 content_type을 'cocktail'로 설정
+            if hit["_index"] == "cocktail":
+                doc["content_type"] = "cocktail"
+            # 푸드 레시피인 경우 content_type을 'food'로 설정
+            elif hit["_index"] == "food":
+                doc["content_type"] = "food"
+
+            # 결과 리스트에 추가
+            results.append(doc)
+
+        return jsonify(results), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/update/one", methods=["POST"])

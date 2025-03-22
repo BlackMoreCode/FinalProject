@@ -1,11 +1,11 @@
 import React from "react";
-import {MyInfo} from "../api/dto/ReduxDto";
-import {CalendarResDto} from "../api/dto/CalendarDto";
+import { MyInfo } from "../api/dto/ReduxDto";
+import { CalendarResDto } from "../api/dto/CalendarDto";
 
 // 토큰에 들어가는 데이터 타입
-export interface TokenState{
-  accessToken: string | null,
-  refreshToken: string | null,
+export interface TokenState {
+  accessToken: string | null;
+  refreshToken: string | null;
 }
 export interface UserState {
   id: number | null;
@@ -13,6 +13,7 @@ export interface UserState {
   nickname: string;
   guest: boolean;
   admin: boolean;
+  premium: boolean; // 프리미엄 회원 여부 추가
   likedRecipes: Set<string>; // 좋아요한 레시피 ID 목록
   reportedRecipes: Set<string>; // 신고한 레시피 ID 목록
 }
@@ -78,7 +79,6 @@ export interface ModalState {
   };
 }
 
-
 // 옵션 모달에 들어가는 옵션객체의 데이터 타입
 export interface Option {
   label: string;
@@ -93,24 +93,26 @@ export interface Position {
 }
 export type SNSLoginType = "google" | "naver" | "kakao";
 // 변화 감지용 함수 타입 (함수에 지정하면, 알아서 타입이 지정됨)
-export type Change = React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+export type Change = React.ChangeEventHandler<
+  HTMLInputElement | HTMLTextAreaElement
+>;
 // 클릭 감지용 함수 타입
 export type Click = React.MouseEventHandler<HTMLButtonElement | HTMLDivElement>;
 // 키 입력 감지용 함수 타입
-export type KeyPress = React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+export type KeyPress = React.KeyboardEventHandler<
+  HTMLInputElement | HTMLTextAreaElement
+>;
 // 변화 감지와 세터도 설정할 수 있게 만든 객체 타입
 export type ChangeWithSetter<T> = (
   event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   setter: React.Dispatch<React.SetStateAction<T>>
 ) => void;
 
-
 // 인풋 요소의 공통적인 타입
 export interface InputProps {
   value: string;
   onChange: Change; // input, textarea 등에서 사용할 onChange 이벤트
 }
-
 
 export interface Ingredient {
   name: string;
@@ -137,5 +139,3 @@ export interface RecipeData {
   report: number;
   author: number;
 }
-
-

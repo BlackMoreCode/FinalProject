@@ -1,5 +1,6 @@
 package com.kh.back.service.python;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.dto.python.SearchResDto;
@@ -11,6 +12,7 @@ import com.kh.back.service.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
@@ -229,17 +231,26 @@ public class ElasticService {
 	 */
 	public List<Map<String, Object>> getUserRecipes(Long memberId, int page, int size) {
 		try {
-			URI uri = new URI(flaskBaseUrl + "/api/profile/recipes?memberId=" + memberId + "&page=" + page + "&size=" + size);
+			// URL을 직접 문자열로 조합
+			String url = flaskBaseUrl + "/api/profile/recipes?memberId=" + memberId
+					+ "&page=" + page
+					+ "&size=" + size;
 
-			log.info("[getUserRecipes] Calling Flask with URI: {}", uri);
+			log.info("[getUserRecipes] Calling Flask with URL: {}", url);
 
-			List<Map<String, Object>> response = restTemplate.getForObject(uri, List.class);
-			log.info("[getUserRecipes] Flask response: {}", response);
+			// API 호출
+			ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-			return response;
+			// 응답을 List<Map<String, Object>> 형식으로 변환
+			List<Map<String, Object>> responseBody = objectMapper.readValue(response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+
+			log.info("[getUserRecipes] Flask response: {}", responseBody);
+
+			return responseBody;
 		} catch (Exception e) {
-			log.error("[getUserRecipes] Error fetching user recipes: {}", e.getMessage());
-			return List.of();
+			log.error("[getUserRecipes] Error fetching user recipes", e);
+			throw new RuntimeException("Error fetching user recipes", e);  // 예외 던지기
 		}
 	}
+
 }
