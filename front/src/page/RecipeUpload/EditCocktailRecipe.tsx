@@ -30,7 +30,6 @@ const EditCockTailRecipe: React.FC = () => {
     const fetchCocktailDetail = async () => {
       try {
         const data = await RecipeApi.fetchCocktail(id!, type!);
-        
         setRecipe(data);
         setImage(data.image); // data.image는 string일 가능성 있음
         setName(data.name);
@@ -182,7 +181,7 @@ const EditCockTailRecipe: React.FC = () => {
         onChange={(e) => setAbv(e.target.value)}
         className="w-full p-2 border rounded"
       />
-
+  
       <div>
         <h2 className="text-lg font-semibold">재료</h2>
         {ingredients.map((ingredient, index) => (
@@ -212,19 +211,21 @@ const EditCockTailRecipe: React.FC = () => {
         ))}
         <button
           onClick={handleAddIngredient}
-          className="mt-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="w-full p-2 bg-[#6a4e23] text-white rounded hover:bg-[#5a4020]"
         >
           재료 추가
         </button>
       </div>
+  
       <button
         onClick={handleUpdateCocktail}
-        className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+        className="w-full p-2 bg-[#6a4e23] text-white rounded hover:bg-[#5a4020]"
       >
         칵테일 레시피 수정
       </button>
     </div>
   );
+  
 };
 
 export default EditCockTailRecipe;

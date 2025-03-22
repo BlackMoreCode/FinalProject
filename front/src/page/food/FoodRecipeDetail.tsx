@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
+import recipeDetailStyles from './style/RecipeDetailStyles';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardMedia, Typography, Grid, Box, CircularProgress, Alert, Divider } from '@mui/material';
 import Comment from '../comment/Comment';
@@ -10,6 +10,7 @@ import RecipeApi from '../../api/RecipeApi';
 
 import Profile from '../profile/Profile';
 import LikeReportButtons from '../LikeReportButton'; 
+
 
 
 
@@ -42,53 +43,47 @@ const RecipeDetail: React.FC = () => {
     if (!recipe) return <Alert severity="warning">레시피를 찾을 수 없습니다.</Alert>;
 
     return (
-        <Box sx={{ maxWidth: 1200, margin: 'auto', padding: 3 }}>
+        <Box sx={recipeDetailStyles.container}>
             <Card>
-                <CardMedia
-                    component="img"
-                    image={recipe.image}
-                    alt={recipe.name}
-                    sx={{ borderRadius: 2, height: 800, width: '100%', objectFit: 'cover' }}
-                />
-                <CardContent>
-                    <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+                <CardMedia component="img" image={recipe.image} alt={recipe.name} sx={recipeDetailStyles.cardMedia} />
+                <CardContent sx={recipeDetailStyles.cardContent}>
+                    <Typography variant="h3" component="h1" gutterBottom sx={recipeDetailStyles.title}>
                         {recipe.name}
                     </Typography>
-                    <Grid container spacing={2} sx={{ marginBottom: 3 }}>
+
+                    <Grid container spacing={3} sx={recipeDetailStyles.gridContainer}>
                         <Grid item xs={12} md={6}>
-                            <Typography variant="body1" color="text.secondary">
+                            <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1.2rem" }}>
                                 <strong>조리 방법:</strong> {recipe.cookingMethod}
                             </Typography>
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <Typography variant="body1" color="text.secondary">
+                            <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1.2rem" }}>
                                 <strong>요리 종류:</strong> {recipe.category}
                             </Typography>
                         </Grid>
-                
                     </Grid>
 
                     {/* 작성자 프로필 */}
-                    <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-    <Profile userId={recipe.author} customStyle={null} />
-</Box>
+                    <Box sx={recipeDetailStyles.profileBox}>
+                        <Profile userId={recipe.author} customStyle={{ boxShadow: "none" }} />
+                    </Box>
 
-<Grid item xs={12}>
-                            <Typography variant="body1" color="text.secondary">
-                                <strong>팁:</strong> {recipe.description}
-                            </Typography>
-                        </Grid>
-
+                    <Grid item xs={12} sx={recipeDetailStyles.descriptionBox}>
+                        <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1.2rem" }}>
+                            <strong>팁:</strong> {recipe.description}
+                        </Typography>
+                    </Grid>
 
                     {/* 재료 */}
-                    <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', marginTop: 3 }}>
+                    <Typography variant="h5" component="h2" gutterBottom sx={recipeDetailStyles.sectionTitle}>
                         재료
                     </Typography>
-                    <Divider sx={{ marginBottom: 2 }} />
-                    <Grid container spacing={2}>
+                    <Divider sx={recipeDetailStyles.divider} />
+                    <Grid container spacing={3} sx={recipeDetailStyles.ingredientGrid}>
                         {recipe.ingredients?.map((ingredient, index) => (
                             <Grid item xs={12} sm={6} md={4} key={index}>
-                                <Typography variant="body1">
+                                <Typography variant="body1" sx={{ fontSize: "1.2rem" }}>
                                     {`${ingredient.ingredient}: ${ingredient.amount}`}
                                 </Typography>
                             </Grid>
@@ -96,68 +91,54 @@ const RecipeDetail: React.FC = () => {
                     </Grid>
 
                     {/* 조리 과정 */}
-                    <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', marginTop: 4 }}>
-    조리 과정
-</Typography>
-<Divider sx={{ marginBottom: 2 }} />
+                    <Typography variant="h5" component="h2" gutterBottom sx={recipeDetailStyles.sectionTitle}>
+                        조리 과정
+                    </Typography>
+                    <Divider sx={recipeDetailStyles.divider} />
 
-{recipe.instructions?.map((manual, index) => (
-    <Grid
-        container
-        spacing={2}
-        key={index}
-        alignItems="flex-start" // 상단 정렬
-        sx={{ marginBottom: 4 }}
-    >
-        {/* 조리 과정 이미지 */}
-        {manual.imageUrl && (
-            <Grid item xs={12} md={6}>
-                <CardMedia
-                    component="img"
-                    image={manual.imageUrl}
-                    alt={`조리 과정 ${index + 1}`}
-                    sx={{
-                        borderRadius: 2,
-                        width: '100%',
-                        maxWidth: 400, // 이미지 크기 키움
-                        height: 300, // 이미지 높이 조정
-                        objectFit: 'cover',
-                    }}
-                />
-            </Grid>
-        )}
+                    {recipe.instructions?.map((manual, index) => (
+                        <Grid container spacing={3} key={index} alignItems="flex-start" sx={recipeDetailStyles.instructionGrid}>
+                            {/* 조리 과정 이미지 */}
+                            {manual.imageUrl && (
+                                <Grid item xs={12} md={6}>
+                                    <CardMedia
+                                        component="img"
+                                        image={manual.imageUrl}
+                                        alt={`조리 과정 ${index + 1}`}
+                                        sx={recipeDetailStyles.instructionImage}
+                                    />
+                                </Grid>
+                            )}
 
-        {/* 조리 과정 텍스트 (Step과 텍스트 세로 배치) */}
-        <Grid item xs={12} md={6}>
-            {/* Step 제목 */}
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                {`Step ${index + 1}`}
-            </Typography>
+                            {/* 조리 과정 텍스트 */}
+                            <Grid item xs={12} md={6}>
+                                <Typography variant="h6" gutterBottom sx={recipeDetailStyles.stepTitle}>
+                                    {`Step ${index + 1}`}
+                                </Typography>
+                                <Divider sx={recipeDetailStyles.divider} />
+                                <Typography variant="body1" sx={{ fontSize: "1.2rem" }}>
+                                    {manual.text}
+                                </Typography>
+                            </Grid>
+                        </Grid>
+                    ))}
 
-            {/* 구분선 */}
-            <Divider sx={{ marginBottom: 2 }} />
-
-            {/* 조리 과정 텍스트 */}
-            <Typography variant="body1" sx={{ fontSize: '0.9rem' }}>
-                {manual.text}
-            </Typography>
-        </Grid>
-    </Grid>
-))}                 
-
- <LikeReportButtons
-postId={id ?? ''}
-type={type ?? ''}
-likes={recipe.like}
-reports={recipe.report}
-updateCounts={(newLikes, newReports) =>
-    setRecipe(prev => prev ? { ...prev, like: newLikes, report: newReports } : prev)
-}
-/>
-
+                    <Box sx={recipeDetailStyles.likeReportBox}>
+                        <LikeReportButtons
+                            postId={id ?? ""}
+                            type={type ?? ""}
+                            likes={recipe.like}
+                            reports={recipe.report}
+                            updateCounts={(newLikes, newReports) =>
+                                setRecipe((prev) => (prev ? { ...prev, like: newLikes, report: newReports } : prev))
+                            }
+                        />
+                    </Box>
 
                     {/* 댓글 섹션 */}
-                    <Comment postId={id ?? ''} />
+                    <Box sx={recipeDetailStyles.commentBox}>
+                        <Comment postId={id ?? ""} />
+                    </Box>
                 </CardContent>
             </Card>
         </Box>

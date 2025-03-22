@@ -81,4 +81,32 @@ public class CommentService {
         });
     }
 
+
+    @Transactional
+    public boolean deleteComment(Long memberId, Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+
+        // 작성자 본인인지 확인
+        if (!comment.getMember().getMemberId().equals(memberId)) {
+            throw new RuntimeException("댓글 삭제 권한이 없습니다.");
+        }
+
+        commentRepository.delete(comment);
+        return true;
+    }
+
+
+    @Transactional
+    public boolean deleteReply(Long memberId, Long replyId) {
+        Comment reply = commentRepository.findById(replyId)
+                .orElseThrow(() -> new RuntimeException("대댓글을 찾을 수 없습니다."));
+        if (!reply.getMember().getMemberId().equals(memberId)) {
+            throw new RuntimeException("대댓글 삭제 권한이 없습니다.");
+        }
+
+        commentRepository.delete(reply);
+        return true;
+    }
+
 }

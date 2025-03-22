@@ -45,16 +45,27 @@ public class CommentController {
         return ResponseEntity.ok(isSaved);
     }
 
-    @PostMapping("/addReply")
-    public ResponseEntity<Boolean> addReply(Authentication authentication,
-                                            @RequestBody ReplyReqDto replyReqDto) {
+        @PostMapping("/addReply")
+        public ResponseEntity<Boolean> addReply(Authentication authentication,
+                                                @RequestBody ReplyReqDto replyReqDto) {
+            Long memberId = Long.parseLong(authentication.getName());
+            boolean isSaved = commentService.addReply(memberId, replyReqDto);
+            // 대댓글이 성공적으로 저장되었으면 true, 아니면 false 반환
+            return ResponseEntity.ok(isSaved);
+        }
+    @DeleteMapping("/deleteComment/{commentId}")
+    public ResponseEntity<Boolean> deleteComment(Authentication authentication,
+                                                 @PathVariable Long commentId) {
         Long memberId = Long.parseLong(authentication.getName());
-        boolean isSaved = commentService.addReply(memberId, replyReqDto);
-        // 대댓글이 성공적으로 저장되었으면 true, 아니면 false 반환
-        return ResponseEntity.ok(isSaved);
+        boolean isDeleted = commentService.deleteComment(memberId, commentId);
+        return ResponseEntity.ok(isDeleted);
     }
 
-
-
-
+    @DeleteMapping("/deleteReply/{replyId}")
+    public ResponseEntity<Boolean> deleteReply(Authentication authentication,
+                                               @PathVariable Long replyId) {
+        Long memberId = Long.parseLong(authentication.getName());
+        boolean isDeleted = commentService.deleteReply(memberId, replyId);
+        return ResponseEntity.ok(isDeleted);
+    }
 }

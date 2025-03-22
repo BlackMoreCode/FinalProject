@@ -88,7 +88,7 @@ const AddCockTailDetail =()=>{
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-4">
-          <div>
+      <div>
         <h2 className="text-lg font-semibold">칵테일 사진</h2>
         <input
           type="file"
@@ -97,13 +97,11 @@ const AddCockTailDetail =()=>{
           className="hidden"
           id="upload"
         />
-      
         {image && (
           <div className="mt-2">
             <img src={URL.createObjectURL(image)} alt="칵테일 사진" className="w-full h-auto rounded" />
           </div>
         )}
-
         <label
           htmlFor="upload"
           className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg"
@@ -111,79 +109,76 @@ const AddCockTailDetail =()=>{
           <Upload />
           <span>사진 업로드</span>
         </label>
-        
       </div>
       <input
         type="text"
         placeholder="칵테일 이름"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
       />
       <input
         type="text"
         placeholder="잔 종류"
         value={glass}
         onChange={(e) => setGlass(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
       />
       <input
         type="text"
         placeholder="카테고리"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
       />
       <input
         type="text"
         placeholder="가니시"
         value={garnish}
         onChange={(e) => setGarnish(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
       />
       <textarea
         placeholder="준비 방법"
         value={preparation}
         onChange={(e) => setPreparation(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
       />
       <input
         type="text"
         placeholder="알코올 도수 (ABV)"
         value={abv}
         onChange={(e) => setAbv(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
       />
-
       <div>
         <h2 className="text-lg font-semibold">재료</h2>
         {ingredients.map((ingredient, index) => (
           <div key={index} className="space-y-2">
             <input
               type="text"
-              placeholder={`재료`}
+              placeholder="재료"
               value={ingredient.ingredient}
               onChange={(e) => handleIngredientChange(index, "ingredient", e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
             />
             <input
               type="text"
-              placeholder={`양`}
+              placeholder="양"
               value={ingredient.amount}
               onChange={(e) => handleIngredientChange(index, "amount", e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
             />
             <input
               type="text"
-              placeholder={`단위`}
+              placeholder="단위"
               value={ingredient.unit}
               onChange={(e) => handleIngredientChange(index, "unit", e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
             />
-             <div className="h-6"></div>
+            <div className="h-6"></div>
           </div>
         ))}
-       
         <button
           onClick={handleAddIngredient}
           className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-2"
@@ -199,7 +194,7 @@ const AddCockTailDetail =()=>{
       </div>
       <button
         onClick={handleSaveCocktail}
-       className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-4 hover:bg-[#d1b6a3]"
+        className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-4 hover:bg-[#d1b6a3]"
       >
         칵테일 레시피 저장
       </button>

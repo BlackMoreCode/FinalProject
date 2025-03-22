@@ -293,13 +293,19 @@ const EditRecipeDetail: React.FC = () => {
           </div>
 
           <Button
-            variant="contained"
-            color="primary"
-            onClick={handleUpdateRecipe}
-            sx={{ mt: 2 }}
-          >
-            레시피 수정
-          </Button>
+  variant="contained"
+  onClick={handleUpdateRecipe}
+  sx={{
+    width: '100%', 
+    mt: 2,
+    backgroundColor: '#6a4e23',  // 색상을 #6a4e23으로 설정
+    '&:hover': {
+      backgroundColor: '#d1b6a3', // hover 시 색상 변경 (약간 어두운 색)
+    },
+  }}
+>
+  레시피 수정
+</Button>
         </CardContent>
       </Card>
     </Box>

@@ -22,7 +22,7 @@ import EditCockTailRecipe from "./page/RecipeUpload/EditCocktailRecipe";
 
 // import Forum from "./page/forum/Forum";
 
-// import PostDetail from "./page/forum/PostDetail/PostDetail";
+// import PostDetail from ya"./page/forum/PostDetail/PostDetail";
 // import CreatePost from "./page/forum/CreatePost";
 // import ForumPosts from "./page/forum/ForumPosts";
 import Forum from "./page/forum/Forum";
