@@ -1325,48 +1325,60 @@ def predict_machine_learning():
 def get_user_recipes():
     try:
         member_id = request.args.get("memberId")
-        page = int(request.args.get("page", 0))  # 기본값 0
-        size = int(request.args.get("size", 10))  # 기본값 10
-
         if not member_id:
             return jsonify({"error": "memberId is required"}), 400
 
-        from_offset = page * size  # 페이지네이션을 위한 from 값 설정
+        try:
+            member_id = int(member_id)  # 🔹 문자열을 정수로 변환
+        except ValueError:
+            return jsonify({"error": "Invalid memberId"}), 400
 
-        # 쿼리: memberId로 해당 유저가 작성한 레시피를 가져오기
+        page = int(request.args.get("page", 0))  # 기본값 0
+        size = int(request.args.get("size", 10))  # 기본값 10
+        from_offset = page * size
+
+        # 인덱스명을 고정
+        index_names = ["recipe_cocktail", "recipe_food"]
+
+        # 쿼리: memberId(숫자)로 해당 유저가 작성한 레시피를 가져오기
         query = {
             "query": {
-                "term": {"author": member_id}  # 해당 유저가 작성한 글만 조회
+                "term": {"author": member_id}  # 🔹 정수 타입으로 검색
             },
             "from": from_offset,
             "size": size,
-            "_source": ["id", "title", "createdAt"]  # 필요한 필드만 포함
+            "_source": ["name"]  # 🔹 'name'만 가져오기 (createdAt 제거)
         }
 
-        response = es.search(index=["cocktail", "food"], body=query)
+        try:
+            response = es.search(index=index_names, body=query)
+        except Exception as e:
+            # Elasticsearch에서 인덱스를 찾을 수 없을 때 발생할 수 있는 오류를 처리
+            if "index_not_found_exception" in str(e):
+                app.logger.info(f"Index not found: {index_names}. Returning empty array.")
+                return jsonify([]), 200  # 인덱스가 없으면 빈 배열 반환
+            else:
+                app.logger.error(f"Error fetching user recipes: {str(e)}")
+                raise  # 다른 예외는 다시 던져서 처리
+
         hits = response.get("hits", {}).get("hits", [])
 
         if not hits:
-            return jsonify({"message": "No recipes found for this user"}), 404
+            app.logger.info(f"No recipes found for member_id {member_id} in indexes: {index_names}. Returning empty array.")
+            return jsonify([]), 200  # 빈 배열 반환
 
-        # 결과에 content_type을 칵테일 또는 푸드로 설정
+        # 🔹 결과에 content_type 추가
         results = []
         for hit in hits:
             doc = hit["_source"]
-            doc["id"] = hit["_id"]
+            doc["title"] = doc.pop("name", "")  # 'name'을 'title'로 변경
+            doc["content_type"] = "cocktail" if hit["_index"] == "recipe_cocktail" else "food"
 
-            # 칵테일 레시피인 경우 content_type을 'cocktail'로 설정
-            if hit["_index"] == "cocktail":
-                doc["content_type"] = "cocktail"
-            # 푸드 레시피인 경우 content_type을 'food'로 설정
-            elif hit["_index"] == "food":
-                doc["content_type"] = "food"
-
-            # 결과 리스트에 추가
             results.append(doc)
 
         return jsonify(results), 200
     except Exception as e:
+        app.logger.error(f"Error in get_user_recipes: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
