@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 public class CommentResDto {
-
+    private Long memberId;
     private Long commentId;   // 댓글 ID
     private String nickName;   // 댓글 작성자 닉네임
     private String content;    // 댓글 내용
@@ -27,6 +27,7 @@ public class CommentResDto {
                 .collect(Collectors.toList()); // 대댓글을 리스트로 변환
 
         return new CommentResDto(
+                comment.getMember().getMemberId(),
                 comment.getCommentId(),
                 comment.getMember().getNickName(),
                 comment.getContent(),

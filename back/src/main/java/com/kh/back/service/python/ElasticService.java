@@ -129,6 +129,24 @@ public class ElasticService {
 		}
 	}
 
+
+	public String updateRecipe(String jsonData) {
+		try {
+			URI uri = new URI(flaskBaseUrl + "/update/one");
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpEntity<String> requestEntity = new HttpEntity<>(jsonData, headers);
+			ResponseEntity<String> response = restTemplate.postForEntity(uri, requestEntity, String.class);
+
+			log.info("레시피 업로드 응답: {}", response.getBody());
+			return response.getBody();
+		} catch (Exception e) {
+			log.error("레시피 업로드 중 에러 발생: {}", e.getMessage());
+			return null;
+		}
+	}
+
 	/**
 	 * [검색 결과 변환 메서드]
 	 * - JSON 응답 문자열을 List 형태로 변환
