@@ -10,6 +10,7 @@ import com.kh.back.entity.member.Member;
 import com.kh.back.repository.ReactionRepository;
 import com.kh.back.repository.auth.RefreshTokenRepository;
 import com.kh.back.repository.member.MemberRepository;
+import com.kh.back.service.PurchaseService;
 import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class ReduxService {
 	private final MemberRepository memberRepository;
 	private final ObjectMapper objectMapper;
 	private final MemberService memberService;
+	private final PurchaseService purchaseService;
 	@Autowired
 	private ReactionRepository reactionRepository;
 
@@ -37,6 +39,7 @@ public class ReduxService {
 		return objectMapper.convertValue(member, MemberPublicResDto.class);
 	}
 
+	// ReduxService.java
 	public ReduxResDto getMyInfo(Authentication auth) {
 		try {
 			// 인증된 사용자 정보를 가져옴
@@ -65,10 +68,15 @@ public class ReduxService {
 			reduxResDto.setEmail(member.getEmail());
 			reduxResDto.setNickname(member.getNickName());
 			reduxResDto.setRole(member.getAuthority());
-
-			// 좋아요 및 신고한 레시피 ID 추가
 			reduxResDto.setLikedRecipes(likedRecipes);
 			reduxResDto.setReportedRecipes(reportedRecipes);
+
+			// ★ 프리미엄 여부를 설정
+			// 예: member 객체에 프리미엄 여부를 판단하는 메서드가 있거나,
+			// PurchaseService를 호출하여 구매 기록이 있는지 확인하는 로직을 추가합니다.
+			// 아래는 예시입니다.
+			boolean premium = purchaseService.isMemberPremium(member.getMemberId());
+			reduxResDto.setPremium(premium); // ReduxResDto에 premium 필드를 추가해야 함
 
 			return reduxResDto;
 		} catch (Exception e) {
@@ -76,6 +84,7 @@ public class ReduxService {
 			return null;
 		}
 	}
+
 
 
 }

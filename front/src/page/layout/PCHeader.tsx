@@ -21,15 +21,13 @@ const PCHeader = () => {
 
   const menuList = [
     { path: "/main", name: "Main" },
-    { path: "/about", name: "About" },
-    { path: "/contact", name: "Contact" },
     { path: "/forum", name: "Forum" },
   ];
 
   const recipeList = [
     { name: "cocktail", fn: () => navigate("/recipe/cocktail") },
     { name: "food", fn: () => navigate("/recipe/food") },
-    { name: "Add a cocktail", fn: () => navigate("/recipe/typeselect") },
+    { name: "Add a recipe", fn: () => navigate("/recipe/typeselect") },
   ];
 
   // 로고 클릭 시 /main으로 이동
