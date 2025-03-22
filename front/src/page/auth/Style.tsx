@@ -53,16 +53,16 @@ export const InputField = styled.input`
   width: 100%;
   padding: 12px;
   margin: 10px 0;
-  border: 1px solid #dccafc;
+  border: 1px solid #c3a97e;
   border-radius: 20px;
   box-sizing: border-box;
   font-size: 16px;
   
   
   &:focus {
-    border-color: #a16eff; /* 클릭 시 변경할 테두리 색상 */
+    border-color: #6a4e23; /* 클릭 시 변경할 테두리 색상 */
     outline: none; /* 기본 파란색 아웃라인 제거 */
-    box-shadow: 0 0 5px rgba(161, 110, 255, 0.5); /* 클릭 시 부드러운 그림자 효과 */
+    box-shadow: 0 0 5px rgba(106, 78, 35, 0.5); /* 클릭 시 부드러운 그림자 효과 */
   }
 `;
 
@@ -70,7 +70,7 @@ export const InputField = styled.input`
 export const Button = styled.button`
   width: 100%;
   padding: 12px;
-  background-color: #5f53d3;
+  background-color: #6a4e23;
   color: white;
   border: none;
   border-radius: 20px;
@@ -206,7 +206,7 @@ export const Input = styled.input`
   width: 100%;  
   padding: 9px;
   margin-bottom: 2px;
-  border: 1px solid ${({ theme }) => theme.border || "#dccafc"};
+  border: 1px solid ${({ theme }) => theme.border || "#c3a97e"}; /* 연한 브라운 */
   border-radius: 15px;
   font-size: 16px;
   box-sizing: border-box;
@@ -214,29 +214,36 @@ export const Input = styled.input`
   color: ${({ theme }) => theme.inputTextColor || "black"};
   outline: none;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); // 쉐도우 추가
+
   &:focus {
-    border-color: #a16eff; /* 클릭 시 변경할 테두리 색상 */
+    border-color: #6a4e23; /* 클릭 시 변경할 테두리 색상 (진한 브라운) */
     outline: none; /* 기본 파란색 아웃라인 제거 */
-    box-shadow: 0 0 5px rgba(161, 110, 255, 0.5); /* 클릭 시 부드러운 그림자 효과 */
+    box-shadow: 0 0 5px rgba(106, 78, 35, 0.5); /* 클릭 시 부드러운 그림자 효과 */
   }
+
   &::placeholder {
-    font-size: 12px;  /* placeholder 텍스트 크기 줄이기 */
-    color: ${({ theme }) => theme.placeholderColor || "#aaa"};  /* placeholder 텍스트 색상 */
+    font-size: 12px;  
+    color: ${({ theme }) => theme.placeholderColor || "#a08156"}; /* placeholder 색을 중간 톤으로 변경 */
   }
 `;
+
 
 export const PhoneVerifyButton = styled.button`
   padding: 9px;
   font-size: 16px;
   color: ${({ theme }) => theme.buttonTextColor || "white"};
-  background-color: ${({ disabled, theme }) => (disabled ? theme.disabledButton || "#dccafc" : theme.buttonBackground || "#5f53d3")};
+  background-color: ${({ disabled, theme }) => 
+    disabled ? theme.disabledButton || "#c3a97e" : theme.buttonBackground || "#c3a97e"};
   border: none;
   border-radius: 20px;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
   &:hover {
-    background-color: ${({ disabled, theme }) => (disabled ? theme.disabledButtonHover || "#dccafc" : theme.buttonHover || "#5f53d3")};
+    background-color: ${({ disabled, theme }) => 
+      disabled ? theme.disabledButtonHover || "#c3a97e" : theme.buttonHover || "#c3a97e"};
   }
 `;
+
 
 export const Message = styled.p<{isValid : boolean}>`
   color: ${(props) => (props.isValid ? (props.theme.validMessage || 'green') : (props.theme.invalidMessage || 'red'))}; /* 메시지 색상 */
@@ -254,25 +261,24 @@ export const SignupButton = styled.button`
   padding: 15px 30px;
   font-size: 16px;
   color: ${({ theme }) => theme.buttonTextColor || "white"};
-  background-color: ${({ disabled, theme }) => (disabled ? theme.disabledButton || "#5f53d3" : theme.buttonBackground || "#dccafc")};
+  background-color: ${({ disabled, theme }) => (disabled ? theme.disabledButton || "#6a4e23" : theme.buttonBackground || "#dccafc")};
   border: none;
   border-radius: 20px;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   &:hover {
-    background-color: ${({ disabled, theme }) => (disabled ? theme.disabledButtonHover || "#5f53d3" : theme.buttonHover || "#dccafc")};
+    background-color: ${({ disabled, theme }) => (disabled ? theme.disabledButtonHover || "#6a4e23" : theme.buttonHover || "#dccafc")};
   }
 `;
-
 export const TermsWrapper = styled.div`
   margin-top: 20px;
   padding: 10px;
-  border: 1px solid #5f53d3;
+  border: 1px solid #6a4e23;
   border-radius: 15px;
   text-align: left; // 왼쪽 정렬
 `;
 
 export const TermsHeader = styled.h4`
-  color: #5f53d3;
+  color: #6a4e23;
   text-align: left; // 왼쪽 정렬
 `;
 
@@ -289,35 +295,37 @@ export const TermLabel = styled.label`
   margin-left: 8px; /* 텍스트와 체크박스 사이의 간격 */
 `;
 
-
 export const TermLink = styled.span`
-  color: blue;
+  color: #6a4e23;
   cursor: pointer;
   text-decoration: underline;
 `;
 
 export const CloseButton = styled.button`
   padding: 10px 20px;
-  background-color: #5f53d3;
+  background-color: #6a4e23;
   color: white;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-`;
 
+  &:hover {
+    background-color: #5a3d1e; /* 버튼 호버 시 더 어두운 브라운 */
+  }
+`;
 
 export const TermsCheckbox = styled.input`
   appearance: none; /* 기본 브라우저 스타일 제거 */
   width: 16px;
   height: 16px;
-  border: 2px solid #5f53d3; /* 체크박스 테두리 */
+  border: 2px solid #6a4e23; /* 체크박스 테두리 */
   border-radius: 4px;
   position: relative;
   cursor: pointer;
   
   &:checked {
-    background-color: #5f53d3; /* 체크되었을 때 배경색 */
-    border-color: #5f53d3;
+    background-color: #6a4e23; /* 체크되었을 때 배경색 */
+    border-color: #6a4e23;
   }
 
   &:checked::before {
@@ -339,7 +347,7 @@ const TermsContainer = styled.div`
   align-items: center;
   font-size: 14px;
   padding: 10px;
-  border: 1px solid #5f53d3;
+  border: 1px solid #6a4e23;
   border-radius: 15px;
-  background-color: ${({ theme }) => theme.inputBackground || "white"};
+  background-color: ${({ theme }) => theme.inputBackground || "#c3a97e"};
 `;
