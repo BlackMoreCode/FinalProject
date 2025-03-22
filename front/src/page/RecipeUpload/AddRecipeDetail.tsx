@@ -110,152 +110,151 @@ const AddRecipeDetail = () => {
     }
 };
 
-  return (
-    <div className="p-6 max-w-2xl mx-auto space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">음식 사진</h2>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-          id="upload"
-        />
-     
-        {image && (
-          <div className="border rounded-lg p-4">
-            <img src={URL.createObjectURL(image)} alt="레시피 사진" className="w-full h-auto" />
-          </div>
-          
-        )}
-           <label htmlFor="upload" className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
-          <Upload />
-          <span>사진 업로드</span>
-        </label>
-      </div>
-
+return (
+  <div className="p-6 max-w-2xl mx-auto space-y-4">
+    <div>
+      <h2 className="text-lg font-semibold">음식 사진</h2>
       <input
-        type="text"
-        placeholder="레시피 제목"
-        value={title}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-lg"
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+        id="upload"
       />
-      <input
-        type="text"
-        placeholder="조리방법"
-        value={cookingMethod}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setCookingMethod(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-lg"
-      />
-      <input
-        type="text"
-        placeholder="요리 종류"
-        value={cuisineType}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setCuisineType(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-lg"
-      />
-
-      <div>
-        <h2 className="text-lg font-semibold">재료</h2>
-        {ingredients.map((ingredient, index) => (
-          <div key={index} className="flex gap-4 mb-4">
-            <input
-              type="text"
-              placeholder={`재료 ${index + 1}`}
-              value={ingredient.ingredient}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleIngredientChange(index, "ingredient", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            />
-            <input
-              type="text"
-              placeholder={`양 ${index + 1}`}
-              value={ingredient.amount}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleIngredientChange(index, "amount", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-        ))}
-        <button
-          onClick={handleAddIngredient}
-          className="w-full py-2 bg-blue-500 text-white rounded-lg mt-2"
-        >
-          재료 추가
-        </button>
-        {ingredients.length > 1 && (
-          <button
-            onClick={handleRemoveIngredient}
-            className="w-full py-2 bg-red-500 text-white rounded-lg mt-2"
-          >
-            가장 최근 재료 삭제
-          </button>
-        )}
-      </div>
-      
-      <div>
-        <h2 className="text-lg font-semibold">조리법</h2>
-        {steps.map((step, index) => (
-          <div key={index} className="space-y-2">
-                
-                {step.image && (
-              <div className="border rounded-lg p-4">
-                <img src={URL.createObjectURL(step.image)} alt={`조리 단계 ${index + 1}`} className="w-full h-auto" />
-              </div>
-            )}
-            <textarea
-              placeholder={`조리 단계 ${index + 1}`}
-              value={step.text}
-              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => handleStepChange(index, e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleStepImageUpload(index, e)}
-              className="hidden"
-              id={`step-upload-${index}`}
-            />
-      
-              <label htmlFor={`step-upload-${index}`} className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
-              <Upload />
-              <span>조리 단계 사진 업로드</span>
-            </label>
-          </div>
-        ))}
-        <button
-          onClick={handleAddStep}
-          className="w-full py-2 bg-blue-500 text-white rounded-lg mt-2"
-        >
-          조리법 추가
-        </button>
-        {steps.length > 1 && (
-          <button
-            onClick={handleRemoveStep}
-            className="w-full py-2 bg-red-500 text-white rounded-lg mt-2"
-          >
-            가장 최근 조리법 삭제
-          </button>
-        )}
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold">레시피 팁</h2>
-        <textarea
-          placeholder="레시피 팁을 입력하세요"
-          value={recipeTip}
-          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setRecipeTip(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg"
-        />
-      </div>
-      
-
-      <button
-        className="w-full py-2 bg-blue-500 text-white rounded-lg mt-4"
-        onClick={handleSaveRecipe}
-      >
-        레시피 저장
-      </button>
+   
+      {image && (
+        <div className="border rounded-lg p-4">
+          <img src={URL.createObjectURL(image)} alt="레시피 사진" className="w-full h-auto" />
+        </div>
+        
+      )}
+         <label htmlFor="upload" className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
+        <Upload />
+        <span>사진 업로드</span>
+      </label>
     </div>
-  );
+
+    <input
+      type="text"
+      placeholder="레시피 제목"
+      value={title}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+    />
+    <input
+      type="text"
+      placeholder="조리방법"
+      value={cookingMethod}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setCookingMethod(e.target.value)}
+      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+    />
+    <input
+      type="text"
+      placeholder="요리 종류"
+      value={cuisineType}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setCuisineType(e.target.value)}
+      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+    />
+
+    <div>
+      <h2 className="text-lg font-semibold">재료</h2>
+      {ingredients.map((ingredient, index) => (
+        <div key={index} className="flex gap-4 mb-4">
+          <input
+            type="text"
+            placeholder={`재료 ${index + 1}`}
+            value={ingredient.ingredient}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => handleIngredientChange(index, "ingredient", e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+          />
+          <input
+            type="text"
+            placeholder={`양 ${index + 1}`}
+            value={ingredient.amount}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => handleIngredientChange(index, "amount", e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+          />
+        </div>
+      ))}
+      <button
+        onClick={handleAddIngredient}
+        className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-2"
+      >
+        재료 추가
+      </button>
+      {ingredients.length > 1 && (
+        <button
+          onClick={handleRemoveIngredient}
+          className="w-full py-2 bg-[#d1b6a3] text-white rounded-lg mt-2"
+        >
+          가장 최근 재료 삭제
+        </button>
+      )}
+    </div>
+    
+    <div>
+      <h2 className="text-lg font-semibold">조리법</h2>
+      {steps.map((step, index) => (
+        <div key={index} className="space-y-2">
+              
+          {step.image && (
+            <div className="border rounded-lg p-4">
+              <img src={URL.createObjectURL(step.image)} alt={`조리 단계 ${index + 1}`} className="w-full h-auto" />
+            </div>
+          )}
+          <textarea
+            placeholder={`조리 단계 ${index + 1}`}
+            value={step.text}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => handleStepChange(index, e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => handleStepImageUpload(index, e)}
+            className="hidden"
+            id={`step-upload-${index}`}
+          />
+    
+          <label htmlFor={`step-upload-${index}`} className="cursor-pointer flex items-center space-x-2 border p-2 rounded-lg">
+            <Upload />
+            <span>조리 단계 사진 업로드</span>
+          </label>
+        </div>
+      ))}
+      <button
+        onClick={handleAddStep}
+        className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-2"
+      >
+        조리법 추가
+      </button>
+      {steps.length > 1 && (
+        <button
+          onClick={handleRemoveStep}
+          className="w-full py-2 bg-[#d1b6a3] text-white rounded-lg mt-2"
+        >
+          가장 최근 조리법 삭제
+        </button>
+      )}
+    </div>
+
+    <div>
+      <h2 className="text-lg font-semibold">레시피 팁</h2>
+      <textarea
+        placeholder="레시피 팁을 입력하세요"
+        value={recipeTip}
+        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setRecipeTip(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6a4e23] focus:border-[#6a4e23]"
+      />
+    </div>
+    
+    <button
+      className="w-full py-2 bg-[#6a4e23] text-white rounded-lg mt-4 hover:bg-[#d1b6a3]"
+      onClick={handleSaveRecipe}
+    >
+      레시피 저장
+    </button>
+  </div>
+);
 }
 export default AddRecipeDetail;
