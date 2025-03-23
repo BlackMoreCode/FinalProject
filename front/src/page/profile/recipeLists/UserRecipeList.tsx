@@ -99,10 +99,10 @@ const UserRecipesList: React.FC<{ memberId: number }> = ({ memberId }) => {
 
   const fetchRecipes = useCallback(async () => {
     if (loading || !hasMore || error) return; // 이미 오류가 발생했거나, 로딩 중이면 다시 요청하지 않음
-
+  
     setLoading(true);
     setError(null); // 오류 초기화
-
+  
     try {
       const newRecipes = await ProfileApi.getUserRecipes(
         memberId,
@@ -122,11 +122,11 @@ const UserRecipesList: React.FC<{ memberId: number }> = ({ memberId }) => {
       setLoading(false);
     }
   }, [memberId, page, loading, hasMore, error]);
-
+  
   useEffect(() => {
     fetchRecipes();
   }, [fetchRecipes]);
-
+  
   if (error || (recipes.length === 0 && !loading)) {
     return (
       <div>
@@ -137,14 +137,13 @@ const UserRecipesList: React.FC<{ memberId: number }> = ({ memberId }) => {
       </div>
     );
   }
-
+  
   return (
     <div>
       <RecipeContainer>
-        {recipes.map((recipe) => (
-          <Card key={recipe.id}>
+        {recipes.map((recipe, index) => (
+          <Card key={index}>
             <Title>{recipe.title}</Title>
-            <Timestamp>{recipe.createdAt || "N/A"}</Timestamp>
             <ContentType>{recipe.content_type || "N/A"}</ContentType>
           </Card>
         ))}

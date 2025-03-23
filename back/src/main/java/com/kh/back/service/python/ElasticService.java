@@ -227,7 +227,7 @@ public class ElasticService {
 	 * @param memberId 유저 ID
 	 * @param page     페이지 번호
 	 * @param size     페이지 당 항목 수
-	 * @return 레시피 목록 (id, title, createdAt)
+	 * @return 레시피 목록 (id, title, content_type)
 	 */
 	public List<Map<String, Object>> getUserRecipes(Long memberId, int page, int size) {
 		try {
@@ -242,7 +242,8 @@ public class ElasticService {
 			ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
 			// 응답을 List<Map<String, Object>> 형식으로 변환
-			List<Map<String, Object>> responseBody = objectMapper.readValue(response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+			List<Map<String, Object>> responseBody = objectMapper.readValue(response.getBody(),
+					new TypeReference<List<Map<String, Object>>>() {});
 
 			log.info("[getUserRecipes] Flask response: {}", responseBody);
 
@@ -252,5 +253,4 @@ public class ElasticService {
 			throw new RuntimeException("Error fetching user recipes", e);  // 예외 던지기
 		}
 	}
-
 }

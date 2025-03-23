@@ -80,7 +80,7 @@ public class RecipeService {
      * @param memberId 유저 ID
      * @param page     페이지 번호
      * @param size     페이지 당 항목 수
-     * @return 레시피 목록 (id, title, createdAt)
+     * @return 레시피 목록 (id, title, content_type)
      */
     public List<Map<String, Object>> getUserRecipes(Long memberId, int page, int size) {
         List<Map<String, Object>> rawList = elasticService.getUserRecipes(memberId, page, size);
@@ -88,13 +88,10 @@ public class RecipeService {
         return rawList.stream()
                 .map(recipe -> {
                     Map<String, Object> recipeMap = new HashMap<>();
-                    recipeMap.put("id", recipe.get("id"));
                     recipeMap.put("title", recipe.get("title"));
-                    recipeMap.put("createdAt", recipe.getOrDefault("createdAt", "N/A"));
-                    recipeMap.put("content_type", recipe.getOrDefault("content_type", "N/A"));
+                    recipeMap.put("content_type", recipe.getOrDefault("content_type", "N/A")); // 🔹 createdAt 제거
                     return recipeMap;
                 })
                 .collect(Collectors.toList());
     }
-
 }
