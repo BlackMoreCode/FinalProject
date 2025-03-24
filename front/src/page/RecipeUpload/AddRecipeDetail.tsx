@@ -2,6 +2,7 @@ import { useState, ChangeEvent } from "react";
 import { Upload } from "lucide-react"; // 설치 필요
 import React from "react";
 import RecipeApi from "../../api/RecipeApi";
+import { useNavigate } from "react-router-dom";
 
 // 재료와 조리법의 타입 정의
 interface Ingredient {
@@ -19,6 +20,7 @@ const AddRecipeDetail = () => {
   const [title, setTitle] = useState<string>("");
   const [cookingMethod, setCookingMethod] = useState<string>("");
   const [recipeTip, setRecipeTip] = useState<string>("");
+  const navigate = useNavigate(); // useNavigate 훅 사용
   const [cuisineType, setCuisineType] = useState<string>("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ ingredient: "", amount: "" }]);
   const [steps, setSteps] = useState<Step[]>([{ text: "", image: null }]);
@@ -104,6 +106,7 @@ const AddRecipeDetail = () => {
         const result = await RecipeApi.saveRecipe(formData);
         console.log("레시피 저장 성공:", result);
         alert("레시피가 성공적으로 저장되었습니다.");
+        navigate('/')
     } catch (error) {
         console.error("레시피 저장 실패:", error);
         alert("레시피 저장 중 오류가 발생했습니다.");

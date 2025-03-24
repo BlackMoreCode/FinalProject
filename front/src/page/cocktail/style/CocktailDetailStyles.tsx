@@ -1,6 +1,6 @@
 const cocktailDetailStyles = {
     container: { maxWidth: 1200, margin: 'auto', padding: 3 },
-    cardMedia: { borderRadius: 2, height: 600, width: '100%', objectFit: 'cover' },
+    cardMedia: { height: 600, width: '100%', objectFit: 'cover' }, // 쉐도우 제거
     cardContent: { padding: 4 },
     title: { fontWeight: 'bold', marginBottom: 5, fontSize: '2.5rem' },
     gridContainer: { marginBottom: 5 },

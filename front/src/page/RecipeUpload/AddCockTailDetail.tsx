@@ -2,6 +2,7 @@ import { useState, ChangeEvent } from "react";
 import { Upload } from "lucide-react"; // 설치 필요
 import React from "react";
 import RecipeApi from "../../api/RecipeApi";
+import { useNavigate } from 'react-router-dom'; // useNavigate 추가
 
 interface Ingredient {
   ingredient: string;
@@ -12,6 +13,7 @@ interface Ingredient {
 const AddCockTailDetail =()=>{
   const [name, setName] = useState<string>("");
   const [glass, setGlass] = useState<string>("");
+    const navigate = useNavigate(); // useNavigate 훅 사용
   const [category, setCategory] = useState<string>("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { ingredient: "", amount: "", unit: ""},
@@ -45,7 +47,6 @@ const AddCockTailDetail =()=>{
   // 칵테일 레시피 저장
   const handleSaveCocktail = async () => {
     const formData = new FormData();
-    
     // 기본 필드
     formData.append("name", name);
     formData.append("glass", glass);
@@ -74,6 +75,7 @@ const AddCockTailDetail =()=>{
       const result = await RecipeApi.saveCocktailRecipe(formData);
       console.log("레시피 저장 성공:", result);
       alert("레시피가 성공적으로 저장되었습니다.");
+      navigate('/')
   } catch (error) {
       console.error("레시피 저장 실패:", error);
       alert("레시피 저장 중 오류가 발생했습니다.");

@@ -1367,12 +1367,13 @@ def get_user_recipes():
             app.logger.info(f"No recipes found for member_id {member_id} in indexes: {index_names}. Returning empty array.")
             return jsonify([]), 200  # 빈 배열 반환
 
-        # 🔹 결과에 content_type 추가
+        # 🔹 결과에 content_type 추가 및 _id 추가
         results = []
         for hit in hits:
             doc = hit["_source"]
             doc["title"] = doc.pop("name", "")  # 'name'을 'title'로 변경
             doc["content_type"] = "cocktail" if hit["_index"] == "recipe_cocktail" else "food"
+            doc["id"] = hit["_id"]  # 🔹 Elasticsearch의 _id 추가
 
             results.append(doc)
 
