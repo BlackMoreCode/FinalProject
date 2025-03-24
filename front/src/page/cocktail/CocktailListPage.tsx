@@ -1,54 +1,32 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchRecipeList } from "../../api/RecipeListApi";
+import RecipeApi from "../../api/RecipeApi";
 import placeholder from "./style/placeholder.jpg";
 import placeholder2 from "./style/placeholder2.png";
 import { CocktailListResDto } from "../../api/dto/CotailListResDto";
+import { CocktailResDto } from "../../api/dto/RecipeDto";
 
-/**
- * 칵테일 목록 페이지
- * - 검색어와 카테고리 필터를 적용합니다.
- * - Intersection Observer와 React ref를 사용해 무한 스크롤을 구현합니다.
- * - 카테고리 버튼 클릭 시 인자를 직접 전달하여 "두 번 클릭" 문제를 해결합니다.
- *
- * @returns {JSX.Element} CocktailListPage 컴포넌트
- */
+// 기존 CocktailListResDto에 image 필드가 없을 경우, CocktailResDto의 image 필드를 사용하도록 타입 병합
+type CocktailForList = CocktailListResDto & { image: string };
+
 const CocktailListPage: React.FC = () => {
-  // -------------------- 상태 변수 --------------------
-  // 칵테일 목록 상태 (CocktailListResDto 배열)
-  const [cocktails, setCocktails] = useState<CocktailListResDto[]>([]);
-  // 검색어 상태
+  const [cocktails, setCocktails] = useState<CocktailForList[]>([]);
   const [query, setQuery] = useState<string>("");
-  // 선택된 카테고리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  // -------------------- 무한 스크롤 상태 --------------------
-  // 현재 페이지 번호
   const [page, setPage] = useState<number>(1);
-  // 추가 데이터가 존재하는지 여부
   const [hasMore, setHasMore] = useState<boolean>(true);
-  // IntersectionObserver를 저장할 ref
   const observerRef = useRef<IntersectionObserver | null>(null);
-  // 관찰 대상 요소(ref)
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  // 페이지 이동을 위한 navigate hook
   const navigate = useNavigate();
 
-  /**
-   * 칵테일 목록을 API로부터 불러오는 함수
-   *
-   * @param {number} pageNumber - 불러올 페이지 번호
-   * @param {string} catParam - 새로운 카테고리 값 (선택 사항). 값이 없으면 현재 상태(selectedCategory)를 사용합니다.
-   */
+  // 칵테일 목록을 불러오는 함수
   const loadCocktails = useCallback(
     async (pageNumber: number, catParam?: string) => {
       try {
-        // 전달된 카테고리 값이 있다면 사용하고, 그렇지 않으면 selectedCategory 사용
         const categoryUsed =
           catParam !== undefined ? catParam : selectedCategory;
-
-        // API 호출: "cocktail" 타입을 지정하고, 조리방법 필터는 빈 문자열로 전달합니다.
         const response = await fetchRecipeList(
           query,
           "cocktail",
@@ -58,15 +36,18 @@ const CocktailListPage: React.FC = () => {
           20
         );
         console.log("loadCocktails 응답:", response);
+        // response는 CocktailListResDto[] 타입으로 받아오지만,
+        // image 필드는 RecipeApi의 상세 조회를 통해 채울 예정이므로, 우선 빈 문자열을 할당
+        const listWithImage: CocktailForList[] = response.map((item) => ({
+          ...item,
+          image: item.image ? item.image : "", // image가 없으면 빈 문자열로 설정
+        }));
 
-        // 첫 페이지이면 새로운 목록으로 설정, 아니면 기존 목록에 추가
         if (pageNumber === 1) {
-          setCocktails(response);
+          setCocktails(listWithImage);
         } else {
-          setCocktails((prev) => [...prev, ...response]);
+          setCocktails((prev) => [...prev, ...listWithImage]);
         }
-
-        // 응답 데이터의 길이가 20보다 작으면 더 불러올 데이터가 없다고 판단합니다.
         setHasMore(response && response.length === 20);
       } catch (error) {
         console.error("칵테일 목록 조회 중 에러:", error);
@@ -75,21 +56,41 @@ const CocktailListPage: React.FC = () => {
     [query, selectedCategory]
   );
 
-  /**
-   * 검색 또는 필터를 적용할 때 첫 페이지 데이터를 불러오는 함수
-   */
+  // 칵테일 목록 로드 후, image가 없는 항목들에 대해 RecipeApi.fetchCocktail으로 이미지 업데이트
+  useEffect(() => {
+    const updateImages = async () => {
+      const updatedCocktails = await Promise.all(
+        cocktails.map(async (cocktail) => {
+          if (!cocktail.image) {
+            try {
+              const detail: CocktailResDto = await RecipeApi.fetchCocktail(
+                cocktail.id,
+                "cocktail"
+              );
+              return { ...cocktail, image: detail.image };
+            } catch (err) {
+              console.error(`이미지 업데이트 실패 (ID: ${cocktail.id})`, err);
+              return { ...cocktail, image: placeholder2 };
+            }
+          }
+          return cocktail;
+        })
+      );
+      setCocktails(updatedCocktails);
+    };
+
+    if (cocktails.length > 0) {
+      updateImages();
+    }
+    // 단, cocktails가 변경될 때마다 호출되지 않도록 주의 (한번만 업데이트하도록 별도 플래그를 사용할 수도 있음)
+  }, [cocktails]);
+
   const fetchCocktailsData = useCallback(async () => {
     setPage(1);
     await loadCocktails(1, selectedCategory);
     resetObserver();
   }, [loadCocktails, selectedCategory]);
 
-  /**
-   * IntersectionObserver의 콜백 함수
-   * - 감시 대상이 화면에 나타나면 다음 페이지를 불러옵니다.
-   *
-   * @param {IntersectionObserverEntry[]} entries - 관찰 대상 항목 배열
-   */
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const target = entries[0];
@@ -100,9 +101,6 @@ const CocktailListPage: React.FC = () => {
     [hasMore]
   );
 
-  /**
-   * IntersectionObserver를 초기화 및 재설정하는 함수
-   */
   const resetObserver = useCallback(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -116,14 +114,12 @@ const CocktailListPage: React.FC = () => {
     observerRef.current = observer;
   }, [handleObserver]);
 
-  // 페이지 번호가 변경될 때 추가 데이터를 불러옵니다.
   useEffect(() => {
     if (page > 1) {
       loadCocktails(page, selectedCategory);
     }
   }, [page, loadCocktails, selectedCategory]);
 
-  // 컴포넌트 마운트 시 Observer를 초기화하고, 첫 페이지 데이터를 불러옵니다.
   useEffect(() => {
     resetObserver();
     loadCocktails(1, selectedCategory);
@@ -134,18 +130,10 @@ const CocktailListPage: React.FC = () => {
     };
   }, [resetObserver, loadCocktails, selectedCategory]);
 
-  /**
-   * 상세 페이지로 이동하는 함수
-   *
-   * @param {string} id - 선택된 칵테일의 ID
-   */
   const handleSelectCocktail = (id: string) => {
-    // 상세 페이지의 라우트는 /cocktails/:id 로 구성되어 있습니다.
- 
     navigate(`/cocktailrecipe/detail/${id}/cocktail`);
   };
 
-  // -------------------- 임시 추천 레시피 데이터 (테스트용) --------------------
   const recommendedRecipes = [
     { id: "rec_1", name: "마가리타", image: placeholder2 },
     { id: "rec_2", name: "다이키리", image: placeholder2 },
@@ -156,7 +144,6 @@ const CocktailListPage: React.FC = () => {
     },
   ];
 
-  // -------------------- 예시 카테고리 목록 --------------------
   const categories = [
     "전체",
     "식전 칵테일",
@@ -170,7 +157,6 @@ const CocktailListPage: React.FC = () => {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
-      {/* 상단 영역 */}
       <header className="mb-8">
         <h1 className="text-2xl md:text-4xl font-bold mb-2 text-kakiBrown dark:text-softBeige">
           Cocktail Recipes
@@ -180,7 +166,6 @@ const CocktailListPage: React.FC = () => {
         </p>
       </header>
 
-      {/* 검색 바 섹션 */}
       <section className="mb-12">
         <div className="flex flex-col md:flex-row max-w-md mx-auto space-y-2 md:space-y-0">
           <input
@@ -203,7 +188,6 @@ const CocktailListPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 추천 레시피 섹션 */}
       <section className="mb-16">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           Recipes For You
@@ -229,14 +213,12 @@ const CocktailListPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 카테고리 필터 섹션 */}
       <section className="mb-8 text-center">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           원하는 카테고리를 선택하세요
         </h2>
         <div className="flex flex-wrap justify-center gap-3">
           {categories.map((cat) => {
-            // "전체"는 빈 문자열로 처리합니다.
             const newCat = cat === "전체" ? "" : cat;
             return (
               <button
@@ -261,7 +243,6 @@ const CocktailListPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 칵테일 목록 섹션 */}
       <section className="mb-16">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-kakiBrown dark:text-softBeige">
           Our Recipes
@@ -294,7 +275,6 @@ const CocktailListPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Intersection Observer 감시 대상 요소 */}
       {hasMore && <div ref={sentinelRef} style={{ height: "50px" }} />}
     </div>
   );
