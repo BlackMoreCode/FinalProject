@@ -1,13 +1,18 @@
+import math
 import traceback
+from urllib.parse import unquote
 from redis import Redis
 from rq import Queue
 from flask import Flask, request, jsonify
 from elasticsearch import Elasticsearch
 import json
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+
 from machine_learning.forest import fetch_data_from_es, load_tfidf_models, recommend_recipe, load_weights_from_json, \
-    train_tfidf_model, train_weight
+    train_tfidf_model, train_weight, get_id_list
+
+
 
 app = Flask(__name__)
 es_host = os.getenv("ELASTICSEARCH_HOST", "elasticsearch")
@@ -15,8 +20,8 @@ es = Elasticsearch([f"http://{es_host}:9200"])
 
 # Redis 연결
 redis_url = os.getenv('REDIS_URL', 'redis://redis:6379')
-redis = Redis.from_url(redis_url, socket_timeout=180)
-queue = Queue(connection=redis, job_timeout="30m")
+redis = Redis.from_url(redis_url, socket_timeout=1800)
+queue = Queue(connection=redis, job_timeout='30m')
 
 # ================================================================
 # Utility Functions (공통 ES 인덱스 및 매핑 관리)
@@ -40,19 +45,27 @@ def create_index_if_not_exists(index_name, mapping_file=None):
         if mapping_file and os.path.exists(mapping_file):
             try:
                 mapping = load_mapping(mapping_file)
-                es.indices.create(index=index_name, body=mapping)
-                app.logger.info("인덱스 '{}'가 매핑 파일 '{}'을 사용하여 생성되었습니다.".format(index_name, mapping_file))
+
+                # 매핑 설정과 함께 인덱스를 생성
+                body = {}
+                if "settings" in mapping:
+                    body["settings"] = mapping["settings"]
+                if "mappings" in mapping:
+                    body["mappings"] = mapping["mappings"]
+
+                es.indices.create(index=index_name, body=body)
+                app.logger.info(f"인덱스 '{index_name}'가 매핑 파일 '{mapping_file}'을 사용하여 생성되었습니다.")
             except Exception as e:
-                app.logger.error("매핑 파일 '{}'을 사용하여 인덱스를 생성하는 중 오류 발생: {}. 빈 매핑으로 생성합니다.".format(mapping_file, str(e)))
+                app.logger.error(f"매핑 파일 '{mapping_file}'을 사용하여 인덱스를 생성하는 중 오류 발생: {str(e)}. 빈 매핑으로 생성합니다.")
                 es.indices.create(index=index_name, body={})
-                app.logger.info("인덱스 '{}'가 빈 매핑으로 생성되었습니다.".format(index_name))
         else:
-            # KR: 매핑 파일이 제공되지 않거나 존재하지 않으면 기본(empty) 매핑으로 인덱스 생성
+            # 매핑 파일이 제공되지 않거나 존재하지 않으면 기본(empty) 매핑으로 인덱스 생성
             es.indices.create(index=index_name, body={})
-            app.logger.info("인덱스 '{}'가 빈 매핑으로 생성되었습니다.".format(index_name))
+            app.logger.info(f"인덱스 '{index_name}'가 빈 매핑으로 생성되었습니다.")
         return jsonify({"message": f"Index {index_name} created successfully"}), 200
     else:
         return jsonify({"message": f"Index {index_name} already exists"}), 400
+
 
 def get_index_and_mapping(file_type: str):
     """
@@ -62,7 +75,7 @@ def get_index_and_mapping(file_type: str):
     index_mapping = {
         "cocktail": ("recipe_cocktail", "cocktail_mapping.json"),
         "food": ("recipe_food", "food_mapping.json"),
-        "feed": ("feed", "feed_mapping.json"),
+        "faq": ("faq", "faq_mapping.json"),
         "forum_post": ("forum_post", "forum_post_mapping.json"),
         "forum_category": ("forum_category", "forum_category_mapping.json")
     }
@@ -203,74 +216,67 @@ def search():
         if not index_name:
             return jsonify({"error": "Invalid type filter"}), 400
 
-        # 1) 검색어/카테고리/조리방법 등에 따른 query 빌드 (기존 로직 유지)
         if type_filter == "food":
             category_field = "RCP_PAT2"
             cooking_field = "RCP_WAY2"
-            multi_match_fields = ["name", "ingredients.ingredient", "RCP_PAT2"]
+            multi_match_fields = ["name^3", "RCP_PAT2"]  # 'name' 필드를 더 높은 가중치로
         elif type_filter == "forum_post":
             category_field = "category"
-            cooking_field = "cookingMethod"  # 포럼에는 없는 필드
-            multi_match_fields = ["title", "content", "authorName", "category"]
+            cooking_field = "cookingMethod"
+            multi_match_fields = ["title^3", "content", "authorName", "category"]
         else:
             category_field = "category"
             cooking_field = "cookingMethod"
-            multi_match_fields = ["name", "ingredients.ingredient", "category"]
+            multi_match_fields = ["name", "category"]
 
-        if q and category and cooking_method:
-            query = {
-                "bool": {
-                    "must": [
-                        {"multi_match": {"query": q, "fields": multi_match_fields}},
-                        {"term": {category_field: {"value": category}}},
-                        {"term": {cooking_field: {"value": cooking_method}}}
-                    ]
-                }
-            }
-        elif q and category:
-            query = {
-                "bool": {
-                    "must": [
-                        {"multi_match": {"query": q, "fields": multi_match_fields}},
-                        {"term": {category_field: {"value": category}}}
-                    ]
-                }
-            }
-        elif q and cooking_method:
-            query = {
-                "bool": {
-                    "must": [
-                        {"multi_match": {"query": q, "fields": multi_match_fields}},
-                        {"term": {cooking_field: {"value": cooking_method}}}
-                    ]
-                }
-            }
-        elif category and cooking_method:
-            query = {
-                "bool": {
-                    "must": [
-                        {"term": {category_field: {"value": category}}},
-                        {"term": {cooking_field: {"value": cooking_method}}}
-                    ]
-                }
-            }
-        elif q:
-            query = {"multi_match": {"query": q, "fields": multi_match_fields}}
-        elif category:
-            query = {"term": {category_field: {"value": category}}}
-        elif cooking_method:
-            query = {"term": {cooking_field: {"value": cooking_method}}}
-        else:
-            query = {"match_all": {}}
+        query_clauses = []
 
-        # 2) forum_post인 경우, comments 배열도 함께 가져오도록 source_fields에 추가
+        if q:
+            # Fuzziness와 operator 사용 및 nori_analyzer와 edge_ngram_analyzer 적용
+            query_clauses.append({
+                "multi_match": {
+                    "query": q,
+                    "fields": multi_match_fields,
+                    "fuzziness": "AUTO",  # 자동으로 유사도 조정
+                    "operator": "or"      # 검색어 일부만 일치해도 결과를 반환
+                }
+            })
+            query_clauses.append({
+                "nested": {
+                    "path": "ingredients",
+                    "query": {
+                        "match": {
+                            "ingredients.ingredient": {
+                                "query": q,
+                                "analyzer": "nori_analyzer",  # nori 분석기 사용
+                                "fuzziness": "AUTO",
+                                "operator": "or"
+                            }
+                        }
+                    }
+                }
+            })
+
+        filter_clauses = []
+        if category:
+            filter_clauses.append({"term": {category_field: {"value": category}}})
+        if cooking_method:
+            filter_clauses.append({"term": {cooking_field: {"value": cooking_method}}})
+
+        query = {
+            "bool": {
+                "should": query_clauses,
+                "filter": filter_clauses,
+                "minimum_should_match": 1 if query_clauses else 0  # 최소 한 개의 should 조건 충족 필요
+            }
+        } if query_clauses else {"match_all": {}}
+
         if type_filter == "food":
             source_fields = ["name", "RCP_PAT2", "RCP_WAY2", "like", "abv", "ATT_FILE_NO_MAIN"]
         elif type_filter == "forum_post":
             source_fields = [
-                "title", "content", "authorName", "contentJSON",
-                "viewsCount", "likesCount", "createdAt", "updatedAt",
-                "category", "comments", "sticky"
+                "title", "content", "authorName", "contentJSON", "viewsCount", "likesCount",
+                "createdAt", "updatedAt", "category", "comments", "sticky"
             ]
         else:
             source_fields = ["name", "category", "like", "abv"]
@@ -282,36 +288,18 @@ def search():
             "query": query
         }
 
-        # 3) Elasticsearch 검색
         res = es.search(index=index_name, body=body)
-
-        # 4) 검색 결과 파싱: doc["_source"] + doc["_id"]
         hits = res["hits"]["hits"]
-        results = []
-        for hit in hits:
-            doc = hit["_source"]
-            doc["id"] = hit["_id"]
-            results.append(doc)
+        results = [{"id": hit["_id"], **hit["_source"]} for hit in hits]
 
-        # 5) forum_post인 경우, comments에서 최신 댓글 추출 → latestComment
         if type_filter == "forum_post":
             for doc in results:
                 comments = doc.get("comments", [])
-                if comments:
-                    # createdAt 기준 내림차순 정렬하여 첫 번째를 최신 댓글로
-                    sorted_comments = sorted(
-                        comments,
-                        key=lambda c: c.get("createdAt", ""),
-                        reverse=True
-                    )
-                    doc["latestComment"] = sorted_comments[0]
-                else:
-                    doc["latestComment"] = None
+                doc["latestComment"] = max(comments, key=lambda c: c.get("createdAt", ""), default=None)
 
         return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # 검색 알코올 (레시피용; 단 하나만 남김)
 @app.route("/search/alcohol", methods=["GET"], endpoint="unique_search_alcohol")
@@ -341,12 +329,256 @@ def detail(doc_id):
     index_name, _ = get_index_and_mapping(type_filter)
     if not index_name:
         return jsonify({"error": "Invalid type filter"}), 400
+
     try:
-        # ES 에서 해당 ID 문서 검색 (주의: 변수 이름 수정)
+        # ES에서 해당 ID 문서 검색
         response = es.get(index=index_name, id=doc_id)
+
+        # 조회수 증가
+        es.update(
+            index=index_name,
+            id=doc_id,
+            body={"script": "ctx._source.view = (ctx._source.view ?: 0) + 1"}
+        )
+
         return jsonify(response["_source"])
     except Exception as e:
         return jsonify({"error": str(e)}), 404
+
+
+# Flask 엔드포인트: 주어진 id들이 인덱스에 존재하는지 확인하고, 존재하는 id만 반환
+@app.route('/check', methods=['POST'])
+def check_ids():
+    try:
+        request_data = request.json
+        index = request_data.get('index')
+        ids = request_data.get('ids')  # 리스트로 받은 ids
+
+        index_name, _ = get_index_and_mapping(index)
+
+        if not index or not ids:
+            return jsonify({"message": "Invalid input parameters"}), 400
+
+        valid_ids = [
+            doc_id for doc_id in ids
+            if es.exists(index=index_name, id=doc_id)  # 직접 호출
+        ]
+
+        return jsonify({"valid_ids": valid_ids or []}), 200
+    except Exception as e:
+        return jsonify({"message": "Error occurred: " + str(e)}), 500
+
+
+@app.route("/batch/detail", methods=["POST"])
+def batch_detail():
+    try:
+        request_data = request.json
+        ids = request_data.get("ids", [])
+        type_filter = request_data.get("type", "")
+
+        if not ids or not type_filter:
+            return jsonify({"error": "ids 또는 type이 비어 있습니다."}), 400
+
+        if type_filter not in ["food", "cocktail"]:
+            return jsonify({"error": "잘못된 type 값입니다. (food, cocktail만 허용)"}), 400
+
+        index_name, _ = get_index_and_mapping(type_filter)
+        if not index_name:
+            return jsonify({"error": "잘못된 type 값입니다."}), 400
+
+        results = []
+        for doc_id in ids:
+            response = es.get(index=index_name, id=doc_id)
+            source = response["_source"]
+
+            # food와 cocktail에 대한 이미지 필드 선택
+            image_field = None
+            if type_filter == "food":
+                image_field = source.get("ATT_FILE_NO_MAIN", None)  # 음식의 이미지 필드
+            elif type_filter == "cocktail":
+                image_field = source.get("image", None)  # 칵테일의 이미지 필드
+            name = source.get("name", None)
+            like = source.get("like", 0)
+            results.append({"id": doc_id, "image": image_field, "name": name, "like": like})
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/popular", methods=["GET"])
+def popular_recipes():
+    type_filter = request.args.get("type", "")
+    sort_by = request.args.get("order", "like")  # 기본값: like
+    index_name, _ = get_index_and_mapping(type_filter)
+
+    if not index_name:
+        return jsonify({"error": "Invalid type filter"}), 400
+
+    if sort_by not in ["like", "view"]:
+        return jsonify({"error": "Invalid order parameter"}), 400
+
+    try:
+        response = es.search(
+            index=index_name,
+            body={
+                "size": 10,  # 상위 10개 문서 조회
+                "query": {"match_all": {}},  # 모든 문서를 검색
+                "sort": [{sort_by: {"order": "desc"}}],  # 선택된 필드 기준 내림차순 정렬
+                "_source": ["name", "like", "view"]  # 필요한 필드만 반환
+            }
+        )
+
+        # "_id"는 "_source"가 아니라 hit["_id"]로 접근
+        return jsonify([{
+            "id": hit["_id"],
+            "name": hit["_source"]["name"],
+            "like": hit["_source"]["like"],
+            "view": hit["_source"]["view"]
+        } for hit in response["hits"]["hits"]])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/search/faq', methods=['GET'])
+def search_text_board():
+    """
+    Elasticsearch에서 title 또는 content 필드에 대해 주어진 keyword로 검색하는 API 엔드포인트.
+    q 파라미터가 없으면 전체 검색.
+    페이지네이션 지원.
+    :return: 검색 결과 (JSON 형식)
+    """
+    # 요청에서 keyword 파라미터와 page, size 파라미터 가져오기
+    keyword = request.args.get('q')  # 검색할 키워드
+    page = int(request.args.get('page', 1))  # 기본 페이지는 1
+    size = int(request.args.get('size', 10))  # 기본 페이지 크기는 10
+
+    if page < 1:
+        return jsonify({"error": "Page must be greater than 0"}), 400
+
+    # Elasticsearch 쿼리 구성
+    query = {
+        "query": {
+            "multi_match": {
+                "query": keyword,  # keyword가 없으면 모든 문서 검색
+                "fields": ["title", "content"]
+            }
+        },
+        "from": (page - 1) * size,  # 페이지네이션을 위한 시작 지점
+        "size": size  # 검색 결과의 최대 수
+    }if keyword else {
+        "from": (page - 1) * size,  # 페이지네이션을 위한 시작 지점
+        "size": size  # 검색 결과의 최대 수
+    }
+
+    try:
+        # Elasticsearch에서 검색 실행
+        response = es.search(index="faq", body=query)
+
+        # 검색 결과에서 '_source' 필드에 해당하는 실제 데이터만 추출
+        hits = response["hits"]["hits"]
+        result = [{"title": hit["_source"]["title"], "content": hit["_source"]["content"], "id": hit["_id"]} for hit in hits]
+
+        # 검색 결과 반환
+        return jsonify({"results": result})
+
+    except Exception as e:
+        return jsonify({"error": f"Error occurred while searching: {str(e)}"}), 500
+
+
+@app.route('/total/page', methods=['GET'])
+def total_pages():
+    """
+    전체 검색된 문서에 대한 페이지 수를 반환하는 엔드포인트.
+    :return: 전체 페이지 수 (JSON 형식)
+    """
+    # 요청에서 keyword 파라미터 가져오기
+    keyword = request.args.get('q')  # 검색할 키워드
+    size = int(request.args.get('size', 10))  # 기본 페이지 크기는 10
+
+    # Elasticsearch 쿼리 구성 (결과는 가져오지 않음)
+    query = {
+        "query": {
+            "multi_match": {
+                "query": keyword,  # keyword가 없으면 모든 문서 검색
+                "fields": ["title", "content"]
+            }
+        },
+        "size": 1000  # 검색 결과의 최대 수
+    } if keyword else {
+        "size": 1000  # 검색 결과의 최대 수
+    }
+
+    try:
+        # Elasticsearch에서 검색 실행
+        response = es.search(index="faq", body=query)
+
+        # 총 검색된 문서 수
+        total_hits = response["hits"]["total"]["value"]
+
+        # 총 페이지 수 계산
+        total_page = math.ceil(total_hits / size)
+
+        # 전체 페이지 수 반환
+        return jsonify({"total_page": total_page})
+
+    except Exception as e:
+        return jsonify({"error": f"Error occurred while calculating total pages: {str(e)}"})
+
+@app.route('/faq/<faq_id>', methods=['DELETE'])
+def delete_faq(faq_id):
+    """
+    Elasticsearch에서 주어진 ID에 해당하는 FAQ 항목을 삭제하는 API.
+    :param faq_id: 삭제할 FAQ의 ID
+    :return: 삭제 성공 여부 (boolean)
+    """
+    try:
+        # Elasticsearch에서 FAQ 항목 삭제
+        response = es.delete(index="faq", id=faq_id)
+
+        # 삭제된 결과가 없으면 실패 처리
+        if response.get('result') != 'deleted':
+            return jsonify({"success": False}), 404
+
+        # 삭제 성공
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        return jsonify({"success": False}), 500
+
+@app.route('/faq/<faq_id>', methods=['PUT'])
+def update_faq(faq_id):
+    """
+    Elasticsearch에서 주어진 ID에 해당하는 FAQ 항목을 수정하는 API.
+    :param faq_id: 수정할 FAQ의 ID
+    :return: 수정 성공 여부 (boolean)
+    """
+    try:
+        # 요청에서 수정할 데이터 가져오기
+        data = request.get_json()
+        title = data.get("title")
+        content = data.get("content")
+
+        if not title or not content:
+            return jsonify({"success": False}), 400
+
+        # Elasticsearch에서 FAQ 항목 업데이트
+        doc = {
+            "doc": {
+                "text_title": title,
+                "text_content": content
+            }
+        }
+        response = es.update(index="faq", id=faq_id, body=doc)
+
+        # 업데이트된 결과 확인
+        if response.get('result') != 'updated':
+            return jsonify({"success": False}), 404
+
+        # 수정 성공
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        return jsonify({"success": False}), 500
 
 
 # ================================================================
@@ -839,7 +1071,6 @@ def restore_forum_comment(comment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/forum/comment/<int:comment_id>/like", methods=["POST"])
 def toggle_forum_comment_like(comment_id):
     try:
@@ -882,7 +1113,6 @@ def toggle_forum_comment_like(comment_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # Forum 댓글 신고 처리
 @app.route("/forum/comment/<int:comment_id>/report", methods=["POST"])
@@ -1061,8 +1291,6 @@ def increment_view_count(doc_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-#
-
 # (예시) /forum/searchByMember - 특정 유저가 작성한 게시글만 조회# 게시글/댓글 조회
 # # @app.route("/forum/my", methods=["GET"])
 # # def get_my_content():
@@ -1165,7 +1393,6 @@ def search_posts_by_member():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 # (예시) /forum/comments/searchByMember - 특정 유저가 작성한 댓글만 조회
 @app.route("/forum/comments/searchByMember", methods=["GET"])
 def search_comments_by_member():
@@ -1206,8 +1433,6 @@ def search_comments_by_member():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
 # 모델 학습 요청 API
 @app.route("/model/train", methods=["POST"])
 def train_machine_learning():
@@ -1242,11 +1467,13 @@ def train_machine_learning():
             minor_weight = weight_configs.get("weight_minor", 0.2)
             abv_weight = weight_configs.get("weight_abv", None)
 
-        task = queue.enqueue(train_weight, index_type, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca,
-                             name_weight, ing_weight, major_weight, minor_weight, abv_weight, 10, 0.005)
+        input_data = get_id_list(df, index_type)
+
+        task = queue.enqueue(train_weight, index_type, input_data, df, name_vec, ing_vec, major_vec, minor_vec, abv_sca,
+                             name_weight, ing_weight, major_weight, minor_weight, abv_weight, 10, 0.005, job_timeout='30m')
 
         # 작업 ID를 반환하여 클라이언트가 작업 상태를 추적할 수 있도록 합니다.
-        return jsonify({"message": "모델 학습이 시작되었습니다.", "task_id": task.get_id()}), 202
+        return jsonify({"message": "모델 학습이 시작되었습니다.", "task_id": task.get_id(), "df": df.to_json(orient='records'), "input_data": input_data.to_json(orient='records')}), 202
 
     except Exception as e:
         print(e)
@@ -1276,8 +1503,6 @@ def task_status(task_id):
         return jsonify({"status": "실패", "message": error_message})
 
     return jsonify({"status": "알 수 없음"})
-
-
 
 @app.route("/model/predict", methods=["POST"])
 def predict_machine_learning():
@@ -1382,7 +1607,6 @@ def get_user_recipes():
         app.logger.error(f"Error in get_user_recipes: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/update/one", methods=["POST"])
 def update_one():
     try:
@@ -1412,10 +1636,48 @@ def update_one():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# if __name__ == "__main__":
-#     app.run(debug=True)
 
+@app.route("/bot", methods=["GET"])
+def chat_bot():
+    try:
+        # 클라이언트로부터 전달된 메시지와 size 파라미터 받기
+        message = request.args.get("message", "")
+        if message:
+            message = unquote(message)  # URL 디코딩
+        size = int(request.args.get("size", 5))  # 기본값 5
+
+        if not message:
+            return jsonify({"message": "message is required"}), 400
+
+        # Elasticsearch 쿼리 작성
+        query = {
+            "query": {
+                "multi_match": {
+                    "query": message,
+                    "fields": ["title^3", "content"],
+                    "operator": "or",
+                    "fuzziness": "AUTO"
+                }
+            },
+            "size": size
+        }
+
+        # Elasticsearch에서 검색 수행
+        response = es.search(index="faq", body=query)
+
+        # 결과 처리
+        result = {
+            "query": message,
+            "results": [{
+                "title": hit['_source']['title'],
+                "content": hit['_source']['content']
+            } for hit in response['hits']['hits']]
+        }
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 if __name__ == '__main__':
-    # 수동으로 Redis 연결 확인한 후 Flask 앱 실행
     app.run(host='0.0.0.0', port=5000)

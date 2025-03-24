@@ -1,15 +1,14 @@
-
 package com.kh.back.controller;
 
-import com.kh.back.service.PurchaseService;
+import com.kh.back.dto.recipe.res.RecommendResDto;
 import com.kh.back.service.RecommendService;
-import com.kh.back.service.member.CalendarService;
-import com.kh.back.service.python.ElasticService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @CrossOrigin(origins = "http://localhost:3000")
@@ -19,7 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecommendController {
 	private final RecommendService recommendService;
 	
+	@GetMapping("/public/{type}")
+	public ResponseEntity<List<RecommendResDto>> getTop3Recommend(@PathVariable String type) {
+		return ResponseEntity.ok(recommendService.recommend(null, type));
+	}
+	
+	@GetMapping("/{type}")
+	public ResponseEntity<List<RecommendResDto>> getTop3Recommend(@PathVariable String type, Authentication authentication) {
+		return ResponseEntity.ok(recommendService.recommend(authentication, type));
+	}
+	
 	
 	
 }
-

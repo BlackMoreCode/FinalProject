@@ -4,7 +4,6 @@ import ReduxApi from "../../api/ReduxApi";
 import {setGuest, setUserInfo} from "../../context/redux/UserReducer";
 import {handleLogout} from "../../context/redux/CommonAction";
 import {AppDispatch, RootState} from "../../context/Store";
-import ChatModal from "./chat/ChatModal";
 import {Background, Header, Mobile, PC} from "./style/HeaderStyle";
 import { Outlet } from "react-router-dom";
 import React from "react";
@@ -12,6 +11,8 @@ import PCHeader from "./PCHeader";
 import ModalComponents from "./ModalComponents";
 import MobileHeader from "./MobileHeader";
 import MainContainer from "../../component/MainContainer";
+import ChatStore from "../../context/ChatStore";
+import ChatModal from "../chat/ChatModal";
 
 
 const Layout = () => {
@@ -50,11 +51,10 @@ const Layout = () => {
           <MobileHeader/>
         </Mobile>
       </Header>
-      <ChatModal/>
       <MainContainer>
         <Outlet/>
       </MainContainer>
-      {/*<Footer/>*/}
+      <ChatModal/>
       <ModalComponents/>
     </Background>
   )

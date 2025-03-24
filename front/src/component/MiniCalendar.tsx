@@ -9,6 +9,7 @@ import React from "react";
 import { Box, Typography, IconButton, Badge } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import zIndex from "@mui/material/styles/zIndex";
 
 interface MiniCalendarProps {
   memberId: number | null;
@@ -80,19 +81,19 @@ const MiniCalendar = ({ memberId }: MiniCalendarProps) => {
       const hasEvent = eventCount > 0; // 이벤트가 있는지 확인
 
       days.push(
-        <Badge key={formattedDateStr} color="error" badgeContent={hasEvent ? eventCount : null}>
+        <Badge key={formattedDateStr} color="error" badgeContent={hasEvent ? eventCount : null} sx={{zIndex: 0}}>
           <IconButton
             sx={{
               width: 48,
               height: 48,
               borderRadius: "50%",
               backgroundColor: isToday
-                ? "#006747"
+                ? "#9f8473"
                 : hasEvent
-                  ? "#8b5e3c"
+                  ? "#F5F5DC"
                   : "transparent",
               color: isToday ? "white" : "#333",
-              border: isToday || hasEvent ? "none" : "1px solid #d0d0d0",
+              border: "1px solid #d0d0d0",
               boxShadow: isToday
                 ? "0 4px 10px rgba(0, 103, 71, 0.4)"
                 : hasEvent
@@ -102,9 +103,9 @@ const MiniCalendar = ({ memberId }: MiniCalendarProps) => {
               transition: "all 0.2s ease-in-out",
               "&:hover": {
                 backgroundColor: isToday
-                  ? "#00493E"
+                  ? "#8e735f"
                   : hasEvent
-                    ? "#704c2a"
+                    ? "#E0D8A1"
                     : "#f0f0f0",
                 boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)",
               },

@@ -16,13 +16,17 @@ const AdminApi = {
 	editMember(member : AdminMemberReqDto) {
 		return axiosInstance.post<AdminMemberResDto>(baseUrl + `/admin/member/edit`, member)
 	},
-	uploadJson: (formData : FormData, type : "cocktail" | "food" | "forum") => {
+	uploadJson: (formData : FormData, type : "cocktail" | "food" | "forum" | "faq") => {
 		return axiosInstance.post<boolean>(baseUrl + `/admin/upload/${type}`, formData,{
 			headers: {
 				"Content-Type": "multipart/form-data",
 			},
 			withCredentials: true, // 인증 필요 시
 		})
+	},
+	getChart: ( type: "cocktail" | "food", order: "like" | "view")=> {
+		return axiosInstance.get(baseUrl + `/admin/chart/${type}/${order}`);
 	}
+
 }
 export default AdminApi;

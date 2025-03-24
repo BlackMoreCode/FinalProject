@@ -1,36 +1,89 @@
 {
   "settings": {
+    "analysis": {
+      "tokenizer": {
+        "nori_tokenizer": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed",
+          "discard_punctuation": "true"
+        }
+      },
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    },
     "number_of_shards": 1,
     "number_of_replicas": 0
   },
   "mappings": {
     "properties": {
-      "title": { "type": "text", "analyzer": "standard" },
-      "contentJSON": { "type": "text" },
-      "viewsCount": { "type": "integer" },
-      "likesCount": { "type": "integer" },
-      "likedBy": { "type": "keyword" },
-      "reportCount": { "type": "integer" },
+      "title": {
+        "type": "text",
+        "analyzer": "nori_analyzer"
+      },
+      "contentJSON": {
+        "type": "object"
+      },
+      "viewsCount": {
+        "type": "integer"
+      },
+      "likesCount": {
+        "type": "integer"
+      },
+      "likedBy": {
+        "type": "keyword"
+      },
+      "reportCount": {
+        "type": "integer"
+      },
       "comments": {
         "type": "nested",
         "properties": {
-          "id": { "type": "integer" },
-          "content": { "type": "text" },
+          "id": {
+            "type": "integer"
+          },
+          "content": {
+            "type": "text",
+            "analyzer": "nori_analyzer"
+          },
           "member": {
             "properties": {
-              "memberId": { "type": "long" },
-              "nickName": { "type": "text" }
+              "memberId": {
+                "type": "long"
+              },
+              "nickName": {
+                "type": "text",
+                "analyzer": "nori_analyzer"
+              }
             }
           },
-          "createdAt": { "type": "date" },
-          "updatedAt": { "type": "date" }
+          "createdAt": {
+            "type": "date"
+          },
+          "updatedAt": {
+            "type": "date"
+          }
         }
       },
-      "createdAt": { "type": "date" },
-      "updatedAt": { "type": "date" },
-      "memberId": { "type": "long" },
-      "authorName": { "type": "text" },
-      "category": { "type": "keyword" }
+      "createdAt": {
+        "type": "date"
+      },
+      "updatedAt": {
+        "type": "date"
+      },
+      "memberId": {
+        "type": "long"
+      },
+      "authorName": {
+        "type": "text",
+        "analyzer": "nori_analyzer"
+      },
+      "category": {
+        "type": "keyword"
+      }
     }
   }
 }

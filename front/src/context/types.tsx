@@ -55,11 +55,12 @@ export interface ModalState {
     open: boolean;
     message: string;
     initial: {
+      title: string;
       content: string;
       id: string;
     };
     restriction?: string;
-    onSubmit: ((data: { content: string; id: string }) => void) | null;
+    onSubmit: ((data: { title: string, content: string; id: string }) => void) | null;
     onCancel: (() => void) | null;
   };
   cursorModal: {

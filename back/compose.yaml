@@ -19,7 +19,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - redis-network
+      - backend
     mem_limit: 512m
 
   flask:
@@ -35,26 +35,13 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch
       - REDIS_URL=redis://redis:6379/0
     networks:
-      - redis-network
       - backend
-#    volumes:
-#      - ../flask:/app
-
-  rq-worker:
-    build:
-      context: ../flask  # Flask와 동일한 이미지 사용
-    container_name: rq_worker
-    depends_on:
-      - redis
-      - flask
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-    command: rq worker --worker-class rq.SimpleWorker --max-idle-time 3000
-    networks:
-      - redis-network
+    command: ["supervisord", "-c", "/etc/supervisord.conf"]  # supervisord로 Flask와 RQ 워커 동시에 실행
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.12
+    build:
+      context: .
+      dockerfile: Dockerfile.elasticsearch
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -69,18 +56,17 @@ services:
       - "9200:9200"
     networks:
       - backend
-    mem_limit: 3g
+    mem_limit: 2g
     ulimits:
       memlock:
         soft: -1
         hard: -1
 
+
 volumes:
   mysql-data:
 
 networks:
-  redis-network:
-    driver: bridge
   backend:
     driver: bridge
   mysql-network:

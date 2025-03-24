@@ -173,7 +173,9 @@ public class CalendarService {
 	public List<TopRatedResDto> getTop3RecipeByIndex(String recipe){
 		try {
 			PageRequest pageRequest = PageRequest.of(0, 3);
+			List<Calendar> calendarList = calendarRepository.findAll();
 			List<TopRatedRepoDto> rst = calendarRepository.findTopRecipeRanking(Recipe.valueOf(recipe), pageRequest).getContent();
+			log.warn("결과 : {} - 전체 : {}", rst, calendarList);
 			List<TopRatedResDto> topList = new ArrayList<>();
 			for (int i = 0; i < rst.size(); i++) {
 				TopRatedResDto topRatedResDto = new TopRatedResDto();

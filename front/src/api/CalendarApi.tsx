@@ -2,7 +2,7 @@ import {
   CalendarCreateReqDto,
   CalendarReqDto,
   CalendarResDto,
-  CalendarUpdateReqDto,
+  CalendarUpdateReqDto, RecommendResDto,
   TopRatedResDto
 } from "./dto/CalendarDto";
 import axios from "axios";
@@ -28,6 +28,12 @@ const CalendarApi ={
   },
   getTopRecipes: async (type : string) => {
     return await axios.get<TopRatedResDto>(`${Commons.BASE_URL}/cal/public/top/${type}`)
+  },
+  getPublicRecommend: async (type: string) => {
+    return await axios.get<RecommendResDto[]>(`${Commons.BASE_URL}/recommend/public/${type}`)
+  },
+  getRecommend: async (type: string) => {
+    return await axiosInstance.get<RecommendResDto[]>(`${Commons.BASE_URL}/recommend/${type}`)
   }
 }
 

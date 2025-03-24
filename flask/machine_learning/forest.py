@@ -181,28 +181,27 @@ def convert_name_to_id(df, name_lists):
     # name을 id로 변환하는 딕셔너리 생성
     name_to_id = pd.Series(df["id"].values, index=df["name"]).to_dict()
     # name_lists도 데이터프레임이라면 각 행에 대해 변환을 적용
-    id_lists = name_lists.applymap(lambda name: name_to_id.get(name, None))
+    id_lists = name_lists.map(lambda name: name_to_id.get(name, None))
     return id_lists
 
-def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer,
-                 abv_scaler=None,
-                 weight_init_name=0.1, weight_init_ingredients=0.6, weight_init_major=0.3, weight_init_minor=0.1,
-                 weight_init_abv=0.5,
-                 epochs=10, lr=0.001):
-    """
-    릿지 회귀를 사용하여 최적의 가중치를 학습하는 함수
-    """
+def get_id_list(df, index_name):
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    if index == "cocktail":
+    if index_name == "cocktail":
         test_path = os.path.join(base_dir, "cocktail_test.json")
-    elif index == "food":
+    elif index_name == "food":
         test_path = os.path.join(base_dir, "food_test.json")
     else:
         return None, None, None, None
     data = pd.read_json(test_path)
 
     input_data = convert_name_to_id(df, data)
+    return input_data
 
+def train_weight(index, input_data, df, name_vectorizer, ingredient_vectorizer, major_vectorizer, minor_vectorizer,
+                 abv_scaler=None,
+                 weight_init_name=0.1, weight_init_ingredients=0.6, weight_init_major=0.3, weight_init_minor=0.1,
+                 weight_init_abv=0.5,
+                 epochs=10, lr=0.001):
     # 초기 가중치 설정
     weight_name = weight_init_name
     weight_ingredients = weight_init_ingredients
@@ -218,6 +217,8 @@ def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vector
             liked_items = row.dropna().tolist()
             if len(liked_items) <= 1:
                 continue
+            if not liked_items:  # 만약 liked_items가 빈 리스트라면
+                continue
 
             idx = random.randint(0, len(liked_items) - 1)
             y = liked_items[idx]
@@ -227,7 +228,6 @@ def train_weight(index, df, name_vectorizer, ingredient_vectorizer, major_vector
                                         major_vectorizer, minor_vectorizer, abv_scaler,
                                         weight_name, weight_ingredients,
                                         weight_major, weight_minor, weight_abv)
-            print(recommendations)
 
             top_3_ids = [rec[0] for rec in recommendations[:3]]
             predicted_similarity = recommendations[0][1]  # 1번째 요소가 점수
@@ -427,7 +427,7 @@ def recommend_recipe(user_likes, df, name_vectorizer, ingredient_vectorizer, maj
     recommendation_list = []
     for i in range(top_n):
         recommendation = recommendations[i]
-        recommendation_list.append(recommendation[:2])
+        recommendation_list.append(recommendation[0])
     return recommendation_list  # 상위 N개 추천
 
 

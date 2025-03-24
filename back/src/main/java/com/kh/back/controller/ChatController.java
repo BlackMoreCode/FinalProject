@@ -1,7 +1,7 @@
 package com.kh.back.controller;
 
 
-import com.kh.back.dto.chat.request.ChatReqDto;
+import com.kh.back.dto.chat.request.ChatDto;
 import com.kh.back.dto.chat.request.ChatRoomReqDto;
 import com.kh.back.dto.chat.res.ChatRoomResDto;
 import com.kh.back.service.ChatService;
@@ -9,9 +9,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -23,38 +25,33 @@ public class ChatController {
 
     //채팅방 생성
     @PostMapping("/new")
-    public ResponseEntity<String> createRoom(@RequestBody ChatRoomReqDto chatRoomReqDto) {
+    public ResponseEntity<String> createRoom(@RequestBody ChatRoomReqDto chatRoomReqDto, Authentication auth) {
         if (chatRoomReqDto.getName().length() > 20) {
             return ResponseEntity.badRequest().body("채팅방 이름은 20자 이하로 입력해주세요.");
         }
         if (chatRoomReqDto.getPersonCnt() > 30) {
             return ResponseEntity.badRequest().body("참여 가능 인원은 최대 30명입니다.");
         }
-        ChatRoomResDto room = chatService.createRoom(chatRoomReqDto);
+        ChatRoomResDto room = chatService.createRoom(chatRoomReqDto, auth);
         return ResponseEntity.ok(room.getRoomId());
     }
 
     //채팅방 리스트
     @GetMapping("/roomList")
     public ResponseEntity<List<ChatRoomResDto>> findByRoomList() {
-//        return ResponseEntity.ok(chatService.findRoomList());
         List<ChatRoomResDto> rooms = chatService.findRoomList();
         return ResponseEntity.ok(rooms);
     }
 
     // 참여중인 채팅방 리스트
-    @GetMapping("/myRooms/{memberId}")
-    public ResponseEntity<List<ChatRoomResDto>> getChatRoomsByMemberId(@PathVariable Long memberId) {
-        log.info("Requested memberId : {}", memberId);
-        // Service 호출하여 참여 중인 채팅방 리스트 반환
-        List<ChatRoomResDto> chatRooms = chatService.getChatRoomsByMemberId(memberId);
-
+    @GetMapping("/myRooms")
+    public ResponseEntity<List<ChatRoomResDto>> getChatRoomsByMemberId(Authentication auth) {
+        List<ChatRoomResDto> chatRooms = chatService.getChatRoomsByMemberId(auth);
         return ResponseEntity.ok(chatRooms);
     }
 
     @GetMapping("/rooms")
     public ResponseEntity<List<ChatRoomResDto>> findByRooms() {
-//        return ResponseEntity.ok(chatService.findAllRoom());
         List<ChatRoomResDto> rooms = chatService.findAllRoom();
         return ResponseEntity.ok(rooms);
     }
@@ -92,14 +89,14 @@ public class ChatController {
 
     // 메시지 저장하기
     @PostMapping("/saveMessage")
-    public ResponseEntity<ChatReqDto> saveMessage(@RequestBody ChatReqDto chatMsgDto) {
-        chatService.saveMsg(chatMsgDto.getRoomId(), chatMsgDto.getProfile(),chatMsgDto.getNickName(), chatMsgDto.getMsg());
+    public ResponseEntity<ChatDto> saveMessage(@RequestBody ChatDto chatMsgDto) {
+        chatService.saveMsg(chatMsgDto.getRoomId(), chatMsgDto.getMemberId(), chatMsgDto.getMsg());
         return ResponseEntity.ok(chatMsgDto);
     }
 
     // 채팅 내역 리스트
     @GetMapping("/message/{roomId}")
-    public ResponseEntity<List<ChatReqDto>> findAll(@PathVariable String roomId) {
+    public ResponseEntity<List<ChatDto>> findAll(@PathVariable String roomId) {
         return ResponseEntity.ok(chatService.findAllChatting(roomId));
     }
 
@@ -108,5 +105,10 @@ public class ChatController {
     public ResponseEntity<Boolean> removeRoom(@PathVariable String roomId) {
         boolean isTrue = chatService.removeRoom(roomId);
         return ResponseEntity.ok(isTrue);
+    }
+    
+    @GetMapping("/public/bot/{message}")
+    public ResponseEntity<List<Map<String, String>>> getBotAns(@PathVariable String message) {
+        return ResponseEntity.ok(chatService.getBotResponse(message));
     }
 }

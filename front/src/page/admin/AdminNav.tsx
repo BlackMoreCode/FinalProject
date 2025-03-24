@@ -39,7 +39,7 @@ const AdminNavContainer = styled(Paper)`
         flex-direction: row;
         flex-wrap: wrap; /* 버튼들이 두 줄로 나뉘도록 설정 */
         gap: 20px; /* 버튼 간 간격을 좀 더 넓게 설정 */
-        justify-content: space-between;
+        height: auto;
     }
 `;
 
@@ -73,7 +73,7 @@ interface nav {
 const AdminNav = () => {
 	const navList : nav[] = [
 		{ name: "메인 페이지", id: "main", link: "/admin" },
-		{ name: "게시글 관리 페이지", id: "board", link: "/admin/board/default" },
+		{ name: "차트 페이지", id: "chart", link: "/admin/chart" },
 		{ name: "회원 관리 페이지", id: "member", link: "/admin/member" },
 	];
 	const dispatch = useDispatch<AppDispatch>();

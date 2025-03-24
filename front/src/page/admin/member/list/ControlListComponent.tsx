@@ -1,13 +1,14 @@
 import React from 'react';
 import styled from "styled-components";
 import {useNavigate} from "react-router-dom";
-import {AdminMemberListResDto} from "../../../../api/dto/AdminDto"; // styled-components로 스타일링
+import {AdminMemberListResDto} from "../../../../api/dto/AdminDto";
+import {CgProfile} from "react-icons/cg"; // styled-components로 스타일링
 
 interface TextListProps {
 	list : AdminMemberListResDto[]
 }
 
-const TextListComponent = ({ list  } : TextListProps) => {
+const ControlListComponent = ({ list  } : TextListProps) => {
 	const navigate = useNavigate();
 
 	const onClickNavigator = (e :string | number) => {
@@ -19,7 +20,9 @@ const TextListComponent = ({ list  } : TextListProps) => {
 			{list && list.length > 0 ? (
 				list.map((member) => (
 					<Item onClick={ () => onClickNavigator(member.id)} key={member.id}>
-						<ItemImage src={member.memberImg || "/default-profile.png"} alt="프로필 이미지" />
+						{member.memberImg ? <ItemImage src={member.memberImg} alt="프로필 이미지"/>
+							:
+							<CgProfile size={40} color="#9f8473"/>}
 						<ItemDetail>{member.nickname}</ItemDetail>
 						<ItemDetail>{member.authority}</ItemDetail>
 					</Item>
@@ -80,4 +83,4 @@ const NoData = styled.div`
 	padding: 20px;
 `;
 
-export default TextListComponent;
+export default ControlListComponent;

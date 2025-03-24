@@ -45,6 +45,7 @@ public class ForumEsService {
             }
 
             URI uri = new URI(flaskBaseUrl + "/forum/post");
+            log.warn(requestDto.toString());
             String jsonBody = objectMapper.writeValueAsString(requestDto);
 
             HttpHeaders headers = new HttpHeaders();
@@ -53,7 +54,7 @@ public class ForumEsService {
 
             ResponseEntity<String> response = restTemplate.postForEntity(uri, entity, String.class);
             log.info("createPost 응답: {}", response);
-
+            log.warn(response.toString());
             return objectMapper.readValue(response.getBody(), ForumPostResponseDto.class);
         } catch (Exception e) {
             log.error("게시글 생성 중 오류: {}", e.getMessage());

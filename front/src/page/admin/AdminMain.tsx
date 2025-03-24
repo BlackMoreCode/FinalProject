@@ -6,7 +6,7 @@ import styled from "styled-components";
 
 
 const AdminMain = () => {
-	const typeList : ("cocktail"| "food"| "forum")[] = ["cocktail", "food", "forum"]
+	const typeList : ("cocktail"| "food"| "forum" | "faq")[] = ["cocktail", "food", "forum", "faq"]
 	const context = useContext(AdminContext);
 	const setPage = context?.setPage;
 	useEffect(() => {

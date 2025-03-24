@@ -66,7 +66,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
 				.antMatchers("/forum/**", "/api/forums/**").permitAll()
 				.antMatchers(
 						"/", "/static/**", "/auth/**", "/ws/**", "/oauth2/**",
-						"/api/v1/auth/**", "/api/v1/payments/**", "/chat/**", "/flask/**", "/review/**", "/comments/**",
+						"/api/v1/auth/**", "/api/v1/payments/**", "/flask/**", "/review/**", "/comments/**",
 						"/**/public/**", "/pay/**", "/test/**", "/search", "/api/foodrecipes/**", "/api/recipes/**",
 						"/favicon.ico", "/manifest.json", "/logo192.png", "/logo512.png"
 				).permitAll()

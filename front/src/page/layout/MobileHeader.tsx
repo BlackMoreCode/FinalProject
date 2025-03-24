@@ -70,7 +70,14 @@ const MobileHeader = () => {
   return (
     <Navbar>
       <NavContainer>
-        <div>Logo</div>
+        <TopSection>
+          <img
+            src="/Logo317_2-removebg-preview.png"
+            alt="Logo"
+            onClick={() => navigator("/main")}
+            style={{ cursor: "pointer" }}
+          />
+        </TopSection>
         <TopSection>
           <HamburgerIcon onClick={() => setDropdown(!dropdown)}>
             <HiMenu />

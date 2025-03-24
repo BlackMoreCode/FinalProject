@@ -18,13 +18,6 @@ import AddCockTailDetail from "./page/RecipeUpload/AddCockTailDetail";
 import RecipeTypeSelect from "./page/food/RecipeTypeSelect";
 import EditRecipeDetail from "./page/RecipeUpload/EditRecipeDetail";
 import EditCockTailRecipe from "./page/RecipeUpload/EditCocktailRecipe";
-// import RecipeUploader from "./page/AddRecipeDetail";
-
-// import Forum from "./page/forum/Forum";
-
-// import PostDetail from ya"./page/forum/PostDetail/PostDetail";
-// import CreatePost from "./page/forum/CreatePost";
-// import ForumPosts from "./page/forum/ForumPosts";
 import Forum from "./page/forum/Forum";
 import PostDetail from "./page/forum/PostDetail/PostDetail";
 import CreatePost from "./page/forum/CreatePost";
@@ -34,6 +27,10 @@ import AdminMain from "./page/admin/AdminMain";
 import MemberControlMain from "./page/admin/member/list/MemberControlMain";
 import AdminStore from "./context/AdminStore";
 import MemberItemMain from "./page/admin/member/item/MemberItemMain";
+import ChartMain from "./page/admin/chart/ChartMain";
+import PostListMain from "./page/faq/list/PostListMain";
+import PostStore from "./context/PostStore";
+import ChatStore from "./context/ChatStore";
 
 function App() {
   return (
@@ -42,7 +39,7 @@ function App() {
       <GlobalStyle />
       <Router>
         <Routes>
-          <Route path="/" element={<Layout/>}>
+          <Route path="/" element={<ChatStore><Layout/></ChatStore>}>
             <Route path="main" element={<MainPage />} />
             {/*프로필 페이지*/}
             <Route path="profile/:id?" element={<ProfilePage />} />
@@ -80,12 +77,14 @@ function App() {
             <Route path="foodrecipe/upload" element={<AddRecipeDetail />} />
 
             <Route path="cocktailrecipe/upload" element={< AddCockTailDetail/>} />
+            <Route path="faq/:search?" element={<PostStore><PostListMain/></PostStore>}/>
 
             {/*관리자 페이지*/}
             <Route path="admin" element={<AdminStore><AdminNav/></AdminStore>}>
               <Route path="" element={<AdminMain/>}/>
               <Route path="member/:search?" element={<MemberControlMain/>}/>
               <Route path="member/detail/:id" element={<MemberItemMain/>}/>
+              <Route path="chart" element={<ChartMain/>}/>
             </Route>
           </Route>
           {/* 결제 페이지 */}

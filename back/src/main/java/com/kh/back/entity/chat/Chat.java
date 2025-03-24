@@ -2,8 +2,7 @@ package com.kh.back.entity.chat;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.kh.back.entity.member.Member;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -11,28 +10,20 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "chat")
 public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "chat_id")
-    private Long chatId;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
-
-    // 전송자
-    @Column(name = "sender")
-    private String sender;
-
-    @Column(name = "profile")
-    private String profile;
-
-    // 전송자 닉네임
-    @Column(name = "nickName")
-    private String nickName;
-
+    
     // 전송 내용
     @Column(name = "msg")
     private String msg;

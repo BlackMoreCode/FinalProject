@@ -20,14 +20,14 @@ const PCHeader = () => {
   const location = useLocation();
 
   const menuList = [
-    { path: "/main", name: "Main" },
-    { path: "/forum", name: "Forum" },
+    { path: "/forum", name: "Forum"},
+    { path: "/faq", name: "FAQ"}
   ];
 
   const recipeList = [
     { name: "cocktail", fn: () => navigate("/recipe/cocktail") },
     { name: "food", fn: () => navigate("/recipe/food") },
-    { name: "Add a recipe", fn: () => navigate("/recipe/typeselect") },
+    { name: "Add a cocktail", fn: () => navigate("/recipe/typeselect") },
   ];
 
   // 로고 클릭 시 /main으로 이동
@@ -40,7 +40,7 @@ const PCHeader = () => {
       <NavContainer>
         <TopSection>
           <img
-            src="/Logo317_2.png"
+            src="/Logo317-removebg-preview.png"
             alt="Logo"
             onClick={handleLogoClick}
             style={{ cursor: "pointer" }}
@@ -48,11 +48,6 @@ const PCHeader = () => {
         </TopSection>
         <BottomSection>
           <NavLinks>
-            {menuList.map(({ path, name }) => (
-              <NavLink key={path} to={path} end>
-                {name}
-              </NavLink>
-            ))}
             <DropdownContainer>
               <DropDownButton
                 className={
@@ -70,6 +65,11 @@ const PCHeader = () => {
                 list={recipeList}
               />
             </DropdownContainer>
+            {menuList.map(({ path, name }) => (
+              <NavLink key={path} to={path} end>
+                {name}
+              </NavLink>
+            ))}
           </NavLinks>
         </BottomSection>
         <TopSection>

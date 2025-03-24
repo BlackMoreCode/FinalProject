@@ -1,7 +1,8 @@
 package com.kh.back.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kh.back.dto.chat.request.ChatReqDto;
+import com.kh.back.constant.MsgType;
+import com.kh.back.dto.chat.request.ChatDto;
 import com.kh.back.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,69 +25,36 @@ public class WebSocketHandler extends TextWebSocketHandler {
 	private final Map<WebSocketSession, String> sessionRoomIdMap = new ConcurrentHashMap<>();
 	@Override
 	//클라이언트가 서버로 연결을 시도할 때 호출
-	protected void handleTextMessage(WebSocketSession session, TextMessage msg) throws Exception {
+	protected void handleTextMessage(WebSocketSession session, TextMessage msg) {
 		try {
 			String payload = msg.getPayload();
 			log.warn("payload : {}", payload);
 			// JSON 문자열을 ChatMessageDto 변환 작업
-			ChatReqDto chatMsg = objectMapper.readValue(payload, ChatReqDto.class);
+			ChatDto chatMsg = objectMapper.readValue(payload, ChatDto.class);
 			String roomId = chatMsg.getRoomId();
 
-			/*ChatRoomResDto chatRoom = chatService.findRoomById(roomId);
-			if (chatRoom != null) {
-				log.warn("session : {}", session);
-				log.info("채팅룸의 getRegDate() : {}", chatRoom.getRegDate());
-				sessionRoomIdMap.put(session, roomId);
-				log.info("채팅룸 세션 확인해야함 : {}", sessionRoomIdMap);
-
-				if (chatMsg.getType() == ChatMsgDto.MsgType.ENTER) {
-					chatRoom.handlerActions(session, chatMsg, chatService);
-					log.info("입장 메시지 전송");
-					roomMembersMap.computeIfAbsent(roomId, k -> new HashSet<>()).add(chatMsg.getSender());
-				} else if (chatMsg.getType() == ChatMsgDto.MsgType.TALK) {
-					chatRoom.handlerActions(session, chatMsg, chatService);
-				} else if (chatMsg.getType() == ChatMsgDto.MsgType.CLOSE) {
-					chatRoom.handleSessionClosed(session, chatService);
-				}
-			} else {
-				log.error("채팅룸을 ID로 찾을 수 없습니다. RoomId: {}", roomId);
-			}*/
-			if (chatMsg.getType() == ChatReqDto.MsgType.ENTER) {
+			if (chatMsg.getType() == MsgType.ENTER) {
 				sessionRoomIdMap.put(session, chatMsg.getRoomId());
 				chatService.addSessionAndHandlerEnter(roomId, session, chatMsg);
-			} else if (chatMsg.getType() == ChatReqDto.MsgType.CLOSE) {
+			} else if (chatMsg.getType() == MsgType.CLOSE) {
 				chatService.removeSessionAndHandleExit(roomId, session, chatMsg);
 			} else {
 				chatService.sendMsgToAll(roomId, chatMsg);
-				chatService.saveMsg(chatMsg.getRoomId(), chatMsg.getSender(), chatMsg.getMsg(), chatMsg.getProfile());
+				chatService.saveMsg(chatMsg.getRoomId(), chatMsg.getMemberId(), chatMsg.getMsg());
 			}
 		} catch (Exception e) {
 			log.error("handleTextMessage에서 에러 발생", e);
 		}
 	}
 	@Override
-	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+	public void afterConnectionClosed( WebSocketSession session, CloseStatus status) {
 		//세션과 매핑된 채팅방 ID 가져오기
 		try {
 			log.error("연결 해제 이후 동작(채팅방 종료) : {}", session);
 			String roomId = sessionRoomIdMap.remove(session);
-
-			/*if (roomId != null) {
-				Set<String> roomMembers = roomMembersMap.get(roomId);
-				if (roomMembers != null) {
-					roomMembers.remove(session.getId());
-				}
-
-				ChatRoomResDto chatRoom = chatService.findRoomById(roomId);
-				if (chatRoom != null) {
-					chatRoom.handleSessionClosed(session, chatService);
-				} else {
-					log.warn("채팅창을 아이디로 찾을 수 없음: {}", roomId);
-				}
-			}*/
 			if (roomId != null) {
-				ChatReqDto chatMsg = new ChatReqDto();
-				chatMsg.setType(ChatReqDto.MsgType.CLOSE);
+				ChatDto chatMsg = new ChatDto();
+				chatMsg.setType(MsgType.CLOSE);
 				chatService.removeSessionAndHandleExit(roomId, session, chatMsg);
 			}
 		} catch (Exception e) {

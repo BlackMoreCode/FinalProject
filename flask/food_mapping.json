@@ -1,8 +1,26 @@
 {
+  "settings": {
+    "analysis": {
+      "tokenizer": {
+        "nori_tokenizer": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed",
+          "discard_punctuation": "true"
+        }
+      },
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    }
+  },
   "mappings": {
     "properties": {
       "name": {
-        "type": "text"
+        "type": "text",
+        "analyzer": "nori_analyzer"
       },
       "RCP_WAY2": {
         "type": "keyword"
@@ -17,7 +35,8 @@
         "type": "nested",
         "properties": {
           "ingredient": {
-            "type": "text"
+            "type": "text",
+            "analyzer": "nori_analyzer"
           },
           "amount": {
             "type": "text"
@@ -25,13 +44,15 @@
         }
       },
       "RCP_NA_TIP": {
-        "type": "text"
+        "type": "text",
+        "analyzer": "nori_analyzer"
       },
       "MANUALS": {
         "type": "nested",
         "properties": {
           "text": {
-            "type": "text"
+            "type": "text",
+            "analyzer": "nori_analyzer"
           },
           "imageUrl": {
             "type": "keyword"
@@ -39,12 +60,15 @@
         }
       },
       "like": {
-        "type" : "long"
+        "type": "long"
       },
       "report": {
-        "type" : "long"
+        "type": "long"
       },
-      "author" : {
+      "view": {
+        "type": "long"
+      },
+      "author": {
         "type": "long"
       }
     }

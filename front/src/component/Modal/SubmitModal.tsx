@@ -11,11 +11,21 @@ const SubmitModal = () => {
 	const dispatcher = useDispatch<AppDispatch>()
 	const [content, setContent] = useState<string>("");
 	const [id, setId] = useState<string>("");
+	const [title, setTitle] = useState<string>("");
 
 	useEffect(() => {
 		setContent(submit.initial.content);
 		setId(submit.initial.id);
+		setTitle(submit.initial.title);
 	}, [submit.initial]);
+
+	const onChangeTitle : Change = (e) => {
+		if (submit.restriction) {
+			dispatcher(setRejectModal({message: submit.restriction, onCancel: null }));
+			return;
+		}
+		setTitle(e.target.value);
+	}
 
 	const onChangeContent: Change = (e) => {
 		if (submit.restriction) {
@@ -31,7 +41,7 @@ const SubmitModal = () => {
 			return;
 		}
 
-		submit.onSubmit?.({ content: content, id: id }); // 댓글 제출 또는 수정 처리
+		submit.onSubmit?.({title: title, content: content, id: id }); // 댓글 제출 또는 수정 처리
 		setContent(""); // 내용 초기화
 		onCancel(); // 모달 닫기
 	};
@@ -55,6 +65,7 @@ const SubmitModal = () => {
               </span>
 						))}
 				</Typography>
+				<TextField onChange={onChangeTitle} value={title} multiline={false} />
 				<TextField onChange={onChangeContent} value={content} multiline={true} minRows={3} maxRows={8} />
 			</CustomDialogContent>
 			<DialogActions>

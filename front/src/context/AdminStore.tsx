@@ -1,5 +1,5 @@
 import React, {createContext, ReactNode, useState} from "react";
-import {AdminMemberResDto} from "../api/dto/AdminDto";
+import {AdminMemberResDto, ChartResDto} from "../api/dto/AdminDto";
 import {SelectChangeEvent} from "@mui/material";
 
 // 상태 값들의 타입 정의
@@ -16,6 +16,12 @@ interface AdminContextType {
 	setIsImg: React.Dispatch<React.SetStateAction<boolean>>;
 	isIntro: boolean;
 	setIsIntro: React.Dispatch<React.SetStateAction<boolean>>;
+	chart: ChartResDto[] | null;
+	setChart: React.Dispatch<React.SetStateAction<ChartResDto[] | null>>;
+	type: "cocktail" | "food";
+	setType: React.Dispatch<React.SetStateAction<"cocktail" | "food">>;
+	order: "like" | "view";
+	setOrder: React.Dispatch<React.SetStateAction<"like" | "view">>;
 }
 
 // AdminContext 생성
@@ -32,6 +38,9 @@ const AdminStore: React.FC<AdminStoreProps> = ({ children }) => {
 	const [member, setMember] = useState<AdminMemberResDto | null>(null);
 	const [isImg, setIsImg] = useState<boolean>(false);
 	const [isIntro, setIsIntro] = useState<boolean>(false);
+	const [chart, setChart] = useState<ChartResDto[] | null>(null);
+	const [type, setType] = useState<"cocktail" | "food">("cocktail");
+	const [order, setOrder] = useState<"like" | "view">("view");
 
 	return (
 		<AdminContext.Provider
@@ -48,6 +57,12 @@ const AdminStore: React.FC<AdminStoreProps> = ({ children }) => {
 				setIsImg,
 				isIntro,
 				setIsIntro,
+				chart,
+				setChart,
+				type,
+				setType,
+				order,
+				setOrder,
 			}}
 		>
 			{children}

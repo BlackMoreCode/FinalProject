@@ -7,10 +7,12 @@ import com.kh.back.constant.Authority;
 import com.kh.back.dto.admin.res.AdminMemberListResDto;
 import com.kh.back.dto.admin.res.AdminMemberResDto;
 import com.kh.back.dto.admin.request.AdminMemberReqDto;
+import com.kh.back.dto.admin.res.ChartResDto;
 import com.kh.back.repository.member.MemberRepository;
 import com.kh.back.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -140,7 +142,42 @@ public class AdminService {
 		}
 	}
 	
-	
+	public List<ChartResDto> getChart(Authentication auth, String type, String order) {
+		// Flask API 호출 URL에 파라미터를 추가
+		String url = String.format("http://localhost:5001/popular?type=%s&order=%s", type, order);
+		try {
+			Member member = memberService.convertAuthToEntity(auth);
+			
+			if(!member.getAuthority().equals(Authority.ROLE_ADMIN)){
+				log.error("관리자가 아닌 회원이 차트를 조회하고 있습니다. : {}", member);
+				return null;
+			}
+			
+			// Flask API에서 반환되는 JSON을 List<ChartResDto>로 자동 매핑
+			ResponseEntity<List<ChartResDto>> response = restTemplate.exchange(
+				url,
+				HttpMethod.GET,
+				null,
+				new ParameterizedTypeReference<List<ChartResDto>>() {
+				}
+			);
+			
+			// JSON 응답을 ChartResDto 객체 리스트로 변환
+			List<ChartResDto> chartResDtoList = response.getBody();
+			
+			// null 체크 후 데이터 반환
+			if (chartResDtoList != null) {
+				return chartResDtoList;
+			} else {
+				log.error("차트 데이터가 비어있습니다.");
+				return null;
+			}
+		} catch (Exception e) {
+			// 예외 처리
+			log.error("차트를 불러오는데 에러가 발생했습니다. :{}-{}-{} {}", type, order, auth, e.getMessage());
+			return null;
+		}
+	}
 	
 	private List<AdminMemberListResDto> convertMemberListToDtoList(List<Member> memberList) {
 		List<AdminMemberListResDto> list = new ArrayList<>();

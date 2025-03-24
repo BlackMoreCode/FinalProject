@@ -43,3 +43,9 @@ export interface TopRatedResDto {
   rate: number;
 }
 
+export interface RecommendResDto {
+  id : string;
+  name: string;
+  image: string;
+  likes: number;
+}

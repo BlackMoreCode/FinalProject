@@ -5,6 +5,10 @@ import RecipeApi from "../../api/RecipeApi";
 import placeholder from "./style/placeholder.jpg";
 import placeholder2 from "./style/placeholder2.png";
 import { CocktailListResDto } from "../../api/dto/CotailListResDto";
+import {RecommendResDto} from "../../api/dto/CalendarDto";
+import CalendarApi from "../../api/CalendarApi";
+import {useSelector} from "react-redux";
+import {RootState} from "../../context/Store";
 import { CocktailResDto } from "../../api/dto/RecipeDto";
 
 // 기존 CocktailListResDto에 image 필드가 없을 경우, CocktailResDto의 image 필드를 사용하도록 타입 병합
@@ -15,8 +19,15 @@ const CocktailListPage: React.FC = () => {
   const [query, setQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
+  const guest = useSelector((state : RootState) => state.user.guest);
+
+  const [recommends, setRecommends] = useState<RecommendResDto[] | null>(null);
+
+  // -------------------- 무한 스크롤 상태 --------------------
+  // 현재 페이지 번호
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  // IntersectionObserver를 저장할 ref
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
@@ -134,6 +145,7 @@ const CocktailListPage: React.FC = () => {
     navigate(`/cocktailrecipe/detail/${id}/cocktail`);
   };
 
+  // -------------------- 임시 추천 레시피 데이터 (테스트용) --------------------
   const recommendedRecipes = [
     { id: "rec_1", name: "마가리타", image: placeholder2 },
     { id: "rec_2", name: "다이키리", image: placeholder2 },
@@ -154,6 +166,30 @@ const CocktailListPage: React.FC = () => {
     "식후 칵테일",
     "핫 드링크",
   ];
+
+  useEffect(() => {
+    const fetchRecommends = async () => {
+      try {
+        if (guest) {
+          const rsp = await CalendarApi.getPublicRecommend("cocktail");
+          console.log(rsp);
+          if(rsp.status === 200) {
+            setRecommends(rsp.data);
+          }
+        } else  {
+          const rsp = await CalendarApi.getRecommend("cocktail");
+          console.log(rsp);
+          if(rsp.status === 200) {
+            setRecommends(rsp.data);
+          }
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchRecommends()
+  }, [guest]);
+
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
@@ -193,10 +229,11 @@ const CocktailListPage: React.FC = () => {
           Recipes For You
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recommendedRecipes.map((item) => (
+          {recommends && recommends.map((item) => (
             <div
               key={item.id}
-              className="border rounded overflow-hidden shadow border-kakiBrown dark:border-darkKaki"
+              className="border rounded overflow-hidden shadow border-kakiBrown dark:border-darkKaki cursor-pointer transition-transform transform hover:scale-105"
+              onClick={() => handleSelectCocktail(item.id)}
             >
               <img
                 src={item.image}

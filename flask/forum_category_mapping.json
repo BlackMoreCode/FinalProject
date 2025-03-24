@@ -1,18 +1,33 @@
 {
   "settings": {
+    "analysis": {
+      "tokenizer": {
+        "nori_tokenizer": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed",
+          "discard_punctuation": "true"
+        }
+      },
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    },
     "number_of_shards": 1,
     "number_of_replicas": 0
   },
   "mappings": {
     "properties": {
       "id": { "type": "integer" },
-      "title": { "type": "text", "analyzer": "standard" },
-      "description": { "type": "text", "analyzer": "standard" },
+      "title": { "type": "text", "analyzer": "nori_analyzer" },
+      "description": { "type": "text", "analyzer": "nori_analyzer" },
       "postCount": { "type": "integer" },
       "commentCount": { "type": "integer" },
       "updatedAt": { "type": "date" },
-      "latestPostTitle": { "type": "text" },
-      "latestPostAuthor": { "type": "text" },
+      "latestPostTitle": { "type": "text", "analyzer": "nori_analyzer" },
+      "latestPostAuthor": { "type": "text", "analyzer": "nori_analyzer" },
       "latestPostCreatedAt": { "type": "date" }
     }
   }

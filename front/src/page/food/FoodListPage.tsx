@@ -3,6 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { fetchRecipeList } from "../../api/RecipeListApi";
 import placeholder2 from "./style/placeholder2.png";
 import { FoodListResDto } from "../../api/dto/FoodListResDto";
+import {RecommendResDto} from "../../api/dto/CalendarDto";
+import CalendarApi from "../../api/CalendarApi";
+import {useSelector} from "react-redux";
+import {RootState} from "../../context/Store";
 
 /**
  * 음식 레시피 목록 페이지 (작은 카드 버전)
@@ -31,6 +35,9 @@ const FoodListPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedCookingMethod, setSelectedCookingMethod] =
     useState<string>("");
+
+  const [recommends, setRecommends] = useState<RecommendResDto[] | null>(null);
+  const guest = useSelector((state : RootState) => state.user.guest)
 
   // -------------------- 무한 스크롤 상태 --------------------
   const [page, setPage] = useState<number>(1);
@@ -169,11 +176,29 @@ const FoodListPage: React.FC = () => {
   };
 
   // -------------------- 예시 추천 레시피 데이터 (테스트용) --------------------
-  const recommendedRecipes = [
-    { id: "rec_1", name: "비빔밥", image: placeholder2 },
-    { id: "rec_2", name: "김치찌개", image: placeholder2 },
-    { id: "rec_3", name: "불고기", image: placeholder2 },
-  ];
+
+  useEffect(() => {
+    const fetchRecommends = async () => {
+      try {
+        if(guest) {
+          const rsp = await CalendarApi.getPublicRecommend("food")
+          console.log(rsp)
+          if(rsp.status === 200) {
+            setRecommends(rsp.data);
+          }
+        } else {
+          const rsp = await CalendarApi.getRecommend("food")
+          console.log(rsp)
+          if(rsp.status === 200) {
+            setRecommends(rsp.data);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    fetchRecommends()
+  }, [guest]);
 
   // -------------------- 필터 옵션 데이터 --------------------
   const filterTypes = ["카테고리", "조리방법"];
@@ -217,10 +242,11 @@ const FoodListPage: React.FC = () => {
           Recipes For You
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recommendedRecipes.map((item) => (
+          {recommends && recommends.map((item) => (
             <div
               key={item.id}
-              className="border rounded overflow-hidden shadow border-kakiBrown dark:border-darkKaki"
+              className="border rounded overflow-hidden shadow border-kakiBrown dark:border-darkKaki cursor-pointer transition-transform transform hover:scale-105"
+              onClick={() => handleSelectFood(item.id)}
             >
               <img
                 src={item.image}

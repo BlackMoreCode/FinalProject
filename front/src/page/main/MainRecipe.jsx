@@ -58,7 +58,6 @@ const CategoryTitle = styled.h3`
   font-size: 24px;
   font-weight: bold;
   color: #6f4f1f; /* 따뜻한 갈색 글씨 */
-  margin: 20px 0;
   padding: 10px 20px;
   text-align: center; /* 중앙 정렬 */
   width: fit-content; /* 제목이 길어져도 너비는 내용에 맞게 조절 */
@@ -67,7 +66,6 @@ const CategoryTitle = styled.h3`
 `;
 
 const Line = styled.div`
-  margin: 0 50px;
   height: 2px;
   background-color: #6f4f1f; /* 같은 색으로 실선 추가 */
   margin: 0 auto; /* 가운데 정렬 */
@@ -91,17 +89,20 @@ const Recipe = ({ image, title, url }) => {
 };
 
 const Top3Recipes = ({ category, recipes }) => {
+  const url = (id) => {
+    return category === "주류" ? `/cocktailrecipe/detail/${id}/cocktail` : `/foodrecipe/detail/${id}/food`
+  }
   return (
     <div>
       <CategoryTitle>{category}</CategoryTitle>
       <Line /> {/* 실선 추가 */}
       <RecipeContainer>
-        {recipes.map((recipe) => (
+        {recipes && recipes.map((recipe) => (
           <Recipe
             key={recipe.id}
             image={recipe.image}
-            title={recipe.title}
-            url={recipe.url}
+            title={recipe.name}
+            url={url(recipe.id)}
           />
         ))}
       </RecipeContainer>

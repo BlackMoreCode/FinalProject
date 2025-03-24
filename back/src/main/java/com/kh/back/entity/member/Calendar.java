@@ -20,7 +20,7 @@ public class Calendar {
 	
 	private LocalDate date;
 	
-	@Enumerated
+	@Enumerated(EnumType.STRING)
 	private Recipe recipe;
 	
 	private String recipeId;

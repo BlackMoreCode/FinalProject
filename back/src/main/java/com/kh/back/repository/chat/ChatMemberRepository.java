@@ -16,6 +16,6 @@ public interface ChatMemberRepository extends JpaRepository<ChatMember, Long> {
     Optional<ChatMember> findByMemberAndChatRoom(Member member, ChatRoom chatRoom);
 
     // 해당 roomId에 입장한 회원 수
-    @Query("SELECT COUNT(cm) FROM ChatMember cm WHERE cm.chatRoom.roomId = :roomId")
+    @Query("SELECT COUNT(cm) FROM ChatMember cm WHERE cm.chatRoom.id = :roomId")
     int cntRoomMember(@Param("roomId") String roomId);
 }

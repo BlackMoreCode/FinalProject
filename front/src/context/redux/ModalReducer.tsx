@@ -37,6 +37,7 @@ const initialState: ModalState = {
     open: false,
     message: "",
     initial: {
+      title: "",
       content: "",
       id: "",
     },
@@ -147,9 +148,9 @@ const ModalReducer = createSlice({
       state,
       action: PayloadAction<{
         message: string;
-        initial: { content: string; id: string };
+        initial: { title: string, content: string; id: string };
         restriction?: string;
-        onSubmit: ((data: { content: string; id: string }) => void) | null;
+        onSubmit: ((data: { title: string, content: string; id: string }) => void) | null;
         onCancel: (() => void) | null
       }>
     ) => {
@@ -214,7 +215,7 @@ const ModalReducer = createSlice({
       state.optionModal = { open: false, message: "", options: [], onOption: (value: string) => {}, onCancel: null };
     },
     closeSubmitModal: (state) => {
-      state.submitModal = { open: false, message: "", initial: { content: "", id: "" }, restriction: undefined, onSubmit: null, onCancel: null };
+      state.submitModal = { open: false, message: "", initial: {title: "", content: "", id: "" }, restriction: undefined, onSubmit: null, onCancel: null };
     },
     closeCursorModal: (state) => {
       state.cursorModal = { open: false, message: "", options: [], onOption: null, onCancel: null, position: null, id: "" };
@@ -234,7 +235,7 @@ const ModalReducer = createSlice({
       state.rejectModal = { open: false, message: "", onCancel: null };
       state.confirmModal = { open: false, message: "", onConfirm: null, onCancel: null };
       state.optionModal = { open: false, message: "", options: [], onOption: null, onCancel: null };
-      state.submitModal = { open: false, message: "", initial: { content: "", id: "" }, restriction: undefined, onSubmit: (data: { content: string; id: string }) => {}, onCancel: null };
+      state.submitModal = { open: false, message: "", initial: { title: "", content: "", id: "" }, restriction: undefined, onSubmit: (data: { content: string; id: string }) => {}, onCancel: null };
       state.cursorModal = { open: false, message: "", options: [], onOption: null, onCancel: null, position: null, id: "" };
       state.titleNContentModal = {open : false, title: "", content: "", onCancel: null };
     },

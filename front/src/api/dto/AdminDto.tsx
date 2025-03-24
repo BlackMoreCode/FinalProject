@@ -22,3 +22,10 @@ export interface AdminMemberReqDto {
   introduce: boolean;
   authority: "ROLE_ADMIN" | "ROLE_USER" | "REST_USER"
 }
+
+export interface ChartResDto {
+  id: string;
+  name: string;
+  like: number;
+  view: number;
+}

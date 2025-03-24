@@ -7,4 +7,8 @@ import lombok.*;
 public class SearchResDto {
 	protected String name;
 	protected String id;
+	
+	
+	
 }
+

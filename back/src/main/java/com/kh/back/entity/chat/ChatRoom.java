@@ -20,7 +20,7 @@ import java.util.List;
 public class ChatRoom {
     @Id
     @Column(name = "room_id")
-    private String roomId;
+    private String id;
 
     @Column(name = "room_name", length = 20, nullable = false)
     @Size(max = 20, message = "채팅방 이름은 최대 20자 입력 가능")

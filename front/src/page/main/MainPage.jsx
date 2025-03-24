@@ -1,53 +1,65 @@
 import Banner from "./Banner";
 import Top3Recipes from "./MainRecipe";
+import {useEffect, useState} from "react";
+import {useSelector} from "react-redux";
+import CalendarApi from "../../api/CalendarApi";
 
 const MainPage = () => {
-  const generalRecipes = [
-    {
-      id: 1,
-      title: "Delicious Spaghetti Carbonara",
-      image: "/images/spaghetti.jpg",
-      url: "/recipes/1",
-    },
-    {
-      id: 2,
-      title: "Perfectly Grilled Chicken",
-      image: "/images/chicken.jpg",
-      url: "/recipes/2",
-    },
-    {
-      id: 3,
-      title: "Vegan Avocado Salad",
-      image: "/images/salad.jpg",
-      url: "/recipes/3",
-    },
-  ];
-
-  const alcoholicRecipes = [
-    {
-      id: 1,
-      title: "Margarita",
-      image: "/images/margarita.jpg",
-      url: "/recipes/4",
-    },
-    {
-      id: 2,
-      title: "Whiskey Sour",
-      image: "/images/whiskey.jpg",
-      url: "/recipes/5",
-    },
-    {
-      id: 3,
-      title: "Pina Colada",
-      image: "/images/pina-colada.jpg",
-      url: "/recipes/6",
-    },
-  ];
+  const guest = useSelector((state) => state.user.guest);
+  const [cocktailList, setCocktailList] = useState([]);
+  const [foodList, setFoodList] = useState([]);
+  
+  useEffect(() => {
+    const fetchCocktail = async () => {
+      try{
+        if(!guest){
+          const rsp = await CalendarApi.getRecommend("cocktail")
+          console.log(rsp)
+          if (rsp.status === 200){
+            setCocktailList(rsp.data)
+          }
+        }else {
+          const rsp = await CalendarApi.getPublicRecommend("cocktail")
+          console.log(rsp)
+          if (rsp.status === 200){
+            setCocktailList(rsp.data)
+          }
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    fetchCocktail()
+  },[guest])
+  
+  useEffect(() => {
+    const fetchFood = async () => {
+      try{
+        if(!guest){
+          const rsp = await CalendarApi.getRecommend("food")
+          console.log(rsp)
+          if (rsp.status === 200){
+            setFoodList(rsp.data)
+          }
+        }else {
+          const rsp = await CalendarApi.getPublicRecommend("food")
+          console.log(rsp)
+          if (rsp.status === 200){
+            setFoodList(rsp.data)
+          }
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    fetchFood()
+  },[guest])
+  
   return (
     <div>
       <Banner />
-      <Top3Recipes category="일반 음식 레시피" recipes={generalRecipes} />
-      <Top3Recipes category="주류 레시피" recipes={alcoholicRecipes} />
+      <Top3Recipes category="일반 음식" recipes={foodList} />
+      <Top3Recipes category="주류" recipes={cocktailList} />
     </div>
   );
 };

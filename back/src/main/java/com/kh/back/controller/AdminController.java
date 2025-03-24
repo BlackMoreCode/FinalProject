@@ -5,6 +5,7 @@ package com.kh.back.controller;
 import com.kh.back.dto.admin.request.AdminMemberReqDto;
 import com.kh.back.dto.admin.res.AdminMemberListResDto;
 import com.kh.back.dto.admin.res.AdminMemberResDto;
+import com.kh.back.dto.admin.res.ChartResDto;
 import com.kh.back.dto.python.SearchListResDto;
 import com.kh.back.entity.member.Member;
 import com.kh.back.service.admin.AdminService;
@@ -49,6 +50,10 @@ public class AdminController {
 		return ResponseEntity.ok(adminService.uploadJson(type, file, authentication));
 	}
 	
+	@GetMapping("/chart/{type}/{order}")
+	public ResponseEntity<List<ChartResDto>> getChart(@PathVariable String type, @PathVariable String order, Authentication authentication) {
+		return ResponseEntity.ok(adminService.getChart(authentication, type, order));
+	}
 	
 	
 }

@@ -8,7 +8,7 @@ import React from "react";
 import styled from "styled-components";
 
 interface UploaderProps {
-	type: "cocktail" | "food" | "forum";
+	type: "cocktail" | "food" | "forum" | "faq";
 }
 
 const UploaderComponent = ({ type }: UploaderProps) => {
