@@ -90,6 +90,7 @@ public class RecipeService {
                     Map<String, Object> recipeMap = new HashMap<>();
                     recipeMap.put("title", recipe.get("title"));
                     recipeMap.put("content_type", recipe.getOrDefault("content_type", "N/A")); // 🔹 createdAt 제거
+                    recipeMap.put("id", recipe.get("id"));
                     return recipeMap;
                 })
                 .collect(Collectors.toList());
